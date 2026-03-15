@@ -39,7 +39,6 @@
             <li>Choose a project card from the list.</li>
             <li>Review the parcel in its Tirana neighborhood.</li>
             <li>Focus the project for the close 3D presentation.</li>
-            <li>Select and isolate floors when discussing apartments.</li>
           </ol>
         </section>
 
@@ -50,24 +49,7 @@
           <div class="controls">
             <button id="focus-building" type="button">Focus Project</button>
             <button id="reset-view" type="button">Back To Overview</button>
-            <button id="toggle-isolate" type="button" disabled>Isolate Floor</button>
           </div>
-
-          <section class="floor-section">
-            <div class="section-head">
-              <h2>Available Floors</h2>
-              <span id="floor-count">0 floors</span>
-            </div>
-            <div id="floor-list" class="floor-list"></div>
-          </section>
-
-          <section class="selection-card">
-            <p class="status-label">Selected Floor</p>
-            <h2 id="selected-floor-name">None</h2>
-            <p id="selected-floor-meta" class="selection-meta">
-              Focus the project, then choose a floor.
-            </p>
-          </section>
         </section>
 
         <p id="status-text" class="footnote">
@@ -78,7 +60,7 @@
       <main class="viewer-wrap">
         <div class="map-overlay">
           <div class="map-chip">Real parcel in Tirana</div>
-          <div class="map-chip subtle">Pitch, zoom, and floor focus tuned for sales presentations</div>
+          <div class="map-chip subtle">Map context with the selected project model</div>
         </div>
         <div id="map"></div>
       </main>
