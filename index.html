@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tirana Apartment Explorer</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script
+      defer
+      src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"
+    ></script>
+    <script defer src="./main.js"></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="panel">
+        <p class="eyebrow">Sales Demo</p>
+        <h1>XPlan</h1>
+        <p class="intro">
+          Start with the project list. Selecting a card moves the map to that
+          parcel and opens the apartment presentation controls below.
+        </p>
+
+        <section class="projects-section">
+          <div class="section-head">
+            <h2>Projects</h2>
+            <span id="project-count">0 projects</span>
+          </div>
+          <div id="project-list" class="project-list"></div>
+        </section>
+
+        <section id="empty-state" class="status-card">
+          <p class="status-label">Client Flow</p>
+          <ol>
+            <li>Choose a project card from the list.</li>
+            <li>Review the parcel in its Tirana neighborhood.</li>
+            <li>Focus the project for the close 3D presentation.</li>
+            <li>Select and isolate floors when discussing apartments.</li>
+          </ol>
+        </section>
+
+        <section id="project-detail" hidden>
+          <h1 id="project-title">Builder Project</h1>
+          <p id="project-meta" class="intro"></p>
+
+          <div class="controls">
+            <button id="focus-building" type="button">Focus Project</button>
+            <button id="reset-view" type="button">Back To Overview</button>
+            <button id="toggle-isolate" type="button" disabled>Isolate Floor</button>
+          </div>
+
+          <section class="floor-section">
+            <div class="section-head">
+              <h2>Available Floors</h2>
+              <span id="floor-count">0 floors</span>
+            </div>
+            <div id="floor-list" class="floor-list"></div>
+          </section>
+
+          <section class="selection-card">
+            <p class="status-label">Selected Floor</p>
+            <h2 id="selected-floor-name">None</h2>
+            <p id="selected-floor-meta" class="selection-meta">
+              Focus the project, then choose a floor.
+            </p>
+          </section>
+        </section>
+
+        <p id="status-text" class="footnote">
+          Choose a project card to begin.
+        </p>
+      </aside>
+
+      <main class="viewer-wrap">
+        <div class="map-overlay">
+          <div class="map-chip">Real parcel in Tirana</div>
+          <div class="map-chip subtle">Pitch, zoom, and floor focus tuned for sales presentations</div>
+        </div>
+        <div id="map"></div>
+      </main>
+    </div>
+  </body>
+</html>
