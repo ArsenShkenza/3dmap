@@ -7,45 +7,194 @@ const resetButton = document.getElementById("reset-view");
 const statusText = document.getElementById("status-text");
 const projectTitle = document.getElementById("project-title");
 const projectMeta = document.getElementById("project-meta");
+const projectThesis = document.getElementById("project-thesis");
+const projectCategory = document.getElementById("project-category");
+const projectRoi = document.getElementById("project-roi");
+const projectTicket = document.getElementById("project-ticket");
+const projectStage = document.getElementById("project-stage");
+const projectAccess = document.getElementById("project-access");
+const projectTimeline = document.getElementById("project-timeline");
+const projectMemo = document.getElementById("project-memo");
+const categoryList = document.getElementById("category-list");
+const promptList = document.getElementById("prompt-list");
+const searchForm = document.getElementById("search-form");
+const omniSearch = document.getElementById("omni-search");
 
-const DEBUG = true;
+const DEBUG = false;
 const CAN_FETCH_LOCAL_ASSET = window.location.protocol !== "file:";
+
+const exploreCategories = [
+  { id: "all", label: "All Opportunities" },
+  { id: "land", label: "Land & Development" },
+  { id: "partners", label: "Seeking Partners" },
+  { id: "turnkey", label: "Turn-key / Built" },
+  { id: "offplan", label: "Off-Plan Vision" },
+];
+
+const promptExamples = [
+  "Projects in Durres with waterfront positioning",
+  "Projects in Tirana seeking co-investors above 8% ROI",
+  "Stabilized commercial asset in Prishtina",
+];
 
 const projects = [
   {
-    id: "park-residence",
-    name: "Park Residence Tirana",
-    district: "Keshilli i Evropes",
-    summary: "8 floors, boulevard-facing parcel beside the park spine.",
-    center: [19.81874, 41.32788],
-    bearing: -24,
-    zoomOverview: 16.15,
-    zoomFocus: 18.55,
-    pitchOverview: 48,
-    pitchFocus: 60,
+    id: "palase-horizon",
+    name: "Tirana Skyline Residences",
+    city: "Tirana",
+    district: "Liqeni i Thate",
+    categoryId: "land",
+    categoryLabel: "Land & Development",
+    access: "VIP",
+    roi: "12.4%",
+    ticket: "EUR 10.8M equity",
+    stage: "Approved Permit",
+    timeline: ["Land Control", "Approved Permit", "Capital Raise", "Construction"],
+    summary: "A permit-ready premium residential site in Tirana positioned for a high-visibility, high-margin launch.",
+    thesis:
+      "Planning clarity, premium neighborhood positioning, and strong end-market depth make this a cleaner development story than a resort concept.",
+    center: [19.8208, 41.3099],
+    bearing: -20,
+    zoomOverview: 15.2,
+    zoomFocus: 17.9,
+    pitchOverview: 54,
+    pitchFocus: 64,
     footprint: [
-      [19.81861, 41.32779],
-      [19.81888, 41.32779],
-      [19.81891, 41.32796],
-      [19.81864, 41.32798],
-      [19.81861, 41.32779],
+      [19.82052, 41.30973],
+      [19.82103, 41.30969],
+      [19.82116, 41.31007],
+      [19.82063, 41.31011],
+      [19.82052, 41.30973],
     ],
-    floorCount: 8,
-    floorHeight: 3.35,
-    roofHeight: 2.3,
-    modelSrc: "./assets/louisiana_state_house.glb",
+    floorCount: 11,
+    floorHeight: 3.55,
+    roofHeight: 3.1,
+    modelSrc: "./assets/le_millefiori.glb",
+    searchTerms: ["tirana", "permit", "residences", "land", "development", "premium"],
   },
   {
-    id: "vista-garden",
-    name: "Vista Garden Tirana",
+    id: "boulevard-crown",
+    name: "Boulevard Crown Tower",
+    city: "Tirana",
+    district: "Bulevardi i Ri",
+    categoryId: "partners",
+    categoryLabel: "Seeking Partners",
+    access: "Invite Only",
+    roi: "9.2%",
+    ticket: "EUR 8.5M for 30%",
+    stage: "Capital Raise",
+    timeline: ["Concept Ready", "Business Plan", "Capital Raise", "Permit Delivery"],
+    summary: "Urban tower concept seeking a strategic co-investor with plan, visibility, and central-city momentum.",
+    thesis:
+      "Institutional-style entry into a flagship Tirana position with capital leverage and a ready-made story for partnership discussions.",
+    center: [19.8317, 41.3406],
+    bearing: -12,
+    zoomOverview: 15.4,
+    zoomFocus: 18.15,
+    pitchOverview: 56,
+    pitchFocus: 66,
+    footprint: [
+      [19.83145, 41.34042],
+      [19.83192, 41.3404],
+      [19.83203, 41.34075],
+      [19.83157, 41.34079],
+      [19.83145, 41.34042],
+    ],
+    floorCount: 18,
+    floorHeight: 3.35,
+    roofHeight: 3.3,
+    modelSrc: "./assets/le_millefiori.glb",
+    searchTerms: ["tirana", "partner", "co-investor", "roi", "tower", "boulevard", "bulevardi"],
+  },
+  {
+    id: "prishtina-prime",
+    name: "Prishtina Prime Offices",
+    city: "Prishtina",
+    district: "Central Business District",
+    categoryId: "turnkey",
+    categoryLabel: "Turn-key / Built",
+    access: "Open",
+    roi: "8.1%",
+    ticket: "EUR 6.2M acquisition",
+    stage: "Stabilized Asset",
+    timeline: ["Completed", "Leased", "Cash Flow", "Refinance / Exit"],
+    summary: "Finished commercial floorplate with tenant narrative and clean yield messaging for conservative capital.",
+    thesis:
+      "A lower-volatility income play suited for investors prioritizing occupancy strength, lease certainty, and immediate cash flow.",
+    center: [21.1618, 42.6627],
+    bearing: 18,
+    zoomOverview: 15.25,
+    zoomFocus: 17.75,
+    pitchOverview: 52,
+    pitchFocus: 63,
+    footprint: [
+      [21.16153, 42.6625],
+      [21.16201, 42.66246],
+      [21.16212, 42.66282],
+      [21.16166, 42.66287],
+      [21.16153, 42.6625],
+    ],
+    floorCount: 14,
+    floorHeight: 3.2,
+    roofHeight: 2.8,
+    modelSrc: "./assets/skyscraper.glb",
+    searchTerms: ["prishtina", "office", "commercial", "yield", "built", "turnkey", "leased"],
+  },
+  {
+    id: "lalzi-villas",
+    name: "Durres Marina Residences",
+    city: "Durres",
+    district: "Seafront Growth Corridor",
+    categoryId: "offplan",
+    categoryLabel: "Off-Plan Vision",
+    access: "VIP",
+    roi: "10.9%",
+    ticket: "EUR 6.1M block buy",
+    stage: "Construction Start",
+    timeline: ["Concept Ready", "Sales Launch", "Construction Start", "Delivery"],
+    summary: "A seafront residential concept framed for early-entry buyers seeking Durres waterfront upside before full area repricing.",
+    thesis:
+      "Durres tourism momentum and cleaner urban positioning make this a stronger waterfront story than the previous out-of-market villa placeholder.",
+    center: [19.4381, 41.3138],
+    bearing: -22,
+    zoomOverview: 14.8,
+    zoomFocus: 17.45,
+    pitchOverview: 53,
+    pitchFocus: 64,
+    footprint: [
+      [19.43778, 41.31357],
+      [19.43832, 41.31355],
+      [19.43847, 41.31398],
+      [19.43791, 41.31402],
+      [19.43778, 41.31357],
+    ],
+    floorCount: 9,
+    floorHeight: 3.15,
+    roofHeight: 2.7,
+    modelSrc: "./assets/skyscraper.glb",
+    searchTerms: ["durres", "marina", "residences", "off-plan", "construction", "waterfront"],
+  },
+  {
+    id: "tirana-innovation-hub",
+    name: "Tirana Meridian Residences",
+    city: "Tirana",
     district: "Komuna e Parisit",
-    summary: "10 floors with a wider residential podium footprint.",
-    center: [19.80592, 41.31887],
+    categoryId: "partners",
+    categoryLabel: "Seeking Partners",
+    access: "Open",
+    roi: "8.8%",
+    ticket: "EUR 4.6M co-investment",
+    stage: "Partner Outreach",
+    timeline: ["Design Ready", "Partner Outreach", "Structuring", "Execution"],
+    summary: "A polished mid-rise residential concept positioned for co-investors who want prime-city exposure without landmark-scale risk.",
+    thesis:
+      "Balanced scale, central positioning, and premium residential demand make this a cleaner partnership story for fast-moving capital.",
+    center: [19.8061, 41.3189],
     bearing: 12,
-    zoomOverview: 15.9,
-    zoomFocus: 17.8,
-    pitchOverview: 48,
-    pitchFocus: 60,
+    zoomOverview: 15.8,
+    zoomFocus: 17.95,
+    pitchOverview: 50,
+    pitchFocus: 62,
     footprint: [
       [19.80577, 41.31877],
       [19.80609, 41.31877],
@@ -57,121 +206,109 @@ const projects = [
     floorHeight: 3.25,
     roofHeight: 2.4,
     modelSrc: "./assets/le_millefiori.glb",
+    searchTerms: ["tirana", "partner", "residential", "mid-rise", "co-investment", "premium"],
   },
   {
-    id: "lakeview-point",
-    name: "Lakeview Point",
-    district: "Artificial Lake Edge",
-    summary: "12 floors aimed at premium units with stronger skyline presence.",
-    center: [19.82098, 41.31267],
-    bearing: -38,
-    zoomOverview: 15.75,
-    zoomFocus: 17,
+    id: "prishtina-design-labs",
+    name: "Prishtina Grand Boulevard",
+    city: "Prishtina",
+    district: "Emerging Urban Quarter",
+    categoryId: "offplan",
+    categoryLabel: "Off-Plan Vision",
+    access: "Open",
+    roi: "9.4%",
+    ticket: "EUR 4.8M equity",
+    stage: "Feasibility",
+    timeline: ["Vision Stage", "Feasibility", "Raise", "Permit"],
+    summary: "A future-facing mixed-use boulevard scheme used to present long-horizon upside with strong urban identity.",
+    thesis:
+      "An early-entry development story for investors willing to back placemaking quality before broader market repricing arrives.",
+    center: [21.1534, 42.6554],
+    bearing: 8,
+    zoomOverview: 15.1,
+    zoomFocus: 17.5,
     pitchOverview: 50,
-    pitchFocus: 60,
+    pitchFocus: 61,
     footprint: [
-      [19.82083, 41.31256],
-      [19.82111, 41.31255],
-      [19.82114, 41.31278],
-      [19.82087, 41.31279],
-      [19.82083, 41.31256],
-    ],
-    floorCount: 12,
-    floorHeight: 3.2,
-    roofHeight: 2.6,
-    modelSrc: "./assets/singer_building.glb",
-  },
-  {
-    id: "duck-showcase",
-    name: "Duck Showcase",
-    district: "Prototype Asset Demo",
-    summary: "Non-building test model to validate diverse GLB import behavior.",
-    center: [19.81335, 41.32332],
-    bearing: -12,
-    zoomOverview: 15.95,
-    zoomFocus: 17.9,
-    pitchOverview: 48,
-    pitchFocus: 60,
-    footprint: [
-      [19.8132, 41.3232],
-      [19.81349, 41.32319],
-      [19.81351, 41.32343],
-      [19.81324, 41.32344],
-      [19.8132, 41.3232],
-    ],
-    floorCount: 9,
-    floorHeight: 3.1,
-    roofHeight: 2.2,
-    modelSrc: "./assets/duck.glb",
-  },
-  {
-    id: "avocado-studio",
-    name: "Avocado Studio",
-    district: "Prototype Asset Demo",
-    summary: "Organic mesh sample used to test scaling and scene lighting.",
-    center: [19.80958, 41.32054],
-    bearing: 18,
-    zoomOverview: 16.05,
-    zoomFocus: 18.05,
-    pitchOverview: 49,
-    pitchFocus: 60,
-    footprint: [
-      [19.80943, 41.32045],
-      [19.80971, 41.32044],
-      [19.80974, 41.32064],
-      [19.80946, 41.32065],
-      [19.80943, 41.32045],
+      [21.15313, 42.65522],
+      [21.15355, 42.65519],
+      [21.15367, 42.65555],
+      [21.15327, 42.6556],
+      [21.15313, 42.65522],
     ],
     floorCount: 11,
     floorHeight: 3.2,
-    roofHeight: 2.4,
-    modelSrc: "./assets/avocado.glb",
-  },
-  {
-    id: "boombox-hub",
-    name: "BoomBox Hub",
-    district: "Prototype Asset Demo",
-    summary: "Hard-surface sample asset for materials and edge definition checks.",
-    center: [19.81713, 41.31686],
-    bearing: -30,
-    zoomOverview: 15.9,
-    zoomFocus: 17.85,
-    pitchOverview: 48,
-    pitchFocus: 60,
-    footprint: [
-      [19.81698, 41.31677],
-      [19.81726, 41.31677],
-      [19.81729, 41.31696],
-      [19.81701, 41.31698],
-      [19.81698, 41.31677],
-    ],
-    floorCount: 10,
-    floorHeight: 3.1,
-    roofHeight: 2.3,
-    modelSrc: "./assets/boombox.glb",
-  },
-  {
-    id: "lantern-reserve",
-    name: "Lantern Reserve",
-    district: "Prototype Asset Demo",
-    summary: "Complex metallic/glass sample used as a stress test for the scene.",
-    center: [19.82291, 41.31945],
-    bearing: 8,
-    zoomOverview: 15.9,
-    zoomFocus: 17.75,
-    pitchOverview: 48,
-    pitchFocus: 60,
-    footprint: [
-      [19.82275, 41.31935],
-      [19.82303, 41.31935],
-      [19.82306, 41.31956],
-      [19.82278, 41.31958],
-      [19.82275, 41.31935],
-    ],
-    floorCount: 12,
-    floorHeight: 3.2,
     roofHeight: 2.5,
-    modelSrc: "./assets/lantern.glb",
+    modelSrc: "./assets/le_millefiori.glb",
+    searchTerms: ["prishtina", "boulevard", "mixed-use", "future", "off-plan", "equity"],
+  },
+  {
+    id: "durres-logistics-park",
+    name: "Durres Gateway Business Center",
+    city: "Durres",
+    district: "Port Access Corridor",
+    categoryId: "partners",
+    categoryLabel: "Seeking Partners",
+    access: "VIP",
+    roi: "9.1%",
+    ticket: "EUR 6.9M joint venture",
+    stage: "Structuring",
+    timeline: ["Concept Ready", "Structuring", "Capital Raise", "Delivery"],
+    summary: "A port-adjacent office and trade-services scheme designed for investors who want infrastructure-linked demand.",
+    thesis:
+      "Durres infrastructure growth and commercial catchment create a pragmatic partnership case with clear occupational logic.",
+    center: [19.4556, 41.3338],
+    bearing: -10,
+    zoomOverview: 13.9,
+    zoomFocus: 16.7,
+    pitchOverview: 48,
+    pitchFocus: 60,
+    footprint: [
+      [19.45513, 41.33348],
+      [19.45603, 41.33344],
+      [19.45618, 41.33406],
+      [19.45531, 41.33412],
+      [19.45513, 41.33348],
+    ],
+    floorCount: 8,
+    floorHeight: 3.5,
+    roofHeight: 2.6,
+    modelSrc: "./assets/skyscraper.glb",
+    searchTerms: ["durres", "business center", "commercial", "partner", "gateway", "joint venture"],
+  },
+  {
+    id: "vlora-marina-club",
+    name: "Prishtina Skyline Suites",
+    city: "Prishtina",
+    district: "City Edge Expansion Zone",
+    categoryId: "turnkey",
+    categoryLabel: "Turn-key / Built",
+    access: "Invite Only",
+    roi: "8.6%",
+    ticket: "EUR 8.9M acquisition",
+    stage: "Operational Asset",
+    timeline: ["Completed", "Operational", "Yield Hold", "Strategic Exit"],
+    summary: "A completed premium residential asset in Prishtina designed to present a cleaner, more urban acquisition narrative.",
+    thesis:
+      "This keeps the portfolio anchored in the target cities while preserving the polished, high-ticket acquisition story the product needs.",
+    center: [21.1499, 42.6528],
+    bearing: 14,
+    zoomOverview: 15.2,
+    zoomFocus: 17.8,
+    pitchOverview: 52,
+    pitchFocus: 63,
+    footprint: [
+      [21.14962, 42.65261],
+      [21.15012, 42.65259],
+      [21.15023, 42.65296],
+      [21.14974, 42.65301],
+      [21.14962, 42.65261],
+    ],
+    floorCount: 13,
+    floorHeight: 3.25,
+    roofHeight: 2.9,
+    modelSrc: "./assets/le_millefiori.glb",
+    searchTerms: ["prishtina", "residential", "acquisition", "built", "yield", "suites"],
   },
 ];
 
@@ -180,53 +317,59 @@ let mapReady = false;
 let activeProject = null;
 let glbState = null;
 let glbInitPromise = null;
+let activeCategory = "all";
+let visibleProjects = [...projects];
+let projectLoadToken = 0;
+let activeProjectAuto = false;
+let pulseFrame = 0;
+let pulseAnimationId = 0;
+
+const MODEL_REVEAL_ZOOM_BUFFER = 0.6;
+const AUTO_SELECT_ZOOM = 15.5;
+const AUTO_SELECT_DISTANCE_METERS = 700;
 
 bootstrap();
 
 function debugLog(...args) {
   if (DEBUG) {
-    console.log("[3dmap]", ...args);
+    console.log("[pro-x]", ...args);
   }
 }
 
 function bootstrap() {
   const maplibregl = window.maplibregl;
   if (!maplibregl) {
-    statusText.textContent = "MapLibre failed to load.";
+    statusText.textContent = "Map engine failed to load.";
     return;
   }
 
-  debugLog("runtime", {
-    protocol: window.location.protocol,
-    canFetchLocalAsset: CAN_FETCH_LOCAL_ASSET,
-  });
-
-  projectCount.textContent = `${projects.length} projects`;
-  buildProjectCards();
+  buildCategoryChips();
+  buildPromptChips();
+  renderProjectList();
 
   map = new maplibregl.Map({
     container: "map",
     style: {
       version: 8,
       sources: {
-        "carto-light": {
+        "carto-dark": {
           type: "raster",
           tiles: [
-            "https://a.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-            "https://b.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-            "https://c.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
-            "https://d.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png",
+            "https://a.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+            "https://b.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+            "https://c.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
+            "https://d.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png",
           ],
           tileSize: 256,
           attribution: "&copy; OpenStreetMap contributors &copy; CARTO",
         },
       },
-      layers: [{ id: "carto-light", type: "raster", source: "carto-light" }],
+      layers: [{ id: "carto-dark", type: "raster", source: "carto-dark" }],
     },
-    center: [19.8189, 41.3274],
-    zoom: 12.5,
-    pitch: 18,
-    bearing: 0,
+    center: [20.45, 41.25],
+    zoom: 7.15,
+    pitch: 34,
+    bearing: -8,
     antialias: true,
   });
 
@@ -236,19 +379,59 @@ function bootstrap() {
     mapReady = true;
     debugLog("map loaded");
 
-    map.addSource("projects-overview", {
+    map.addSource("projects-overview-points", {
       type: "geojson",
-      data: createProjectsOverviewCollection(),
+      data: createProjectsOverviewPoints(getOverviewPointProjects()),
     });
     map.addLayer({
-      id: "projects-overview-fill",
-      type: "fill-extrusion",
-      source: "projects-overview",
+      id: "projects-glow-outer",
+      type: "circle",
+      source: "projects-overview-points",
       paint: {
-        "fill-extrusion-color": "#d8a35c",
-        "fill-extrusion-height": ["get", "heightMeters"],
-        "fill-extrusion-base": 0,
-        "fill-extrusion-opacity": 0.68,
+        "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 10, 10, 18, 14, 28, 16.2, 0],
+        "circle-color": "#d6a86a",
+        "circle-opacity": ["interpolate", ["linear"], ["zoom"], 6, 0.16, 10, 0.12, 14, 0.08, 16.2, 0],
+        "circle-blur": 0.5,
+      },
+    });
+    map.addLayer({
+      id: "projects-glow-inner",
+      type: "circle",
+      source: "projects-overview-points",
+      paint: {
+        "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 3.6, 10, 6.5, 14, 8, 16.2, 0],
+        "circle-color": "#f0c884",
+        "circle-opacity": ["interpolate", ["linear"], ["zoom"], 6, 0.92, 10, 0.84, 14, 0.72, 16.2, 0],
+        "circle-stroke-width": 0.8,
+        "circle-stroke-color": "rgba(255,255,255,0.36)",
+      },
+    });
+
+    map.addSource("active-project-point", {
+      type: "geojson",
+      data: emptyFeatureCollection(),
+    });
+    map.addLayer({
+      id: "active-project-pulse",
+      type: "circle",
+      source: "active-project-point",
+      paint: {
+        "circle-radius": 18,
+        "circle-color": "#f0c884",
+        "circle-opacity": 0,
+        "circle-blur": 0.55,
+      },
+    });
+    map.addLayer({
+      id: "active-project-core",
+      type: "circle",
+      source: "active-project-point",
+      paint: {
+        "circle-radius": ["interpolate", ["linear"], ["zoom"], 6, 4.5, 10, 7.5, 14, 9, 16.2, 0],
+        "circle-color": "#f0c884",
+        "circle-opacity": ["interpolate", ["linear"], ["zoom"], 6, 1, 10, 0.94, 14, 0.82, 16.2, 0],
+        "circle-stroke-width": 1.2,
+        "circle-stroke-color": "rgba(255,255,255,0.48)",
       },
     });
 
@@ -256,43 +439,73 @@ function bootstrap() {
       type: "geojson",
       data: emptyFeatureCollection(),
     });
-    map.addLayer({
-      id: "project-parcel-fill",
-      type: "fill",
-      source: "project-parcel",
-      paint: {
-        "fill-color": "#d88a2d",
-        "fill-opacity": 0.25,
-      },
-    });
-    map.addLayer({
-      id: "project-parcel-line",
-      type: "line",
-      source: "project-parcel",
-      paint: {
-        "line-color": "#8e4f05",
-        "line-width": 3,
-      },
-    });
-
-    if (!CAN_FETCH_LOCAL_ASSET) {
-      debugLog("glb init skipped (file protocol)");
-      statusText.textContent =
-        "Open this app through http://localhost (example: python3 -m http.server 8000) to load the GLB model.";
-      return;
-    }
 
     statusText.textContent =
-      "All projects are visible on the map. Select a card to load its GLB model.";
+      "The map opens in market view. Use AI prompts or choose a curated opportunity to begin.";
+
+    if (!CAN_FETCH_LOCAL_ASSET) {
+      statusText.textContent =
+        "Open through http://localhost to unlock GLB presentation mode. Market view still works.";
+    }
+
+    map.on("move", handleMapCameraChange);
+    map.on("moveend", () => {
+      handleMapCameraChange();
+      autoSelectProjectForCurrentView();
+      queueVisibleModelSync();
+    });
+    refreshOverviewSources();
+    startActivePointPulse();
   });
 
   focusButton.addEventListener("click", () => focusProject(true));
   resetButton.addEventListener("click", resetProjectView);
+  searchForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    runOmniSearch(omniSearch.value.trim());
+  });
 }
 
-function buildProjectCards() {
+function buildCategoryChips() {
+  categoryList.innerHTML = "";
+  exploreCategories.forEach((category) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "category-chip";
+    button.textContent = category.label;
+    button.dataset.categoryId = category.id;
+    button.addEventListener("click", () => {
+      activeCategory = category.id;
+      omniSearch.value = "";
+      applyProjectFilter(filterProjectsByCategory(category.id));
+      updateCategoryButtons();
+      statusText.textContent = `${category.label} curated for review.`;
+    });
+    categoryList.appendChild(button);
+  });
+  updateCategoryButtons();
+}
+
+function buildPromptChips() {
+  promptList.innerHTML = "";
+  promptExamples.forEach((prompt) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "prompt-chip";
+    button.textContent = prompt;
+    button.addEventListener("click", () => {
+      omniSearch.value = prompt;
+      runOmniSearch(prompt);
+    });
+    promptList.appendChild(button);
+  });
+}
+
+function renderProjectList() {
   projectList.innerHTML = "";
-  projects.forEach((project) => {
+  projectCount.textContent = `${visibleProjects.length} opportunities`;
+
+  visibleProjects.forEach((project) => {
     const card = document.createElement("button");
     card.type = "button";
     card.className = "project-card";
@@ -300,54 +513,227 @@ function buildProjectCards() {
     card.innerHTML = `
       <span class="project-card-top">
         <span class="project-card-title">${project.name}</span>
-        <span class="project-card-badge">${project.floorCount}F</span>
+        <span class="project-card-badge">${project.access}</span>
       </span>
-      <span class="project-card-meta">${project.district}</span>
+      <span class="project-card-meta">${project.categoryLabel} • ${project.city}</span>
       <span class="project-card-copy">${project.summary}</span>
+      <span class="project-card-stats">
+        <span class="stat-pill">ROI ${project.roi}</span>
+        <span class="stat-pill">${project.stage}</span>
+        <span class="stat-pill">${project.ticket}</span>
+      </span>
     `;
-    card.addEventListener("click", () => selectProject(project.id));
+    card.addEventListener("click", () => selectProject(project.id, { autoFocus: true }));
     projectList.appendChild(card);
+  });
+
+  updateProjectCards();
+}
+
+function updateCategoryButtons() {
+  Array.from(categoryList.children).forEach((chip) => {
+    chip.classList.toggle("active", chip.dataset.categoryId === activeCategory);
   });
 }
 
-function selectProject(projectId) {
+function filterProjectsByCategory(categoryId) {
+  if (categoryId === "all") {
+    return [...projects];
+  }
+  return projects.filter((project) => project.categoryId === categoryId);
+}
+
+function applyProjectFilter(filteredProjects) {
+  visibleProjects = filteredProjects;
+  renderProjectList();
+  refreshOverviewSources();
+
+  const hasResults = visibleProjects.length > 0;
+  emptyState.hidden = hasResults;
+  if (!hasResults) {
+    projectDetail.hidden = true;
+    setGeoJsonSource("project-parcel", emptyFeatureCollection());
+    activeProject = null;
+    refreshOverviewSources();
+    updateGlbVisibility();
+    statusText.textContent = "No matching opportunities found. Try a broader investor query.";
+  }
+}
+
+function runOmniSearch(query) {
+  if (!query) {
+    applyProjectFilter(filterProjectsByCategory(activeCategory));
+    statusText.textContent = "Showing the curated market view again.";
+    return;
+  }
+
+  const matches = scoreProjects(query)
+    .filter((entry) => entry.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map((entry) => entry.project);
+
+  if (matches.length === 0) {
+    applyProjectFilter([]);
+    return;
+  }
+
+  activeCategory = "all";
+  updateCategoryButtons();
+  applyProjectFilter(matches);
+  statusText.textContent = `${matches.length} matching opportunities surfaced for "${query}".`;
+  selectProject(matches[0].id, { autoFocus: true });
+}
+
+function scoreProjects(query) {
+  const normalizedQuery = normalizeText(query);
+  const roiThresholdMatch = normalizedQuery.match(/(?:roi|yield).{0,12}?(\d+(?:\.\d+)?)/);
+  const roiThreshold = roiThresholdMatch ? Number(roiThresholdMatch[1]) : null;
+
+  return projects.map((project) => {
+    let score = 0;
+    const projectText = normalizeText(
+      [
+        project.name,
+        project.city,
+        project.district,
+        project.categoryLabel,
+        project.access,
+        project.stage,
+        project.summary,
+        project.thesis,
+        ...project.searchTerms,
+      ].join(" ")
+    );
+
+    if (projectText.includes(normalizedQuery)) {
+      score += 12;
+    }
+
+    normalizedQuery.split(" ").forEach((term) => {
+      if (term.length > 2 && projectText.includes(term)) {
+        score += 2;
+      }
+    });
+
+    if (/tirana|co-invest|partner|partnere/.test(normalizedQuery) && project.id === "boulevard-crown") {
+      score += 8;
+    }
+    if (/south|coast|resort|permit|palase/.test(normalizedQuery) && project.id === "palase-horizon") {
+      score += 8;
+    }
+    if (/prishtina|commercial|office|yield|built|stabil/.test(normalizedQuery) && project.id === "prishtina-prime") {
+      score += 8;
+    }
+
+    if (roiThreshold !== null) {
+      const projectRoiValue = parseFloat(project.roi);
+      if (projectRoiValue >= roiThreshold) {
+        score += 4;
+      }
+    }
+
+    return { project, score };
+  });
+}
+
+function normalizeText(value) {
+  return value.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, " ");
+}
+
+function selectProject(projectId, options = {}) {
   const project = projects.find((item) => item.id === projectId);
   if (!project || !mapReady) {
     return;
   }
 
   activeProject = project;
+  activeProjectAuto = Boolean(options.autoSelected);
+  projectLoadToken += 1;
+  const loadToken = projectLoadToken;
+
   updateProjectCards();
+  updateProjectDetail(project);
   setGeoJsonSource("project-parcel", createProjectParcel(project));
-  if (CAN_FETCH_LOCAL_ASSET) {
-    setActiveGlbModel(project.modelSrc).catch((error) => {
-      console.error(error);
-      debugLog("glb switch failed", String(error));
-    });
-  }
+  refreshOverviewSources();
   updateGlbVisibility();
 
+  if (CAN_FETCH_LOCAL_ASSET) {
+    if (!options.silentStatus) {
+      statusText.textContent = `Loading ${project.name} presentation model...`;
+    }
+    ensureProjectModel(project, loadToken)
+      .then(() => {
+        if (loadToken !== projectLoadToken || activeProject?.id !== project.id) {
+          return;
+        }
+        if (!options.silentStatus) {
+          statusText.textContent = `${project.name} is ready for presentation view.`;
+        }
+      })
+      .catch((error) => {
+        console.error(error);
+        debugLog("glb switch failed", String(error));
+        if (loadToken !== projectLoadToken) {
+          return;
+        }
+        if (!options.silentStatus) {
+          statusText.textContent =
+            "Model preview could not load. Parcel and market narrative are still available.";
+        }
+      });
+  } else {
+    if (!options.silentStatus) {
+      statusText.textContent =
+        "Market view is active. Run the app on localhost to unlock the GLB presentation layer.";
+    }
+  }
+
+  if (!options.preserveCamera) {
+    map.fitBounds(projectBounds(project), {
+      padding: getOverviewPadding(),
+      duration: 1000,
+      pitch: project.pitchOverview,
+      bearing: project.bearing,
+      essential: true,
+      maxZoom: project.zoomOverview,
+    });
+  }
+
+  if (options.autoFocus !== false) {
+    map.once("moveend", () => {
+      if (!activeProject || activeProject.id !== project.id) {
+        return;
+      }
+      focusProject(true);
+    });
+  }
+}
+
+function updateProjectDetail(project) {
   emptyState.hidden = true;
   projectDetail.hidden = false;
   projectTitle.textContent = project.name;
-  projectMeta.textContent = `${project.floorCount} floors on ${project.district}`;
+  projectMeta.textContent = `${project.city} • ${project.district}`;
+  projectThesis.textContent = project.thesis;
+  projectCategory.textContent = project.categoryLabel;
+  projectRoi.textContent = project.roi;
+  projectTicket.textContent = project.ticket;
+  projectStage.textContent = project.stage;
+  projectAccess.textContent = project.access;
+  projectMemo.textContent = buildInvestmentMemo(project);
+  renderTimeline(project.timeline, project.stage);
+}
 
-  map.fitBounds(projectBounds(project), {
-    padding: { top: 80, right: 80, bottom: 80, left: 420 },
-    duration: 900,
-    pitch: project.pitchOverview,
-    bearing: project.bearing,
-    essential: true,
-    maxZoom: project.zoomOverview,
-  });
-
-  statusText.textContent = "Project selected. Moving to parcel, then focusing.";
-
-  map.once("moveend", () => {
-    if (!activeProject || activeProject.id !== project.id) {
-      return;
+function renderTimeline(steps, activeStep) {
+  projectTimeline.innerHTML = "";
+  steps.forEach((step) => {
+    const item = document.createElement("div");
+    item.className = "timeline-step";
+    if (step === activeStep) {
+      item.classList.add("active");
     }
-    focusProject(true);
+    item.textContent = step;
+    projectTimeline.appendChild(item);
   });
 }
 
@@ -358,20 +744,17 @@ function focusProject(withAnimation) {
 
   map.easeTo({
     center: activeProject.center,
-    zoom: activeProject.zoomFocus + 0.15,
-    pitch: 76,
-    bearing: activeProject.bearing + 18,
-    offset: [220, 120],
+    zoom: activeProject.zoomFocus,
+    pitch: activeProject.pitchFocus,
+    bearing: activeProject.bearing + 10,
+    offset: getFocusOffset(),
     duration: withAnimation ? 1200 : 0,
     essential: true,
   });
 
   if (CAN_FETCH_LOCAL_ASSET) {
     updateGlbVisibility();
-    statusText.textContent = "Project focused. GLB is now the building on map.";
-  } else {
-    statusText.textContent =
-      "GLB blocked on file://. Run local server: python3 -m http.server 8000";
+    statusText.textContent = `${activeProject.name} is now in cinematic presentation view.`;
   }
 }
 
@@ -385,17 +768,38 @@ function resetProjectView() {
     zoom: activeProject.zoomOverview,
     pitch: activeProject.pitchOverview,
     bearing: activeProject.bearing,
-    offset: [99, 0],
+    offset: [0, 0],
     duration: 900,
     essential: true,
   });
-  statusText.textContent = "Overview restored.";
+  statusText.textContent = `${activeProject.name} returned to market view.`;
+}
+
+function getOverviewPadding() {
+  if (window.innerWidth < 980) {
+    return { top: 250, right: 24, bottom: 24, left: 24 };
+  }
+  return { top: 120, right: 80, bottom: 80, left: 500 };
+}
+
+function getFocusOffset() {
+  return window.innerWidth < 980 ? [0, 110] : [180, 90];
 }
 
 function updateProjectCards() {
   Array.from(projectList.children).forEach((card) => {
     card.classList.toggle("active", card.dataset.projectId === activeProject?.id);
   });
+}
+
+function refreshOverviewSources() {
+  if (!mapReady) {
+    return;
+  }
+  setGeoJsonSource("projects-overview-points", createProjectsOverviewPoints(getOverviewPointProjects()));
+  setGeoJsonSource("active-project-point", createActiveProjectPoint());
+  handleMapCameraChange();
+  queueVisibleModelSync();
 }
 
 function setGeoJsonSource(sourceId, data) {
@@ -406,36 +810,45 @@ function setGeoJsonSource(sourceId, data) {
 }
 
 function createProjectParcel(project) {
+  return emptyFeatureCollection();
+}
+
+function createProjectsOverviewPoints(projectItems) {
+  return {
+    type: "FeatureCollection",
+    features: projectItems.map((project) => ({
+      type: "Feature",
+      properties: { id: `${project.id}-point` },
+      geometry: {
+        type: "Point",
+        coordinates: project.center,
+      },
+    })),
+  };
+}
+
+function createActiveProjectPoint() {
+  if (!activeProject) {
+    return emptyFeatureCollection();
+  }
+
   return {
     type: "FeatureCollection",
     features: [
       {
         type: "Feature",
-        properties: { id: `${project.id}-parcel` },
+        properties: { id: `${activeProject.id}-active-point` },
         geometry: {
-          type: "Polygon",
-          coordinates: [project.footprint],
+          type: "Point",
+          coordinates: activeProject.center,
         },
       },
     ],
   };
 }
 
-function createProjectsOverviewCollection() {
-  return {
-    type: "FeatureCollection",
-    features: projects.map((project) => ({
-      type: "Feature",
-      properties: {
-        id: `${project.id}-overview`,
-        heightMeters: project.floorCount * project.floorHeight + project.roofHeight,
-      },
-      geometry: {
-        type: "Polygon",
-        coordinates: [project.footprint],
-      },
-    })),
-  };
+function getOverviewPointProjects() {
+  return visibleProjects.filter((project) => project.id !== activeProject?.id);
 }
 
 function emptyFeatureCollection() {
@@ -448,12 +861,14 @@ function projectBounds(project) {
   let minLat = Infinity;
   let maxLon = -Infinity;
   let maxLat = -Infinity;
+
   coordinates.forEach(([lon, lat]) => {
     minLon = Math.min(minLon, lon);
     minLat = Math.min(minLat, lat);
     maxLon = Math.max(maxLon, lon);
     maxLat = Math.max(maxLat, lat);
   });
+
   return [
     [minLon, minLat],
     [maxLon, maxLat],
@@ -464,8 +879,145 @@ function updateGlbVisibility() {
   if (!glbState) {
     return;
   }
-  glbState.visible = Boolean(activeProject);
-  debugLog("glb visibility", glbState.visible);
+  map.triggerRepaint();
+}
+
+function getModelRevealZoom(project) {
+  return Math.max(project.zoomOverview + MODEL_REVEAL_ZOOM_BUFFER, project.zoomFocus - 1.1);
+}
+
+function handleMapCameraChange() {
+  if (!mapReady) {
+    return;
+  }
+
+  updateGlbVisibility();
+
+  if (!map.getLayer("active-project-pulse")) {
+    return;
+  }
+
+  const revealZoom = activeProject ? getModelRevealZoom(activeProject) : 16.2;
+  const fadeProgress = clamp((map.getZoom() - (revealZoom - 0.7)) / 0.7, 0, 1);
+  const activeOpacity = activeProject ? 1 - fadeProgress : 0;
+
+  map.setPaintProperty("active-project-core", "circle-opacity", activeOpacity * 0.96);
+  map.setPaintProperty("active-project-pulse", "circle-opacity", activeOpacity * 0.22);
+}
+
+function autoSelectProjectForCurrentView() {
+  if (!mapReady) {
+    return;
+  }
+
+  if (activeProject && !activeProjectAuto) {
+    return;
+  }
+
+  if (map.getZoom() < AUTO_SELECT_ZOOM) {
+    if (activeProjectAuto) {
+      clearActiveProject();
+    }
+    return;
+  }
+
+  const mapCenter = map.getCenter();
+  const nearestProject = visibleProjects
+    .map((project) => ({
+      project,
+      distance: distanceBetweenLngLat(project.center, [mapCenter.lng, mapCenter.lat]),
+    }))
+    .sort((a, b) => a.distance - b.distance)[0];
+
+  if (!nearestProject || nearestProject.distance > AUTO_SELECT_DISTANCE_METERS) {
+    if (activeProjectAuto) {
+      clearActiveProject();
+    }
+    return;
+  }
+
+  if (activeProject?.id === nearestProject.project.id) {
+    return;
+  }
+
+  selectProject(nearestProject.project.id, {
+    autoFocus: false,
+    preserveCamera: true,
+    silentStatus: true,
+    autoSelected: true,
+  });
+}
+
+function queueVisibleModelSync() {
+  if (!mapReady || !CAN_FETCH_LOCAL_ASSET) {
+    return;
+  }
+
+  const loadToken = projectLoadToken;
+  const projectsToSync = visibleProjects.filter((project) => shouldRenderProjectModel(project));
+  projectsToSync.forEach((project) => {
+    ensureProjectModel(project, loadToken).catch((error) => {
+      debugLog("visible model sync failed", project.id, String(error));
+    });
+  });
+}
+
+function startActivePointPulse() {
+  if (pulseAnimationId || !map) {
+    return;
+  }
+
+  const tick = () => {
+    pulseAnimationId = window.requestAnimationFrame(tick);
+    if (!mapReady || !map.getLayer("active-project-pulse")) {
+      return;
+    }
+
+    pulseFrame += 0.035;
+    const zoom = map.getZoom();
+    const revealZoom = activeProject ? getModelRevealZoom(activeProject) : 16.2;
+    const fadeProgress = clamp((zoom - (revealZoom - 0.7)) / 0.7, 0, 1);
+    const activeOpacity = activeProject ? 1 - fadeProgress : 0;
+    const radius = 16 + Math.sin(pulseFrame) * 3 + activeOpacity * 8;
+
+    map.setPaintProperty("active-project-pulse", "circle-radius", radius);
+    map.setPaintProperty("active-project-pulse", "circle-opacity", activeOpacity * 0.22);
+  };
+
+  pulseAnimationId = window.requestAnimationFrame(tick);
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+function clearActiveProject() {
+  activeProject = null;
+  activeProjectAuto = false;
+  projectLoadToken += 1;
+  projectDetail.hidden = true;
+  emptyState.hidden = false;
+  setGeoJsonSource("project-parcel", emptyFeatureCollection());
+  updateProjectCards();
+  refreshOverviewSources();
+  updateGlbVisibility();
+  statusText.textContent = "Zoom into a nearby project or choose one from the curated list.";
+}
+
+function distanceBetweenLngLat([lonA, latA], [lonB, latB]) {
+  const toRadians = (degrees) => (degrees * Math.PI) / 180;
+  const earthRadiusMeters = 6371000;
+  const dLat = toRadians(latB - latA);
+  const dLon = toRadians(lonB - lonA);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRadians(latA)) * Math.cos(toRadians(latB)) * Math.sin(dLon / 2) ** 2;
+
+  return 2 * earthRadiusMeters * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+function buildInvestmentMemo(project) {
+  return `${project.stage}. ${project.ticket}. ${project.thesis}`;
 }
 
 async function initGlbLayer() {
@@ -481,16 +1033,13 @@ async function initGlbLayer() {
 
     glbState = {
       THREE_NS,
-      visible: false,
       ready: false,
       scene: null,
       camera: null,
       renderer: null,
       loader: null,
-      model: null,
-      modelHeight: 1,
-      currentSrc: "",
       modelCache: new Map(),
+      modelEntries: new Map(),
     };
 
     const customLayer = {
@@ -502,18 +1051,20 @@ async function initGlbLayer() {
         glbState.camera = new THREE.Camera();
         glbState.scene = new THREE.Scene();
 
-        const ambient = new THREE.AmbientLight(0xffffff, 1.35);
-        glbState.scene.add(ambient);
+        glbState.scene.add(new THREE.AmbientLight(0xffffff, 1.45));
+        glbState.scene.add(new THREE.HemisphereLight(0xfff1d8, 0x314f76, 1.05));
 
-        const hemi = new THREE.HemisphereLight(0xfff3db, 0xdde7ff, 0.85);
-        glbState.scene.add(hemi);
-
-        const lightA = new THREE.DirectionalLight(0xffffff, 1.45);
+        const lightA = new THREE.DirectionalLight(0xffffff, 1.55);
         lightA.position.set(110, 150, 110);
         glbState.scene.add(lightA);
-        const lightB = new THREE.DirectionalLight(0xfff7ec, 1.0);
+
+        const lightB = new THREE.DirectionalLight(0xf8d9a7, 1.05);
         lightB.position.set(-95, 120, -80);
         glbState.scene.add(lightB);
+
+        const rimLight = new THREE.DirectionalLight(0xbfd8ff, 0.9);
+        rimLight.position.set(40, 80, -140);
+        glbState.scene.add(rimLight);
 
         glbState.renderer = new THREE.WebGLRenderer({
           canvas: map.getCanvas(),
@@ -522,31 +1073,52 @@ async function initGlbLayer() {
         });
         glbState.renderer.autoClear = false;
         glbState.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        glbState.renderer.toneMappingExposure = 1.35;
+        glbState.renderer.toneMappingExposure = 1.45;
+        glbState.renderer.outputColorSpace = THREE.SRGBColorSpace;
 
         glbState.loader = new GLTFLoader();
       },
       render(_gl, matrix) {
-        if (!glbState || !glbState.ready || !glbState.visible || !activeProject) {
+        if (!glbState || !glbState.ready || !glbState.modelEntries.size) {
           return;
         }
 
         const { THREE_NS: THREE } = glbState;
-        const mercator = maplibregl.MercatorCoordinate.fromLngLat(activeProject.center, 0);
-        const desiredHeightMeters =
-          activeProject.floorCount * activeProject.floorHeight + activeProject.roofHeight;
-        const modelScaleMeters = desiredHeightMeters / glbState.modelHeight;
-        const scale = mercator.meterInMercatorCoordinateUnits() * modelScaleMeters;
+        const baseMatrix = new THREE.Matrix4().fromArray(matrix);
+        let hasVisibleModel = false;
 
-        const m = new THREE.Matrix4().fromArray(matrix);
-        const l = new THREE.Matrix4()
-          .makeTranslation(mercator.x, mercator.y, mercator.z)
-          .scale(new THREE.Vector3(scale, -scale, scale));
+        glbState.modelEntries.forEach((entry) => {
+          entry.group.visible = false;
+        });
 
-        glbState.camera.projectionMatrix = m.multiply(l);
-        glbState.renderer.resetState();
-        glbState.renderer.render(glbState.scene, glbState.camera);
-        map.triggerRepaint();
+        glbState.modelEntries.forEach((entry) => {
+          const shouldShow = shouldRenderProjectModel(entry.project);
+          if (!shouldShow) {
+            return;
+          }
+
+          const mercator = window.maplibregl.MercatorCoordinate.fromLngLat(entry.project.center, 0);
+          const desiredHeightMeters =
+            entry.project.floorCount * entry.project.floorHeight + entry.project.roofHeight;
+          const scale =
+            mercator.meterInMercatorCoordinateUnits() * (desiredHeightMeters / entry.modelHeight);
+
+          const modelMatrix = new THREE.Matrix4()
+            .makeTranslation(mercator.x, mercator.y, mercator.z)
+            .scale(new THREE.Vector3(scale, -scale, scale));
+
+          entry.group.visible = true;
+          glbState.camera.projectionMatrix = baseMatrix.clone().multiply(modelMatrix);
+          glbState.renderer.resetState();
+          glbState.renderer.clearDepth();
+          glbState.renderer.render(glbState.scene, glbState.camera);
+          entry.group.visible = false;
+          hasVisibleModel = true;
+        });
+
+        if (!hasVisibleModel) {
+          return;
+        }
       },
     };
 
@@ -556,42 +1128,74 @@ async function initGlbLayer() {
   return glbInitPromise;
 }
 
-async function setActiveGlbModel(src) {
-  if (!src) {
+async function ensureProjectModel(project, loadToken) {
+  if (!project?.modelSrc) {
     return;
   }
 
   await initGlbLayer();
-  if (!glbState || !glbState.scene || !glbState.loader) {
+  if (!glbState || !glbState.scene || !glbState.loader || loadToken !== projectLoadToken) {
     return;
   }
 
-  if (glbState.currentSrc === src && glbState.model) {
+  if (glbState.modelEntries.has(project.id)) {
     return;
   }
 
   const { THREE_NS: THREE } = glbState;
-  let template = glbState.modelCache.get(src);
+  let template = glbState.modelCache.get(project.modelSrc);
   if (!template) {
-    const gltf = await glbState.loader.loadAsync(src);
+    const gltf = await glbState.loader.loadAsync(project.modelSrc);
+    if (loadToken !== projectLoadToken) {
+      return;
+    }
     template = gltf.scene;
-    glbState.modelCache.set(src, template);
-    debugLog("glb loaded", { src });
+    glbState.modelCache.set(project.modelSrc, template);
   }
 
-  if (glbState.model) {
-    glbState.scene.remove(glbState.model);
+  if (loadToken !== projectLoadToken) {
+    return;
   }
 
+  const group = new THREE.Group();
   const instance = template.clone(true);
+  prepareModelInstance(instance);
   instance.rotation.x = Math.PI / 2;
-  glbState.scene.add(instance);
-  glbState.model = instance;
-  glbState.currentSrc = src;
+  group.add(instance);
+  glbState.scene.add(group);
 
   const box = new THREE.Box3().setFromObject(instance);
   const size = box.getSize(new THREE.Vector3());
-  glbState.modelHeight = Math.max(size.y, 1);
+  glbState.modelEntries.set(project.id, {
+    project,
+    group,
+    modelHeight: Math.max(size.y, 1),
+  });
   glbState.ready = true;
-  debugLog("glb active", { src, modelHeight: glbState.modelHeight });
+  map.triggerRepaint();
+}
+
+function shouldRenderProjectModel(project) {
+  if (!mapReady || !map || map.getZoom() < getModelRevealZoom(project)) {
+    return false;
+  }
+
+  if (!visibleProjects.some((item) => item.id === project.id)) {
+    return false;
+  }
+
+  const bounds = map.getBounds();
+  return bounds.contains(project.center);
+}
+
+function prepareModelInstance(root) {
+  root.traverse((node) => {
+    if (!node.isMesh) {
+      return;
+    }
+
+    node.castShadow = false;
+    node.receiveShadow = false;
+    node.frustumCulled = false;
+  });
 }

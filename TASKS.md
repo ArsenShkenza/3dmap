@@ -1,42 +1,68 @@
-# Prototype Task List
+# PRO X Task List
 
-This file tracks tasks for the 3D map prototype and sales demo.
-Scope is speed, clarity, and demo stability (not production hardening).
+This file tracks the concept-pitch prototype for the client brief in `request.md`.
+Goal: sell the vision fast with a premium experience, not build production scope.
 
-## Must Do (Demo Critical)
+## Phase 1 Concept Pitch
 
-- [ ] Render selected parcel visibly on the map (`project-parcel` fill + outline layer).
-- [ ] Prevent GLB model race on fast project switching (latest click wins).
-- [ ] Add simple loading/error states for model loads in `#status-text`.
-- [ ] Confirm all project cards focus reliably on first click.
-- [ ] Smoke-test demo flow on local server before each presentation.
+- [x] Show all projects as lightweight map markers on first load.
+- [x] Load heavy GLB models only when a project is selected or surfaced by close zoom.
+- [ ] Add visible parcel highlight for the selected project.
+- [x] Rebrand the experience from a simple project list into `PRO X`.
+- [x] Move the visual direction to dark, premium, cinematic, and glassmorphism-led.
+- [x] Add an `AI Omni-Search` hero interaction with sample investor prompts.
+- [x] Reframe project detail into a mini pitch deck, not plain metadata.
 
-## Should Do (Demo Quality)
+## Content Alignment With Client Brief
 
-- [ ] Reduce unnecessary repaint workload in custom GL layer.
-- [ ] Make map camera offsets responsive for smaller screens.
-- [ ] Add active/selected accessibility attributes (`aria-pressed` or equivalent).
-- [ ] Add one fallback mode when model fails (parcel-only still looks good).
-- [ ] Align README feature list with current implementation.
+- [ ] Narrow the concept to 3 hero projects for the pitch.
+- [x] Represent the real categories from the brief:
+- [x] `Land & Development`
+- [x] `Seeking Partners / Co-Investment`
+- [x] `Turn-key / Built`
+- [x] `Under Construction / Off-Plan`
+- [x] Add investment-facing metadata per project:
+- [x] stage
+- [x] ROI / expected yield
+- [x] ticket size / funding ask
+- [x] access tier (`Open`, `VIP`, `Invite Only`)
+- [x] one-line investment thesis
 
-## Nice To Have (If Time Allows)
+## Demo Experience
 
-- [ ] Split `main.js` into small modules (`data`, `ui`, `map`, `glb`).
-- [ ] Add quick keyboard controls for focus/reset.
-- [ ] Add one additional project with validated footprint and model.
-- [ ] Add a "demo reset" button that returns to initial neutral state.
-- [ ] Optional: add offline asset strategy for poor network conditions.
+- [x] Add cinematic fly-to behavior tied to search intent and project selection.
+- [x] Add curated category browsing (`Explore`) rather than only a flat list.
+- [x] Add status copy that sounds investor-facing, not developer-facing.
+- [x] Add one polished empty/default state that explains the concept immediately.
+- [x] Add a stronger hero message and tagline from the brief.
 
-## Demo Prep Checklist (Before Showing Client)
+## Premium Project Detail
 
-- [ ] Run with `python3 -m http.server 8000` (not `file://`).
-- [ ] Open app and click each project once.
-- [ ] Verify model appears and camera transitions look smooth.
-- [ ] Verify reset/overview always returns to expected angle.
-- [ ] Keep one fallback narrative ready if model load fails.
+- [x] Add a visual timeline for project phase.
+- [x] Add placeholders for `Data Room`, `AR Ready`, and `360 Walkthrough`.
+- [x] Show why the opportunity matters, not only what the building is.
+- [x] Add one "investment memo" style summary per project.
 
-## Parking Lot
+## Technical Reliability For Demo
 
-- [ ] Add tests for selection and camera behavior.
-- [ ] Introduce bundler/tooling (`npm`, linting, formatting) if prototype grows.
-- [ ] Add telemetry/logging toggle for demo diagnostics.
+- [x] Prevent GLB race condition on fast switching.
+- [x] Add explicit loading / error / fallback states for model loads.
+- [x] Reduce unnecessary repaint work in the custom GL layer.
+- [x] Make camera offsets responsive on smaller screens.
+- [x] Ensure first click always produces visible feedback.
+
+## Before Client Demo
+
+- [ ] Run with `python3 -m http.server 8000` and hard refresh.
+- [ ] Test every project card and search prompt once.
+- [ ] Confirm first paint is fast and map feels alive before any click.
+- [ ] Confirm fallback still looks convincing if a GLB fails.
+- [ ] Prepare a 30-second narrative for the 3 hero projects.
+
+## Later / Parking Lot
+
+- [ ] Add authentication and VIP-gated sections.
+- [ ] Replace placeholder data with real GIS, permit, and ROI documents.
+- [ ] Add true AI search backed by project metadata and embeddings.
+- [ ] Split `main.js` into focused modules if prototype grows further.
+- [ ] Add test coverage once the concept direction stabilizes.

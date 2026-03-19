@@ -3,64 +3,124 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Tirana Apartment Explorer</title>
+    <title>PRO X | Visionary Investments</title>
     <link
       rel="stylesheet"
       href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
     />
-    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles.css?v=20260319-1219" />
     <script
       defer
       src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"
     ></script>
-    <script defer src="./main.js"></script>
+    <script defer src="./main.js?v=20260319-1219"></script>
   </head>
   <body>
     <div class="app-shell">
       <aside class="panel">
-        <p class="eyebrow">Sales Demo</p>
-        <h1>XPlan</h1>
+        <p class="eyebrow">Invitation-Only Investment Intelligence</p>
+        <h1>PRO X</h1>
         <p class="intro">
-          Start with the project list. Selecting a card moves the map to that
-          parcel and opens the apartment presentation controls below.
+          Visionary Investments. Exclusive Access. Explore curated opportunities
+          through a cinematic 3D map experience built for high-ticket real
+          estate conversations.
         </p>
+
+        <section class="status-card">
+          <p class="status-label">Explore</p>
+          <div id="category-list" class="category-list"></div>
+        </section>
 
         <section class="projects-section">
           <div class="section-head">
-            <h2>Projects</h2>
-            <span id="project-count">0 projects</span>
+            <h2>Opportunities</h2>
+            <span id="project-count">0 opportunities</span>
           </div>
           <div id="project-list" class="project-list"></div>
         </section>
 
         <section id="empty-state" class="status-card">
-          <p class="status-label">Client Flow</p>
+          <p class="status-label">How To Pitch</p>
           <ol>
-            <li>Choose a project card from the list.</li>
-            <li>Review the parcel in its Tirana neighborhood.</li>
-            <li>Focus the project for the close 3D presentation.</li>
+            <li>Start with a natural-language investor query.</li>
+            <li>Use the map to frame location, context, and opportunity.</li>
+            <li>Open a project and tell the investment story, not just the specs.</li>
           </ol>
         </section>
 
         <section id="project-detail" hidden>
+          <p id="project-access" class="status-label">VIP</p>
           <h1 id="project-title">Builder Project</h1>
           <p id="project-meta" class="intro"></p>
+          <p id="project-thesis" class="selection-meta"></p>
+
+          <div class="detail-grid">
+            <article class="detail-card">
+              <p class="status-label">Category</p>
+              <strong id="project-category">Land & Development</strong>
+            </article>
+            <article class="detail-card">
+              <p class="status-label">Target ROI</p>
+              <strong id="project-roi">8.0%</strong>
+            </article>
+            <article class="detail-card">
+              <p class="status-label">Funding Ask</p>
+              <strong id="project-ticket">EUR 4.0M</strong>
+            </article>
+            <article class="detail-card">
+              <p class="status-label">Stage</p>
+              <strong id="project-stage">Approved Permit</strong>
+            </article>
+          </div>
+
+          <section class="selection-card">
+            <p class="status-label">PRO X Experience</p>
+            <div class="capability-list">
+              <span class="capability-chip">Data Room Ready</span>
+              <span class="capability-chip">AR / 360 Ready</span>
+              <span class="capability-chip">Investment Memo</span>
+            </div>
+          </section>
+
+          <section class="selection-card">
+            <p class="status-label">Project Timeline</p>
+            <div id="project-timeline" class="timeline"></div>
+          </section>
+
+          <section class="selection-card">
+            <p class="status-label">Investment Memo</p>
+            <p id="project-memo" class="selection-meta"></p>
+          </section>
 
           <div class="controls">
-            <button id="focus-building" type="button">Focus Project</button>
-            <button id="reset-view" type="button">Back To Overview</button>
+            <button id="focus-building" type="button">Enter Presentation View</button>
+            <button id="reset-view" type="button">Back To Market View</button>
           </div>
         </section>
 
         <p id="status-text" class="footnote">
-          Choose a project card to begin.
+          Ask for an opportunity or choose one from the curated list.
         </p>
       </aside>
 
       <main class="viewer-wrap">
+        <section class="hero-overlay">
+          <p class="hero-kicker">AI Omni-Search</p>
+          <h2>Find investable projects in natural language.</h2>
+          <form id="search-form" class="search-form">
+            <input
+              id="omni-search"
+              type="text"
+              placeholder="Projects in Tirana seeking co-investors with ROI above 8%"
+              autocomplete="off"
+            />
+            <button type="submit">Explore</button>
+          </form>
+          <div id="prompt-list" class="prompt-list"></div>
+        </section>
         <div class="map-overlay">
-          <div class="map-chip">Real parcel in Tirana</div>
-          <div class="map-chip subtle">Map context with the selected project model</div>
+          <div class="map-chip">Premium investment context</div>
+          <div class="map-chip subtle">Map massing first, GLB model on demand</div>
         </div>
         <div id="map"></div>
       </main>
