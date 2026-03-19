@@ -81,6 +81,98 @@ const projects = [
     roofHeight: 2.6,
     modelSrc: "./assets/singer_building.glb",
   },
+  {
+    id: "duck-showcase",
+    name: "Duck Showcase",
+    district: "Prototype Asset Demo",
+    summary: "Non-building test model to validate diverse GLB import behavior.",
+    center: [19.81335, 41.32332],
+    bearing: -12,
+    zoomOverview: 15.95,
+    zoomFocus: 17.9,
+    pitchOverview: 48,
+    pitchFocus: 60,
+    footprint: [
+      [19.8132, 41.3232],
+      [19.81349, 41.32319],
+      [19.81351, 41.32343],
+      [19.81324, 41.32344],
+      [19.8132, 41.3232],
+    ],
+    floorCount: 9,
+    floorHeight: 3.1,
+    roofHeight: 2.2,
+    modelSrc: "./assets/duck.glb",
+  },
+  {
+    id: "avocado-studio",
+    name: "Avocado Studio",
+    district: "Prototype Asset Demo",
+    summary: "Organic mesh sample used to test scaling and scene lighting.",
+    center: [19.80958, 41.32054],
+    bearing: 18,
+    zoomOverview: 16.05,
+    zoomFocus: 18.05,
+    pitchOverview: 49,
+    pitchFocus: 60,
+    footprint: [
+      [19.80943, 41.32045],
+      [19.80971, 41.32044],
+      [19.80974, 41.32064],
+      [19.80946, 41.32065],
+      [19.80943, 41.32045],
+    ],
+    floorCount: 11,
+    floorHeight: 3.2,
+    roofHeight: 2.4,
+    modelSrc: "./assets/avocado.glb",
+  },
+  {
+    id: "boombox-hub",
+    name: "BoomBox Hub",
+    district: "Prototype Asset Demo",
+    summary: "Hard-surface sample asset for materials and edge definition checks.",
+    center: [19.81713, 41.31686],
+    bearing: -30,
+    zoomOverview: 15.9,
+    zoomFocus: 17.85,
+    pitchOverview: 48,
+    pitchFocus: 60,
+    footprint: [
+      [19.81698, 41.31677],
+      [19.81726, 41.31677],
+      [19.81729, 41.31696],
+      [19.81701, 41.31698],
+      [19.81698, 41.31677],
+    ],
+    floorCount: 10,
+    floorHeight: 3.1,
+    roofHeight: 2.3,
+    modelSrc: "./assets/boombox.glb",
+  },
+  {
+    id: "lantern-reserve",
+    name: "Lantern Reserve",
+    district: "Prototype Asset Demo",
+    summary: "Complex metallic/glass sample used as a stress test for the scene.",
+    center: [19.82291, 41.31945],
+    bearing: 8,
+    zoomOverview: 15.9,
+    zoomFocus: 17.75,
+    pitchOverview: 48,
+    pitchFocus: 60,
+    footprint: [
+      [19.82275, 41.31935],
+      [19.82303, 41.31935],
+      [19.82306, 41.31956],
+      [19.82278, 41.31958],
+      [19.82275, 41.31935],
+    ],
+    floorCount: 12,
+    floorHeight: 3.2,
+    roofHeight: 2.5,
+    modelSrc: "./assets/lantern.glb",
+  },
 ];
 
 let map;
@@ -144,25 +236,54 @@ function bootstrap() {
     mapReady = true;
     debugLog("map loaded");
 
+    map.addSource("projects-overview", {
+      type: "geojson",
+      data: createProjectsOverviewCollection(),
+    });
+    map.addLayer({
+      id: "projects-overview-fill",
+      type: "fill-extrusion",
+      source: "projects-overview",
+      paint: {
+        "fill-extrusion-color": "#d8a35c",
+        "fill-extrusion-height": ["get", "heightMeters"],
+        "fill-extrusion-base": 0,
+        "fill-extrusion-opacity": 0.68,
+      },
+    });
+
     map.addSource("project-parcel", {
       type: "geojson",
       data: emptyFeatureCollection(),
     });
+    map.addLayer({
+      id: "project-parcel-fill",
+      type: "fill",
+      source: "project-parcel",
+      paint: {
+        "fill-color": "#d88a2d",
+        "fill-opacity": 0.25,
+      },
+    });
+    map.addLayer({
+      id: "project-parcel-line",
+      type: "line",
+      source: "project-parcel",
+      paint: {
+        "line-color": "#8e4f05",
+        "line-width": 3,
+      },
+    });
 
-    if (CAN_FETCH_LOCAL_ASSET) {
-      debugLog("glb init start");
-      initGlbLayer().catch((error) => {
-        console.error(error);
-        debugLog("glb init failed", String(error));
-        statusText.textContent = "3D model could not initialize. Map view still works.";
-      });
-    } else {
+    if (!CAN_FETCH_LOCAL_ASSET) {
       debugLog("glb init skipped (file protocol)");
       statusText.textContent =
         "Open this app through http://localhost (example: python3 -m http.server 8000) to load the GLB model.";
+      return;
     }
 
-    statusText.textContent = "Choose a project card to load parcel and model.";
+    statusText.textContent =
+      "All projects are visible on the map. Select a card to load its GLB model.";
   });
 
   focusButton.addEventListener("click", () => focusProject(true));
@@ -297,6 +418,23 @@ function createProjectParcel(project) {
         },
       },
     ],
+  };
+}
+
+function createProjectsOverviewCollection() {
+  return {
+    type: "FeatureCollection",
+    features: projects.map((project) => ({
+      type: "Feature",
+      properties: {
+        id: `${project.id}-overview`,
+        heightMeters: project.floorCount * project.floorHeight + project.roofHeight,
+      },
+      geometry: {
+        type: "Polygon",
+        coordinates: [project.footprint],
+      },
+    })),
   };
 }
 
