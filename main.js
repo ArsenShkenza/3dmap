@@ -69,7 +69,7 @@ const projects = [
     floorCount: 11,
     floorHeight: 3.55,
     roofHeight: 3.1,
-    modelSrc: "./assets/le_millefiori.glb",
+    modelSrc: "./assets/louisiana_state_house.glb",
     searchTerms: ["tirana", "permit", "residences", "land", "development", "premium"],
   },
   {
@@ -137,7 +137,7 @@ const projects = [
     floorCount: 14,
     floorHeight: 3.2,
     roofHeight: 2.8,
-    modelSrc: "./assets/skyscraper.glb",
+    modelSrc: "./assets/singer_building.glb",
     searchTerms: ["prishtina", "office", "commercial", "yield", "built", "turnkey", "leased"],
   },
   {
@@ -173,142 +173,6 @@ const projects = [
     roofHeight: 2.7,
     modelSrc: "./assets/skyscraper.glb",
     searchTerms: ["durres", "marina", "residences", "off-plan", "construction", "waterfront"],
-  },
-  {
-    id: "tirana-innovation-hub",
-    name: "Tirana Meridian Residences",
-    city: "Tirana",
-    district: "Komuna e Parisit",
-    categoryId: "partners",
-    categoryLabel: "Seeking Partners",
-    access: "Open",
-    roi: "8.8%",
-    ticket: "EUR 4.6M co-investment",
-    stage: "Partner Outreach",
-    timeline: ["Design Ready", "Partner Outreach", "Structuring", "Execution"],
-    summary: "A polished mid-rise residential concept positioned for co-investors who want prime-city exposure without landmark-scale risk.",
-    thesis:
-      "Balanced scale, central positioning, and premium residential demand make this a cleaner partnership story for fast-moving capital.",
-    center: [19.8061, 41.3189],
-    bearing: 12,
-    zoomOverview: 15.8,
-    zoomFocus: 17.95,
-    pitchOverview: 50,
-    pitchFocus: 62,
-    footprint: [
-      [19.80577, 41.31877],
-      [19.80609, 41.31877],
-      [19.8061, 41.31897],
-      [19.8058, 41.31899],
-      [19.80577, 41.31877],
-    ],
-    floorCount: 10,
-    floorHeight: 3.25,
-    roofHeight: 2.4,
-    modelSrc: "./assets/le_millefiori.glb",
-    searchTerms: ["tirana", "partner", "residential", "mid-rise", "co-investment", "premium"],
-  },
-  {
-    id: "prishtina-design-labs",
-    name: "Prishtina Grand Boulevard",
-    city: "Prishtina",
-    district: "Emerging Urban Quarter",
-    categoryId: "offplan",
-    categoryLabel: "Off-Plan Vision",
-    access: "Open",
-    roi: "9.4%",
-    ticket: "EUR 4.8M equity",
-    stage: "Feasibility",
-    timeline: ["Vision Stage", "Feasibility", "Raise", "Permit"],
-    summary: "A future-facing mixed-use boulevard scheme used to present long-horizon upside with strong urban identity.",
-    thesis:
-      "An early-entry development story for investors willing to back placemaking quality before broader market repricing arrives.",
-    center: [21.1534, 42.6554],
-    bearing: 8,
-    zoomOverview: 15.1,
-    zoomFocus: 17.5,
-    pitchOverview: 50,
-    pitchFocus: 61,
-    footprint: [
-      [21.15313, 42.65522],
-      [21.15355, 42.65519],
-      [21.15367, 42.65555],
-      [21.15327, 42.6556],
-      [21.15313, 42.65522],
-    ],
-    floorCount: 11,
-    floorHeight: 3.2,
-    roofHeight: 2.5,
-    modelSrc: "./assets/le_millefiori.glb",
-    searchTerms: ["prishtina", "boulevard", "mixed-use", "future", "off-plan", "equity"],
-  },
-  {
-    id: "durres-logistics-park",
-    name: "Durres Gateway Business Center",
-    city: "Durres",
-    district: "Port Access Corridor",
-    categoryId: "partners",
-    categoryLabel: "Seeking Partners",
-    access: "VIP",
-    roi: "9.1%",
-    ticket: "EUR 6.9M joint venture",
-    stage: "Structuring",
-    timeline: ["Concept Ready", "Structuring", "Capital Raise", "Delivery"],
-    summary: "A port-adjacent office and trade-services scheme designed for investors who want infrastructure-linked demand.",
-    thesis:
-      "Durres infrastructure growth and commercial catchment create a pragmatic partnership case with clear occupational logic.",
-    center: [19.4556, 41.3338],
-    bearing: -10,
-    zoomOverview: 13.9,
-    zoomFocus: 16.7,
-    pitchOverview: 48,
-    pitchFocus: 60,
-    footprint: [
-      [19.45513, 41.33348],
-      [19.45603, 41.33344],
-      [19.45618, 41.33406],
-      [19.45531, 41.33412],
-      [19.45513, 41.33348],
-    ],
-    floorCount: 8,
-    floorHeight: 3.5,
-    roofHeight: 2.6,
-    modelSrc: "./assets/skyscraper.glb",
-    searchTerms: ["durres", "business center", "commercial", "partner", "gateway", "joint venture"],
-  },
-  {
-    id: "vlora-marina-club",
-    name: "Prishtina Skyline Suites",
-    city: "Prishtina",
-    district: "City Edge Expansion Zone",
-    categoryId: "turnkey",
-    categoryLabel: "Turn-key / Built",
-    access: "Invite Only",
-    roi: "8.6%",
-    ticket: "EUR 8.9M acquisition",
-    stage: "Operational Asset",
-    timeline: ["Completed", "Operational", "Yield Hold", "Strategic Exit"],
-    summary: "A completed premium residential asset in Prishtina designed to present a cleaner, more urban acquisition narrative.",
-    thesis:
-      "This keeps the portfolio anchored in the target cities while preserving the polished, high-ticket acquisition story the product needs.",
-    center: [21.1499, 42.6528],
-    bearing: 14,
-    zoomOverview: 15.2,
-    zoomFocus: 17.8,
-    pitchOverview: 52,
-    pitchFocus: 63,
-    footprint: [
-      [21.14962, 42.65261],
-      [21.15012, 42.65259],
-      [21.15023, 42.65296],
-      [21.14974, 42.65301],
-      [21.14962, 42.65261],
-    ],
-    floorCount: 13,
-    floorHeight: 3.25,
-    roofHeight: 2.9,
-    modelSrc: "./assets/le_millefiori.glb",
-    searchTerms: ["prishtina", "residential", "acquisition", "built", "yield", "suites"],
   },
 ];
 
@@ -615,13 +479,16 @@ function scoreProjects(query) {
       }
     });
 
-    if (/tirana|co-invest|partner|partnere/.test(normalizedQuery) && project.id === "boulevard-crown") {
+    if (/tirana|co-invest|partner|partnere|boulevard|capital/.test(normalizedQuery) && project.id === "boulevard-crown") {
       score += 8;
     }
-    if (/south|coast|resort|permit|palase/.test(normalizedQuery) && project.id === "palase-horizon") {
+    if (/tirana|permit|land|development|residential|liqeni/.test(normalizedQuery) && project.id === "palase-horizon") {
       score += 8;
     }
     if (/prishtina|commercial|office|yield|built|stabil/.test(normalizedQuery) && project.id === "prishtina-prime") {
+      score += 8;
+    }
+    if (/durres|waterfront|marina|off plan|construction|seafront/.test(normalizedQuery) && project.id === "lalzi-villas") {
       score += 8;
     }
 
@@ -1030,6 +897,9 @@ async function initGlbLayer() {
     const { GLTFLoader } = await import(
       "https://esm.sh/three@0.161.0/examples/jsm/loaders/GLTFLoader?deps=three@0.161.0"
     );
+    const { RoomEnvironment } = await import(
+      "https://esm.sh/three@0.161.0/examples/jsm/environments/RoomEnvironment?deps=three@0.161.0"
+    );
 
     glbState = {
       THREE_NS,
@@ -1073,8 +943,13 @@ async function initGlbLayer() {
         });
         glbState.renderer.autoClear = false;
         glbState.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        glbState.renderer.toneMappingExposure = 1.45;
+        glbState.renderer.toneMappingExposure = 1.25;
         glbState.renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+        const pmremGenerator = new THREE.PMREMGenerator(glbState.renderer);
+        const environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04);
+        glbState.scene.environment = environment.texture;
+        pmremGenerator.dispose();
 
         glbState.loader = new GLTFLoader();
       },
