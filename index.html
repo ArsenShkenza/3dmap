@@ -26,6 +26,21 @@
           estate conversations.
         </p>
 
+        <section class="hero-overlay">
+          <p class="hero-kicker">AI Omni-Search</p>
+          <h2>Find investable projects in natural language.</h2>
+          <form id="search-form" class="search-form">
+            <input
+              id="omni-search"
+              type="text"
+              placeholder="Projects in Tirana seeking co-investors with ROI above 8%"
+              autocomplete="off"
+            />
+            <button type="submit">Explore</button>
+          </form>
+          <div id="prompt-list" class="prompt-list"></div>
+        </section>
+
         <section class="status-card">
           <p class="status-label">Explore</p>
           <div id="category-list" class="category-list"></div>
@@ -73,26 +88,8 @@
             </article>
           </div>
 
-          <section class="selection-card">
-            <p class="status-label">PRO X Experience</p>
-            <div class="capability-list">
-              <span class="capability-chip">Data Room Ready</span>
-              <span class="capability-chip">AR / 360 Ready</span>
-              <span class="capability-chip">Investment Memo</span>
-            </div>
-          </section>
-
-          <section class="selection-card">
-            <p class="status-label">Project Timeline</p>
-            <div id="project-timeline" class="timeline"></div>
-          </section>
-
-          <section class="selection-card">
-            <p class="status-label">Investment Memo</p>
-            <p id="project-memo" class="selection-meta"></p>
-          </section>
-
           <div class="controls">
+            <button id="open-project-page" type="button">Open Project</button>
             <button id="focus-building" type="button">Enter Presentation View</button>
             <button id="reset-view" type="button">Back To Market View</button>
           </div>
@@ -104,20 +101,6 @@
       </aside>
 
       <main class="viewer-wrap">
-        <section class="hero-overlay">
-          <p class="hero-kicker">AI Omni-Search</p>
-          <h2>Find investable projects in natural language.</h2>
-          <form id="search-form" class="search-form">
-            <input
-              id="omni-search"
-              type="text"
-              placeholder="Projects in Tirana seeking co-investors with ROI above 8%"
-              autocomplete="off"
-            />
-            <button type="submit">Explore</button>
-          </form>
-          <div id="prompt-list" class="prompt-list"></div>
-        </section>
         <div class="map-overlay">
           <div class="map-chip">Premium investment context</div>
           <div class="map-chip subtle">Map massing first, GLB model on demand</div>
@@ -125,5 +108,49 @@
         <div id="map"></div>
       </main>
     </div>
+
+    <section id="experience-page" class="experience-page" hidden>
+      <div class="experience-backdrop"></div>
+      <div class="experience-shell">
+        <header class="experience-header">
+          <button id="experience-close" class="ghost-button" type="button">Back To Map</button>
+          <p id="experience-kicker" class="status-label">Project Experience</p>
+        </header>
+
+        <section class="experience-hero">
+          <div class="experience-copy">
+            <h1 id="experience-title">Project Experience</h1>
+            <p id="experience-meta" class="intro"></p>
+            <p id="experience-summary" class="selection-meta"></p>
+
+            <div class="detail-grid experience-stats">
+              <article class="detail-card">
+                <p class="status-label">Access</p>
+                <strong id="experience-access">VIP</strong>
+              </article>
+              <article class="detail-card">
+                <p class="status-label">Category</p>
+                <strong id="experience-category">Land & Development</strong>
+              </article>
+              <article class="detail-card">
+                <p class="status-label">ROI</p>
+                <strong id="experience-roi">8.0%</strong>
+              </article>
+              <article class="detail-card">
+                <p class="status-label">Stage</p>
+                <strong id="experience-stage">Approved Permit</strong>
+              </article>
+            </div>
+          </div>
+
+          <div class="experience-visual">
+            <div class="visual-frame">
+              <p class="status-label">Front Elevation</p>
+              <div id="floor-elevation" class="floor-elevation"></div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
   </body>
 </html>

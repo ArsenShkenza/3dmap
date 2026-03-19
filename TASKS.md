@@ -32,6 +32,7 @@ Goal: sell the vision fast with a premium experience, not build production scope
 
 - [x] Add cinematic fly-to behavior tied to search intent and project selection.
 - [x] Add curated category browsing (`Explore`) rather than only a flat list.
+- [x] Add supporting land parcels and background building massing beyond the hero GLB models.
 - [x] Add status copy that sounds investor-facing, not developer-facing.
 - [x] Add one polished empty/default state that explains the concept immediately.
 - [x] Add a stronger hero message and tagline from the brief.
@@ -42,6 +43,8 @@ Goal: sell the vision fast with a premium experience, not build production scope
 - [x] Add placeholders for `Data Room`, `AR Ready`, and `360 Walkthrough`.
 - [x] Show why the opportunity matters, not only what the building is.
 - [x] Add one "investment memo" style summary per project.
+- [x] Add a full-page object detail experience with floor-by-floor navigation.
+- [x] Add hoverable front-elevation floors and indicative floor plans with unit details.
 
 ## Technical Reliability For Demo
 
@@ -55,6 +58,8 @@ Goal: sell the vision fast with a premium experience, not build production scope
 
 - [ ] Run with `python3 -m http.server 8000` and hard refresh.
 - [ ] Test every project card and search prompt once.
+- [ ] Check that GLB heroes, massing objects, and land parcels all appear at the intended zoom levels.
+- [ ] Check that every object opens the full-page experience and that floor hover/click states work.
 - [ ] Confirm first paint is fast and map feels alive before any click.
 - [ ] Confirm fallback still looks convincing if a GLB fails.
 - [ ] Prepare a 30-second narrative for the 3 hero projects.
@@ -63,6 +68,7 @@ Goal: sell the vision fast with a premium experience, not build production scope
 
 - [ ] Add authentication and VIP-gated sections.
 - [ ] Replace placeholder data with real GIS, permit, and ROI documents.
+- [ ] Replace the generated facade/floor-plan presentation with real per-project renders and floor-plan artwork.
 - [ ] Add true AI search backed by project metadata and embeddings.
 - [ ] Split `main.js` into focused modules if prototype grows further.
 - [ ] Add test coverage once the concept direction stabilizes.
