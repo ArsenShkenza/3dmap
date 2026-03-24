@@ -1,40 +1,47 @@
-# Tirana Apartment Explorer
+# PRO X Next.js Prototype
 
-Map-first prototype for presenting a builder project in Tirana to apartment buyers.
+Premium investor-facing map experience for showcasing three flagship real estate opportunities across Albania and Kosovo.
 
-## What it demonstrates
+## What changed
 
-- recognizable base map, not a raw globe
-- surrounding context buildings
-- highlighted real parcel/project footprint
-- click project to move from overview into a closer 3D presentation angle
-- click a floor from the map or side panel
-- isolate the selected floor
-
-## Tech choice
-
-This version uses `MapLibre GL JS` instead of Cesium because the goal is a client-facing real estate presentation, not a globe viewer. A map-first camera and extrusion layers make parcel context much easier to understand.
+- migrated the static prototype into a `Next.js` App Router project
+- narrowed the concept pitch to 3 hero opportunities from the client brief
+- upgraded the UI toward a more exclusive private-capital feel
+- preserved the interactive map as the centerpiece of the experience
+- added in-repo skill files for future UI and map-story work
 
 ## Run
 
-Serve the folder locally:
+Install dependencies:
 
 ```bash
-python3 -m http.server 8000
+npm install
 ```
 
-Then open `http://localhost:8000`.
+Start the dev server:
 
-## Files
+```bash
+npm run dev
+```
 
-- [index.html](/Users/orlando/Desktop/Projects/3dmap/index.html): app shell and MapLibre includes
-- [main.js](/Users/orlando/Desktop/Projects/3dmap/main.js): map setup, parcel/building/floor logic, interactions
-- [styles.css](/Users/orlando/Desktop/Projects/3dmap/styles.css): client-demo layout and visual styling
+Then open `http://localhost:3000`.
 
-## Production next step
+## Structure
 
-Replace the simulated context buildings and project geometry with:
+- `app/`: Next.js entrypoints and global styling
+- `components/`: interactive UI and map experience
+- `lib/projects.js`: curated investment data for the concept pitch
+- `public/assets/`: models and static art carried forward from the prototype
+- `assets/`: editable source asset dropzone that syncs into `public/assets/` on `dev` and `build`
+- `.codex/skills/`: project-specific skills for future iteration
 
-- real parcel geometry from your GIS/CAD data
-- real building massing or georeferenced `.glb`
-- apartment metadata by floor/unit
+## Project skills
+
+- `.codex/skills/prox-next-investor-ui`: guardrails for premium investor-facing UI work in this codebase
+- `.codex/skills/prox-map-storytelling`: guidance for keeping the map interaction focused on pitch-driven storytelling
+
+## Notes
+
+- The current map uses open raster tiles, glow-dot selection, and conceptual 3D massing for the concept deck.
+- Any new files added to `assets/` are copied into `public/assets/` automatically before `npm run dev` and `npm run build`.
+- Authentication, a true data room, and AI-backed search are still concept-stage items.
