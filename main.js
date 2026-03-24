@@ -33,6 +33,119 @@ const floorElevation = document.getElementById("floor-elevation");
 const DEBUG = false;
 const CAN_FETCH_LOCAL_ASSET = window.location.protocol !== "file:";
 const BUILDING_ELEVATION_SRC = "./assets/building5.jpg";
+/**
+ * Optional manual polygon overrides (percent coordinates) per project and floor number.
+ * Example:
+ * FLOOR_SHAPES["palase-horizon"][37] = [[8,0],[92,0],...,[0,50]]
+ */
+const FLOOR_SHAPES = {
+  "palase-horizon": {
+    // Top crown samples - edit these and add more floors as needed.
+    37: [
+      [9.2, 0],
+      [90.8, 0],
+      [94.8, 7.0],
+      [97.2, 15.0],
+      [99.0, 28.0],
+      [100, 50.0],
+      [99.0, 72.0],
+      [97.2, 85.0],
+      [94.8, 93.0],
+      [90.8, 100],
+      [9.2, 100],
+      [5.2, 93.0],
+      [2.8, 85.0],
+      [1.0, 72.0],
+      [0, 50.0],
+      [1.0, 28.0],
+      [2.8, 15.0],
+      [5.2, 7.0],
+    ],
+    36: [
+      [8.7, 0],
+      [91.3, 0],
+      [95.0, 6.5],
+      [97.1, 14.0],
+      [99.0, 25.0],
+      [100, 50.0],
+      [99.0, 75.0],
+      [97.1, 86.0],
+      [95.0, 93.5],
+      [91.3, 100],
+      [8.7, 100],
+      [5.0, 93.5],
+      [2.9, 86.0],
+      [1.0, 75.0],
+      [0, 50.0],
+      [1.0, 25.0],
+      [2.9, 14.0],
+      [5.0, 6.5],
+    ],
+    1: [
+      [2.0, 0],
+      [98.0, 0],
+      [100, 10.0],
+      [100, 20.0],
+      [99.0, 34.0],
+      [99.4, 66.0],
+      [100, 80.0],
+      [100, 90.0],
+      [98.0, 100],
+      [2.0, 100],
+      [0, 90.0],
+      [0, 80.0],
+      [0.8, 66.0],
+      [1.0, 34.0],
+      [0, 20.0],
+      [0, 10.0],
+    ],
+  },
+};
+/**
+ * Exact floor polygons in original image pixel space (full facade image coordinates).
+ * Use this when you have coordinates from <area coords="..."> maps.
+ */
+const FLOOR_POLYGONS_ABSOLUTE = {
+  "palase-horizon": {
+    // Match tracing tool output from building5.jpg
+    sourceWidth: 1089,
+    sourceHeight: 2171,
+    floors: {
+      37: [
+        116,
+        276,
+        325,
+        58,
+        968,
+        281,
+        968,
+        337,
+        328,
+        121,
+        116,
+        334,
+        116,
+        276
+      ],
+      36: [
+        116,
+        334,
+        328,
+        117,
+        968,
+        340,
+        969,
+        389,
+        328,
+        174,
+        117,
+        380,
+        116,
+        334
+      ],
+    },
+  },
+};
 
 const exploreCategories = [
   { id: "all", label: "All Opportunities" },
@@ -77,7 +190,7 @@ const projects = [
       [19.82063, 41.31011],
       [19.82052, 41.30973],
     ],
-    floorCount: 11,
+    floorCount: 37,
     floorHeight: 3.55,
     roofHeight: 3.1,
     objectKind: "glb",
@@ -385,6 +498,15 @@ let pulseAnimationId = 0;
 let experienceProjectId = "";
 let hoveredFloorId = "";
 let selectedFloorId = "";
+const floorTraceState = {
+  enabled: false,
+  floorNumber: 37,
+  pointsPct: [],
+  pointsByFloor: {},
+  closedByFloor: {},
+  isClosed: false,
+  cursorPct: null,
+};
 
 const MODEL_REVEAL_ZOOM_BUFFER = 0.6;
 const AUTO_SELECT_ZOOM = 15.5;
@@ -1025,7 +1147,223 @@ function getFacadeZoneLayout(floorCount) {
     zones[zones.length - 1].height += upperSetbackWeight * unit;
   }
 
-  return zones.reverse();
+  return zones
+    .reverse()
+    .map((zone, zoneIndex, allZones) => {
+      const center = zone.top + zone.height / 2;
+      const silhouette = getFacadeSliceSilhouette(center);
+      return {
+        ...zone,
+        index: zoneIndex,
+        yRatio: center,
+        floorCount: allZones.length,
+        leftInset: silhouette.leftInset,
+        rightInset: silhouette.rightInset,
+      };
+    });
+}
+
+function getFacadeSliceSilhouette(yRatio) {
+  const y = clamp(yRatio, 0, 1);
+  // Keyframed profile sampled from building5 facade silhouette (top -> bottom).
+  const profile = [
+    { y: 0.0, leftInset: 29.2, rightInset: 30.0 },
+    { y: 0.07, leftInset: 27.6, rightInset: 28.5 },
+    { y: 0.14, leftInset: 24.4, rightInset: 25.1 },
+    { y: 0.22, leftInset: 22.0, rightInset: 22.8 },
+    { y: 0.31, leftInset: 20.6, rightInset: 21.2 },
+    { y: 0.43, leftInset: 19.6, rightInset: 20.3 },
+    { y: 0.56, leftInset: 19.0, rightInset: 19.8 },
+    { y: 0.69, leftInset: 18.5, rightInset: 19.2 },
+    { y: 0.79, leftInset: 17.9, rightInset: 18.6 },
+    { y: 0.88, leftInset: 17.1, rightInset: 17.9 },
+    { y: 0.94, leftInset: 16.3, rightInset: 17.2 },
+    { y: 1.0, leftInset: 15.6, rightInset: 16.5 },
+  ];
+
+  for (let index = 0; index < profile.length - 1; index += 1) {
+    const current = profile[index];
+    const next = profile[index + 1];
+    if (y <= next.y) {
+      const span = Math.max(next.y - current.y, 0.0001);
+      const t = (y - current.y) / span;
+      return {
+        leftInset: lerp(current.leftInset, next.leftInset, t),
+        rightInset: lerp(current.rightInset, next.rightInset, t),
+      };
+    }
+  }
+
+  const last = profile[profile.length - 1];
+  return { leftInset: last.leftInset, rightInset: last.rightInset };
+}
+
+function lerp(start, end, t) {
+  return start + (end - start) * t;
+}
+
+function getFloorClipPath(zone) {
+  const y = clamp(zone.yRatio ?? 0.5, 0, 1);
+  const floorCount = Math.max(zone.floorCount ?? 1, 1);
+  const normalizedIndex = floorCount <= 1 ? 0 : (zone.index ?? 0) / (floorCount - 1);
+  // Make corner complexity vary by height so each floor can have a distinct contour.
+  if (y < 0.16) {
+    // Crown floors: many corners, stronger chamfers and steps.
+    return [
+      [8.5, 0],
+      [91.5, 0],
+      [95.0, 6.5],
+      [97.0, 13.5],
+      [99.0, 24.0],
+      [100, 50.0],
+      [99.0, 76.0],
+      [97.0, 86.5],
+      [95.0, 93.5],
+      [91.5, 100],
+      [8.5, 100],
+      [5.0, 93.5],
+      [3.0, 86.5],
+      [1.0, 76.0],
+      [0, 50.0],
+      [1.0, 24.0],
+      [3.0, 13.5],
+      [5.0, 6.5],
+    ];
+  }
+  if (y < 0.42) {
+    // Upper tower: 12-corner form.
+    return [
+      [6.0, 0],
+      [94.0, 0],
+      [97.2, 10.0],
+      [100, 25.0],
+      [100, 75.0],
+      [97.2, 90.0],
+      [94.0, 100],
+      [6.0, 100],
+      [2.8, 90.0],
+      [0, 75.0],
+      [0, 25.0],
+      [2.8, 10.0],
+    ];
+  }
+  if (y < 0.8) {
+    // Mid tower: mostly regular with subtle variation per floor index.
+    const nudge = (Math.sin(normalizedIndex * Math.PI * 6) * 0.7).toFixed(3);
+    const side = 2 + Number(nudge);
+    return [
+      [3.6, 0],
+      [96.4, 0],
+      [99.4, 14.0],
+      [100, 50.0],
+      [99.4, 86.0],
+      [96.4, 100],
+      [3.6, 100],
+      [side, 86.0],
+      [0, 50.0],
+      [side, 14.0],
+    ];
+  }
+  // Lower floors/podium: heavier shoulders and deeper cuts.
+  return [
+    [2.4, 0],
+    [97.6, 0],
+    [100, 10.0],
+    [100, 22.0],
+    [98.8, 34.0],
+    [99.2, 66.0],
+    [100, 78.0],
+    [100, 90.0],
+    [97.6, 100],
+    [2.4, 100],
+    [0, 90.0],
+    [0, 78.0],
+    [0.8, 66.0],
+    [1.2, 34.0],
+    [0, 22.0],
+    [0, 10.0],
+  ];
+}
+
+function toPolygonClipPath(points) {
+  return `polygon(${points.map(([x, y]) => `${x}% ${y}%`).join(", ")})`;
+}
+
+function getManualFloorClipPath(projectId, floorNumber) {
+  const projectShapes = FLOOR_SHAPES[projectId];
+  if (!projectShapes) {
+    return null;
+  }
+  const points = projectShapes[floorNumber];
+  if (!Array.isArray(points) || points.length < 3) {
+    return null;
+  }
+  return points;
+}
+
+function toPointPairs(raw) {
+  if (!Array.isArray(raw) || raw.length < 6) {
+    return null;
+  }
+
+  if (Array.isArray(raw[0])) {
+    const pairs = raw
+      .filter((point) => Array.isArray(point) && point.length >= 2)
+      .map(([x, y]) => [Number(x), Number(y)]);
+    return pairs.length >= 3 ? pairs : null;
+  }
+
+  const pairs = [];
+  for (let index = 0; index < raw.length - 1; index += 2) {
+    pairs.push([Number(raw[index]), Number(raw[index + 1])]);
+  }
+  return pairs.length >= 3 ? pairs : null;
+}
+
+function getAbsoluteFloorGeometry(projectId, floorNumber) {
+  const projectPolygons = FLOOR_POLYGONS_ABSOLUTE[projectId];
+  if (!projectPolygons) {
+    return null;
+  }
+
+  const rawCoords = projectPolygons.floors?.[floorNumber];
+  const points = toPointPairs(rawCoords);
+  if (!points) {
+    return null;
+  }
+
+  const sourceWidth = Number(projectPolygons.sourceWidth);
+  const sourceHeight = Number(projectPolygons.sourceHeight);
+  if (!sourceWidth || !sourceHeight) {
+    return null;
+  }
+
+  const normalized = points.map(([x, y]) => [
+    clamp((x / sourceWidth) * 100, 0, 100),
+    clamp((y / sourceHeight) * 100, 0, 100),
+  ]);
+
+  const xs = normalized.map(([x]) => x);
+  const ys = normalized.map(([, y]) => y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+  const width = Math.max(maxX - minX, 0.1);
+  const height = Math.max(maxY - minY, 0.1);
+
+  const clipPoints = normalized.map(([x, y]) => [
+    ((x - minX) / width) * 100,
+    ((y - minY) / height) * 100,
+  ]);
+
+  return {
+    topPct: minY,
+    heightPct: height,
+    leftInsetPct: minX,
+    rightInsetPct: 100 - maxX,
+    clipPoints,
+  };
 }
 
 function renderExperienceElevation(experience) {
@@ -1049,6 +1387,12 @@ function renderExperienceElevation(experience) {
 
   const stack = document.createElement("div");
   stack.className = "elevation-floor-stack";
+  const hasAbsolutePolygons = Boolean(FLOOR_POLYGONS_ABSOLUTE[experience.project.id]);
+  if (hasAbsolutePolygons) {
+    // Absolute floor polygons are defined in full-image coordinates, so
+    // the interactive stack must span the whole facade image area.
+    stack.style.inset = "0";
+  }
   const facadeZones = getFacadeZoneLayout(experience.floors.length);
 
   experience.floors.forEach((floor, floorIndex) => {
@@ -1057,8 +1401,21 @@ function renderExperienceElevation(experience) {
     button.type = "button";
     button.className = "elevation-floor";
     button.dataset.floorId = floor.id;
-    button.style.top = `${(facadeZone.top * 100).toFixed(3)}%`;
-    button.style.height = `${(facadeZone.height * 100).toFixed(3)}%`;
+    const absoluteGeometry = getAbsoluteFloorGeometry(experience.project.id, floor.number);
+    if (absoluteGeometry) {
+      button.style.top = `${absoluteGeometry.topPct.toFixed(3)}%`;
+      button.style.height = `${absoluteGeometry.heightPct.toFixed(3)}%`;
+      button.style.left = `${absoluteGeometry.leftInsetPct.toFixed(3)}%`;
+      button.style.right = `${absoluteGeometry.rightInsetPct.toFixed(3)}%`;
+    } else {
+      button.style.top = `${(facadeZone.top * 100).toFixed(3)}%`;
+      button.style.height = `${(facadeZone.height * 100).toFixed(3)}%`;
+      button.style.left = `${facadeZone.leftInset.toFixed(3)}%`;
+      button.style.right = `${facadeZone.rightInset.toFixed(3)}%`;
+    }
+    const manualClip = getManualFloorClipPath(experience.project.id, floor.number);
+    const clipPoints = absoluteGeometry?.clipPoints || manualClip || getFloorClipPath(facadeZone);
+    button.style.setProperty("--floor-clip-path", toPolygonClipPath(clipPoints));
     button.innerHTML = `
       <strong>${floor.number}</strong>
       <span>${floor.label}</span>
@@ -1080,8 +1437,405 @@ function renderExperienceElevation(experience) {
   });
 
   tower.appendChild(stack);
+  attachFloorTraceTool(tower, image, experience);
   floorElevation.appendChild(tower);
   syncExperienceFloorState();
+}
+
+function attachFloorTraceTool(tower, image, experience) {
+  const project = experience.project;
+  if (project.objectKind === "land") {
+    return;
+  }
+
+  floorTraceState.floorNumber = clampFloorNumber(floorTraceState.floorNumber, experience.floors.length);
+  floorTraceState.pointsByFloor = floorTraceState.pointsByFloor || {};
+  floorTraceState.closedByFloor = floorTraceState.closedByFloor || {};
+  floorTraceState.pointsPct = [...(floorTraceState.pointsByFloor[floorTraceState.floorNumber] || [])];
+  floorTraceState.isClosed = Boolean(floorTraceState.closedByFloor[floorTraceState.floorNumber]);
+
+  const traceWrap = document.createElement("div");
+  traceWrap.className = "floor-trace-tool";
+  traceWrap.innerHTML = `
+    <div class="floor-trace-toolbar">
+      <button type="button" class="ghost-button floor-trace-toggle">Trace Floors</button>
+      <button type="button" class="ghost-button floor-trace-prev">Prev</button>
+      <strong class="floor-trace-floor">Floor ${floorTraceState.floorNumber}</strong>
+      <button type="button" class="ghost-button floor-trace-next">Next</button>
+      <button type="button" class="ghost-button floor-trace-undo">Undo</button>
+      <button type="button" class="ghost-button floor-trace-clear">Clear</button>
+      <button type="button" class="floor-trace-copy">Copy Floor Coords</button>
+    </div>
+    <p class="floor-trace-help">Enable trace, click points clockwise on the facade, then copy coords.</p>
+  `;
+  floorElevation.appendChild(traceWrap);
+
+  const overlay = document.createElement("svg");
+  overlay.className = "floor-trace-overlay";
+  overlay.setAttribute("viewBox", "0 0 100 100");
+  overlay.setAttribute("preserveAspectRatio", "none");
+  tower.appendChild(overlay);
+  const previewCanvas = document.createElement("canvas");
+  previewCanvas.className = "floor-trace-preview-canvas";
+  tower.appendChild(previewCanvas);
+
+  const toggleButton = traceWrap.querySelector(".floor-trace-toggle");
+  const prevButton = traceWrap.querySelector(".floor-trace-prev");
+  const nextButton = traceWrap.querySelector(".floor-trace-next");
+  const undoButton = traceWrap.querySelector(".floor-trace-undo");
+  const clearButton = traceWrap.querySelector(".floor-trace-clear");
+  const copyButton = traceWrap.querySelector(".floor-trace-copy");
+  const floorLabel = traceWrap.querySelector(".floor-trace-floor");
+
+  const setFloor = (floorNumber) => {
+    saveCurrentFloorPoints();
+    floorTraceState.floorNumber = clampFloorNumber(floorNumber, experience.floors.length);
+    floorTraceState.pointsPct = [...(floorTraceState.pointsByFloor[floorTraceState.floorNumber] || [])];
+    floorTraceState.isClosed = Boolean(floorTraceState.closedByFloor[floorTraceState.floorNumber]);
+    floorTraceState.cursorPct = null;
+    floorLabel.textContent = `Floor ${floorTraceState.floorNumber}`;
+    renderTraceOverlay();
+  };
+
+  const saveCurrentFloorPoints = () => {
+    floorTraceState.pointsByFloor[floorTraceState.floorNumber] = [...floorTraceState.pointsPct];
+    floorTraceState.closedByFloor[floorTraceState.floorNumber] = floorTraceState.isClosed;
+  };
+
+  const renderTraceOverlay = () => {
+    const drawPreviewCanvas = (imageRect, towerRect) => {
+      const dpr = window.devicePixelRatio || 1;
+      const canvasWidth = Math.max(Math.round(imageRect.width), 1);
+      const canvasHeight = Math.max(Math.round(imageRect.height), 1);
+      previewCanvas.width = Math.max(Math.round(canvasWidth * dpr), 1);
+      previewCanvas.height = Math.max(Math.round(canvasHeight * dpr), 1);
+      previewCanvas.style.left = `${imageRect.left - towerRect.left}px`;
+      previewCanvas.style.top = `${imageRect.top - towerRect.top}px`;
+      previewCanvas.style.width = `${canvasWidth}px`;
+      previewCanvas.style.height = `${canvasHeight}px`;
+
+      const context = previewCanvas.getContext("2d");
+      if (!context) {
+        return;
+      }
+      context.setTransform(1, 0, 0, 1, 0, 0);
+      context.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+      context.scale(dpr, dpr);
+
+      if (!floorTraceState.enabled) {
+        return;
+      }
+      const pointsPx = floorTraceState.pointsPct.map(([x, y]) => [
+        (x / 100) * canvasWidth,
+        (y / 100) * canvasHeight,
+      ]);
+
+      if (pointsPx.length >= 2) {
+        context.beginPath();
+        context.moveTo(pointsPx[0][0], pointsPx[0][1]);
+        for (let index = 1; index < pointsPx.length; index += 1) {
+          context.lineTo(pointsPx[index][0], pointsPx[index][1]);
+        }
+        context.strokeStyle = "#ffd89c";
+        context.lineWidth = 1;
+        context.setLineDash([]);
+        context.stroke();
+      }
+
+      if (floorTraceState.isClosed && pointsPx.length >= 3) {
+        context.beginPath();
+        context.moveTo(pointsPx[0][0], pointsPx[0][1]);
+        for (let index = 1; index < pointsPx.length; index += 1) {
+          context.lineTo(pointsPx[index][0], pointsPx[index][1]);
+        }
+        context.closePath();
+        context.fillStyle = "rgba(240,200,132,0.22)";
+        context.fill();
+        context.strokeStyle = "rgba(255,242,220,0.96)";
+        context.lineWidth = 0.8;
+        context.stroke();
+      }
+
+      pointsPx.forEach(([x, y], index) => {
+        context.beginPath();
+        context.arc(x, y, index === 0 ? 3 : 2.1, 0, Math.PI * 2);
+        context.fillStyle = index === 0 ? "#8ee7ff" : "#ffe0ab";
+        context.fill();
+        context.lineWidth = 0.8;
+        context.strokeStyle = "rgba(22, 12, 2, 0.9)";
+        context.stroke();
+      });
+
+      if (!floorTraceState.cursorPct) {
+        return;
+      }
+
+      const cursorX = (floorTraceState.cursorPct[0] / 100) * canvasWidth;
+      const cursorY = (floorTraceState.cursorPct[1] / 100) * canvasHeight;
+
+      if (!floorTraceState.isClosed && pointsPx.length >= 1) {
+        const last = pointsPx[pointsPx.length - 1];
+        context.beginPath();
+        context.moveTo(last[0], last[1]);
+        context.lineTo(cursorX, cursorY);
+        context.strokeStyle = "#8ee7ff";
+        context.lineWidth = 1.1;
+        context.setLineDash([5, 3]);
+        context.stroke();
+        context.setLineDash([]);
+      }
+
+      context.beginPath();
+      context.arc(cursorX, cursorY, 2.2, 0, Math.PI * 2);
+      context.fillStyle = "#8ee7ff";
+      context.fill();
+      context.lineWidth = 0.8;
+      context.strokeStyle = "rgba(4, 20, 28, 0.95)";
+      context.stroke();
+    };
+
+    const syncOverlayBounds = () => {
+      const towerRect = tower.getBoundingClientRect();
+      const imageRect = image.getBoundingClientRect();
+      const left = imageRect.left - towerRect.left;
+      const top = imageRect.top - towerRect.top;
+      overlay.style.left = `${left}px`;
+      overlay.style.top = `${top}px`;
+      overlay.style.width = `${imageRect.width}px`;
+      overlay.style.height = `${imageRect.height}px`;
+      drawPreviewCanvas(imageRect, towerRect);
+    };
+    syncOverlayBounds();
+
+    overlay.innerHTML = "";
+    if (!floorTraceState.enabled) {
+      return;
+    }
+
+    if (floorTraceState.cursorPct) {
+      const cursorOnly = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      cursorOnly.setAttribute("cx", String(floorTraceState.cursorPct[0]));
+      cursorOnly.setAttribute("cy", String(floorTraceState.cursorPct[1]));
+      cursorOnly.setAttribute("r", "0.42");
+      cursorOnly.setAttribute("fill", "#8ee7ff");
+      cursorOnly.setAttribute("stroke", "rgba(4, 20, 28, 0.95)");
+      cursorOnly.setAttribute("stroke-width", "0.14");
+      overlay.appendChild(cursorOnly);
+    }
+
+    if (!floorTraceState.pointsPct.length) {
+      return;
+    }
+
+    if (floorTraceState.pointsPct.length >= 2) {
+      const polyline = document.createElementNS("http://www.w3.org/2000/svg", "polyline");
+      polyline.setAttribute(
+        "points",
+        floorTraceState.pointsPct.map(([x, y]) => `${x},${y}`).join(" ")
+      );
+      polyline.setAttribute("fill", "none");
+      polyline.setAttribute("stroke", "#ffd89c");
+      polyline.setAttribute("stroke-width", "0.7");
+      overlay.appendChild(polyline);
+    }
+
+    if (floorTraceState.pointsPct.length >= 3 && floorTraceState.isClosed) {
+      const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+      polygon.setAttribute(
+        "points",
+        floorTraceState.pointsPct.map(([x, y]) => `${x},${y}`).join(" ")
+      );
+      polygon.setAttribute("fill", "rgba(240,200,132,0.22)");
+      polygon.setAttribute("stroke", "rgba(255,242,220,0.96)");
+      polygon.setAttribute("stroke-width", "0.5");
+      overlay.appendChild(polygon);
+
+      // Closed edge after clicking back on the first point.
+      const first = floorTraceState.pointsPct[0];
+      const last = floorTraceState.pointsPct[floorTraceState.pointsPct.length - 1];
+      const closingEdge = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      closingEdge.setAttribute("x1", String(last[0]));
+      closingEdge.setAttribute("y1", String(last[1]));
+      closingEdge.setAttribute("x2", String(first[0]));
+      closingEdge.setAttribute("y2", String(first[1]));
+      closingEdge.setAttribute("stroke", "rgba(255, 222, 169, 0.95)");
+      closingEdge.setAttribute("stroke-width", "0.55");
+      closingEdge.setAttribute("stroke-dasharray", "1.2 1");
+      overlay.appendChild(closingEdge);
+    }
+
+    // Live preview edge from the last fixed point to cursor while tracing.
+    if (!floorTraceState.isClosed && floorTraceState.cursorPct && floorTraceState.pointsPct.length >= 1) {
+      const last = floorTraceState.pointsPct[floorTraceState.pointsPct.length - 1];
+      const preview = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      preview.setAttribute("x1", String(last[0]));
+      preview.setAttribute("y1", String(last[1]));
+      preview.setAttribute("x2", String(floorTraceState.cursorPct[0]));
+      preview.setAttribute("y2", String(floorTraceState.cursorPct[1]));
+      preview.setAttribute("stroke", "#8ee7ff");
+      preview.setAttribute("stroke-width", "0.55");
+      preview.setAttribute("stroke-dasharray", "1.2 0.8");
+      preview.setAttribute("opacity", "1");
+      overlay.appendChild(preview);
+      const cursor = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      cursor.setAttribute("cx", String(floorTraceState.cursorPct[0]));
+      cursor.setAttribute("cy", String(floorTraceState.cursorPct[1]));
+      cursor.setAttribute("r", "0.42");
+      cursor.setAttribute("fill", "#8ee7ff");
+      cursor.setAttribute("stroke", "rgba(4, 20, 28, 0.95)");
+      cursor.setAttribute("stroke-width", "0.14");
+      overlay.appendChild(cursor);
+    }
+
+    floorTraceState.pointsPct.forEach(([x, y], index) => {
+      const point = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      point.setAttribute("cx", String(x));
+      point.setAttribute("cy", String(y));
+      point.setAttribute("r", index === 0 ? "1.05" : "0.78");
+      point.setAttribute("fill", index === 0 ? "#8ee7ff" : "#ffe0ab");
+      point.setAttribute("stroke", "rgba(22, 12, 2, 0.9)");
+      point.setAttribute("stroke-width", "0.2");
+      overlay.appendChild(point);
+
+      const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+      label.setAttribute("x", String(x + 0.8));
+      label.setAttribute("y", String(y - 0.8));
+      label.setAttribute("fill", "#fff0d2");
+      label.setAttribute("font-size", "2.2");
+      label.setAttribute("font-weight", "700");
+      label.textContent = String(index + 1);
+      overlay.appendChild(label);
+    });
+  };
+
+  const toggleTrace = () => {
+    floorTraceState.enabled = !floorTraceState.enabled;
+    floorTraceState.cursorPct = null;
+    tower.classList.toggle("is-tracing", floorTraceState.enabled);
+    stack.style.pointerEvents = floorTraceState.enabled ? "none" : "auto";
+    toggleButton.textContent = floorTraceState.enabled ? "Tracing On" : "Trace Floors";
+    renderTraceOverlay();
+  };
+
+  toggleButton.addEventListener("click", toggleTrace);
+  prevButton.addEventListener("click", () => setFloor(floorTraceState.floorNumber - 1));
+  nextButton.addEventListener("click", () => setFloor(floorTraceState.floorNumber + 1));
+  undoButton.addEventListener("click", () => {
+    floorTraceState.pointsPct.pop();
+    floorTraceState.isClosed = false;
+    renderTraceOverlay();
+  });
+  clearButton.addEventListener("click", () => {
+    floorTraceState.pointsPct = [];
+    floorTraceState.isClosed = false;
+    renderTraceOverlay();
+  });
+  copyButton.addEventListener("click", async () => {
+    saveCurrentFloorPoints();
+    const coords = toAbsoluteFloorCoords(
+      image,
+      floorTraceState.pointsByFloor[floorTraceState.floorNumber] || [],
+      floorTraceState.closedByFloor[floorTraceState.floorNumber]
+    );
+    const payload = {
+      projectId: project.id,
+      floor: floorTraceState.floorNumber,
+      sourceWidth: image.naturalWidth || 0,
+      sourceHeight: image.naturalHeight || 0,
+      coords,
+    };
+    const text = JSON.stringify(payload, null, 2);
+    try {
+      await navigator.clipboard.writeText(text);
+      statusText.textContent = `Copied floor ${floorTraceState.floorNumber} coords to clipboard.`;
+    } catch (_error) {
+      console.log(text);
+      statusText.textContent = "Clipboard blocked. Coordinates logged in console.";
+    }
+  });
+
+  const updateCursorFromEvent = (event) => {
+    if (!floorTraceState.enabled || floorTraceState.isClosed) {
+      return;
+    }
+    const rect = image.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      return;
+    }
+    const xPct = clamp(((event.clientX - rect.left) / rect.width) * 100, 0, 100);
+    const yPct = clamp(((event.clientY - rect.top) / rect.height) * 100, 0, 100);
+    floorTraceState.cursorPct = [Number(xPct.toFixed(3)), Number(yPct.toFixed(3))];
+    renderTraceOverlay();
+  };
+
+  const shouldCloseTraceCycle = (xPct, yPct, rect) => {
+    if (floorTraceState.pointsPct.length < 3) {
+      return false;
+    }
+    const first = floorTraceState.pointsPct[0];
+    const dxPx = ((xPct - first[0]) / 100) * rect.width;
+    const dyPx = ((yPct - first[1]) / 100) * rect.height;
+    return Math.hypot(dxPx, dyPx) <= 16;
+  };
+
+  const addPointFromEvent = (event) => {
+    if (!floorTraceState.enabled) {
+      return;
+    }
+    event.preventDefault();
+    const rect = image.getBoundingClientRect();
+    if (!rect.width || !rect.height) {
+      return;
+    }
+
+    const xPct = clamp(((event.clientX - rect.left) / rect.width) * 100, 0, 100);
+    const yPct = clamp(((event.clientY - rect.top) / rect.height) * 100, 0, 100);
+    if (shouldCloseTraceCycle(xPct, yPct, rect)) {
+      floorTraceState.isClosed = true;
+      floorTraceState.cursorPct = floorTraceState.pointsPct[0];
+      statusText.textContent = `Tracing floor ${floorTraceState.floorNumber}: polygon closed with ${floorTraceState.pointsPct.length} points.`;
+      saveCurrentFloorPoints();
+      renderTraceOverlay();
+      return;
+    }
+
+    if (floorTraceState.isClosed) {
+      return;
+    }
+
+    floorTraceState.pointsPct.push([Number(xPct.toFixed(3)), Number(yPct.toFixed(3))]);
+    floorTraceState.cursorPct = [Number(xPct.toFixed(3)), Number(yPct.toFixed(3))];
+    statusText.textContent = `Tracing floor ${floorTraceState.floorNumber}: ${floorTraceState.pointsPct.length} point${floorTraceState.pointsPct.length === 1 ? "" : "s"}. Click the first point to close.`;
+    renderTraceOverlay();
+  };
+
+  image.addEventListener("pointerdown", addPointFromEvent);
+  tower.addEventListener("pointerdown", addPointFromEvent, true);
+
+  image.addEventListener("pointermove", updateCursorFromEvent);
+  tower.addEventListener("pointermove", updateCursorFromEvent, true);
+
+  image.addEventListener("mouseleave", () => {
+    floorTraceState.cursorPct = null;
+    renderTraceOverlay();
+  });
+
+  setFloor(floorTraceState.floorNumber);
+}
+
+function clampFloorNumber(value, maxFloor) {
+  return Math.min(Math.max(Number(value) || 1, 1), Math.max(maxFloor, 1));
+}
+
+function toAbsoluteFloorCoords(image, pointsPct, closeCycle = false) {
+  const width = image.naturalWidth || 1;
+  const height = image.naturalHeight || 1;
+  const exportPoints =
+    closeCycle && pointsPct.length >= 3 ? [...pointsPct, pointsPct[0]] : pointsPct;
+  return exportPoints.flatMap(([xPct, yPct]) => [
+    Number(((xPct / 100) * width).toFixed(0)),
+    Number(((yPct / 100) * height).toFixed(0)),
+  ]);
 }
 
 function syncExperienceFloorState() {
