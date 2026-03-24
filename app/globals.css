@@ -63,10 +63,14 @@ button {
 
 .page-shell {
   display: grid;
-  grid-template-columns: minmax(420px, 520px) minmax(0, 1fr);
+  grid-template-columns: minmax(380px, 560px) minmax(0, 1fr);
   height: 100dvh;
   min-height: 100dvh;
   overflow: hidden;
+}
+
+.page-shell > * {
+  min-width: 0;
 }
 
 .panel-shell {
@@ -132,9 +136,16 @@ button {
 
 .brand-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
   align-items: flex-start;
+}
+
+.brand-row > div,
+.section-head > div,
+.detail-hero > div,
+.switcher-card-head > div {
+  min-width: 0;
 }
 
 h1,
@@ -147,8 +158,10 @@ h3,
 }
 
 h1 {
-  font-size: clamp(3rem, 6vw, 4.8rem);
-  line-height: 0.92;
+  font-size: clamp(2.4rem, 4.2vw, 3.7rem);
+  line-height: 0.94;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 h2 {
@@ -170,9 +183,9 @@ h3 {
 }
 
 .lead {
-  max-width: 34rem;
-  margin: 14px 0 0;
-  font-size: 1rem;
+  max-width: 26rem;
+  margin: 16px 0 0;
+  font-size: 0.98rem;
 }
 
 .brand-badge,
@@ -186,16 +199,22 @@ h3 {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
 }
 
 .brand-badge {
-  min-width: 168px;
+  min-width: 0;
+  width: fit-content;
+  max-width: 100%;
   padding: 16px 18px;
   flex-direction: column;
   gap: 6px;
   border: 1px solid rgba(241, 211, 161, 0.18);
   background: rgba(255, 255, 255, 0.04);
   color: var(--text-soft);
+  justify-self: flex-start;
 }
 
 .brand-badge strong {
@@ -813,12 +832,28 @@ h3 {
 }
 
 @media (max-width: 1480px) {
+  .detail-columns,
+  .asset-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .switcher-card-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
   .experience-grid {
     grid-template-columns: 1fr;
   }
 
   .detail-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1360px) {
+  .page-shell {
+    grid-template-columns: minmax(360px, 480px) minmax(0, 1fr);
   }
 }
 
@@ -865,7 +900,6 @@ h3 {
     padding: 16px;
   }
 
-  .brand-row,
   .detail-columns,
   .detail-stats {
     grid-template-columns: 1fr;
@@ -873,6 +907,7 @@ h3 {
 
   .brand-badge {
     width: 100%;
+    justify-self: stretch;
   }
 
   .section-head,

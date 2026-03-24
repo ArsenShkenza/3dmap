@@ -1,7 +1,6 @@
 "use client";
 
 import { startTransition, useDeferredValue, useEffect, useState } from "react";
-import AssetVault from "@/components/AssetVault";
 import MapExperience from "@/components/MapExperience";
 import ModelStage from "@/components/ModelStage";
 
@@ -40,9 +39,6 @@ export default function ExperienceShell({
     projects[0]?.primaryAssetId ?? assetLibrary[0]?.id ?? null
   );
   const deferredQuery = useDeferredValue(query);
-  const mappedAssetCount = assetLibrary.filter(
-    (asset) => asset.assignedProjectId
-  ).length;
 
   const filteredProjects = projects.filter((project) => {
     const categoryMatch =
@@ -84,15 +80,6 @@ export default function ExperienceShell({
     });
   };
 
-  const handleSelectAsset = (asset) => {
-    setSelectedAssetId(asset.id);
-    if (asset.assignedProjectId) {
-      setActiveCategory("all");
-      setQuery("");
-      setSelectedId(asset.assignedProjectId);
-    }
-  };
-
   return (
     <main className="page-shell">
       <section className="panel-shell">
@@ -107,10 +94,6 @@ export default function ExperienceShell({
                   opportunities, built to feel closer to private banking than a
                   local property portal.
                 </p>
-              </div>
-              <div className="brand-badge">
-                <span>{mappedAssetCount} mapped opportunities</span>
-                <strong>{assetLibrary.length} imported 3D assets</strong>
               </div>
             </div>
           </div>
@@ -278,53 +261,6 @@ export default function ExperienceShell({
                   </div>
                 </div>
               </article>
-            </div>
-
-            <AssetVault
-              assets={assetLibrary}
-              selectedAssetId={selectedAsset.id}
-              onSelectAsset={handleSelectAsset}
-            />
-
-            <div className="detail-columns">
-              <div className="insight-card">
-                <p className="section-label">Why It Matters</p>
-                <p>{selectedProject.thesis}</p>
-              </div>
-              <div className="insight-card">
-                <p className="section-label">Pitch Angle</p>
-                <p>{selectedProject.narrative}</p>
-              </div>
-            </div>
-
-            <div className="timeline-card">
-              <div className="section-head">
-                <div>
-                  <p className="section-label">Project Timeline</p>
-                  <h3>Signal momentum, not just metadata.</h3>
-                </div>
-              </div>
-              <ol className="timeline-list">
-                {selectedProject.timeline.map((step, index) => (
-                  <li key={step}>
-                    <span>{String(index + 1).padStart(2, "0")}</span>
-                    <strong>{step}</strong>
-                  </li>
-                ))}
-              </ol>
-            </div>
-
-            <div className="vault-card">
-              <div>
-                <p className="section-label">VIP Data Room</p>
-                <h3>Prepared for the next conversation.</h3>
-              </div>
-              <div className="vault-grid">
-                <span>{selectedProject.diligence}</span>
-                <span>{selectedProject.landSize}</span>
-                <span>{selectedProject.sponsor}</span>
-                <span>AR / walkthrough-ready framing</span>
-              </div>
             </div>
           </section>
         </div>
