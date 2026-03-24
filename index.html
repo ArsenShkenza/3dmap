@@ -3,17 +3,34 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function () {
+        try {
+          if (new URLSearchParams(location.search).get("experience")) {
+            document.documentElement.classList.add("experience-launch");
+          }
+        } catch (e) {
+          /* ignore */
+        }
+      })();
+    </script>
+    <style>
+      /* Before deferred main.js runs, hide the map shell so ?experience= does not flash the main UI */
+      html.experience-launch .app-shell {
+        visibility: hidden !important;
+      }
+    </style>
     <title>PRO X | Visionary Investments</title>
     <link
       rel="stylesheet"
       href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260319-1219" />
+    <link rel="stylesheet" href="./styles.css?v=20260324-dt1-scale" />
     <script
       defer
       src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"
     ></script>
-    <script defer src="./main.js?v=20260319-1219"></script>
+    <script defer src="./main.js?v=20260324-scroll-elev"></script>
   </head>
   <body>
     <div class="app-shell">
@@ -142,14 +159,14 @@
               </article>
             </div>
           </div>
-
-          <div class="experience-visual">
-            <div class="visual-frame">
-              <p class="status-label">Front Elevation</p>
-              <div id="floor-elevation" class="floor-elevation"></div>
-            </div>
-          </div>
         </section>
+      </div>
+
+      <div class="experience-elevation-below">
+        <div class="visual-frame experience-elevation-frame">
+          <p class="status-label">Front Elevation</p>
+          <div id="floor-elevation" class="floor-elevation"></div>
+        </div>
       </div>
     </section>
   </body>

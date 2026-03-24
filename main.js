@@ -32,7 +32,7 @@ const floorElevation = document.getElementById("floor-elevation");
 
 const DEBUG = false;
 const CAN_FETCH_LOCAL_ASSET = window.location.protocol !== "file:";
-const BUILDING_ELEVATION_SRC = "./assets/building.png";
+const BUILDING_ELEVATION_SRC = "./assets/building5.jpg";
 
 const exploreCategories = [
   { id: "all", label: "All Opportunities" },
@@ -402,12 +402,14 @@ function bootstrap() {
   const maplibregl = window.maplibregl;
   if (!maplibregl) {
     statusText.textContent = "Map engine failed to load.";
+    document.documentElement.classList.remove("experience-launch");
     return;
   }
 
   buildCategoryChips();
   buildPromptChips();
   renderProjectList();
+  consumeExperienceQueryParam();
 
   map = new maplibregl.Map({
     container: "map",
@@ -564,7 +566,7 @@ function bootstrap() {
     if (!activeProject) {
       return;
     }
-    openProjectExperience(activeProject.id, { focusMap: false });
+    openProjectExperienceInNewTab(activeProject.id);
   });
   resetButton.addEventListener("click", resetProjectView);
   experienceClose.addEventListener("click", closeProjectExperience);
@@ -666,7 +668,7 @@ function renderProjectList() {
       selectProject(project.id, { autoFocus: true, autoSelected: false });
     });
     card.querySelector(".open-project-page-button")?.addEventListener("click", () => {
-      openProjectExperience(project.id, { focusMap: false });
+      openProjectExperienceInNewTab(project.id);
     });
     projectList.appendChild(card);
   });
@@ -857,6 +859,36 @@ function selectProject(projectId, options = {}) {
   }
 }
 
+function openProjectExperienceInNewTab(projectId) {
+  const project = projects.find((item) => item.id === projectId);
+  if (!project) {
+    return;
+  }
+  const url = new URL(window.location.href);
+  url.searchParams.set("experience", projectId);
+  window.open(url.toString(), "_blank", "noopener,noreferrer");
+}
+
+function consumeExperienceQueryParam() {
+  const params = new URLSearchParams(window.location.search);
+  const experienceId = params.get("experience");
+  if (!experienceId) {
+    return;
+  }
+
+  const project = projects.find((item) => item.id === experienceId);
+  params.delete("experience");
+  const newQuery = params.toString();
+  const cleanUrl = `${window.location.pathname}${newQuery ? `?${newQuery}` : ""}${window.location.hash}`;
+  history.replaceState(null, "", cleanUrl);
+
+  if (project) {
+    openProjectExperience(experienceId, { focusMap: false });
+  }
+
+  document.documentElement.classList.remove("experience-launch");
+}
+
 function openProjectExperience(projectId, options = {}) {
   const project = projects.find((item) => item.id === projectId);
   if (!project) {
@@ -1000,7 +1032,10 @@ function renderExperienceElevation(experience) {
   floorElevation.innerHTML = "";
   const caption = document.createElement("p");
   caption.className = "elevation-caption";
-  caption.textContent = experience.project.objectKind === "land" ? "Indicative mapped image" : "Hover each floor on the facade";
+  caption.textContent =
+    experience.project.objectKind === "land"
+      ? "Scroll for full image · indicative elevation"
+      : "Scroll for full elevation · hover floors to explore";
   floorElevation.appendChild(caption);
 
   const tower = document.createElement("div");
