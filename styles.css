@@ -59,6 +59,27 @@ body {
   overflow-x: hidden;
 }
 
+.panel-nav {
+  padding: 22px;
+  border-radius: 30px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at top right, rgba(196, 154, 92, 0.14), transparent 30%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+    rgba(6, 13, 21, 0.74);
+  box-shadow: 0 22px 54px rgba(0, 0, 0, 0.22);
+}
+
+.panel-brand .intro {
+  margin-bottom: 0;
+}
+
+.panel-nav-section {
+  margin-top: 0;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .eyebrow,
 .status-label,
 .footnote,
@@ -392,6 +413,16 @@ button:disabled {
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.24);
 }
 
+.panel-nav .hero-overlay,
+.panel-nav .status-card {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
 .hero-overlay h2 {
   margin-top: 6px;
   max-width: 16ch;
@@ -402,6 +433,10 @@ button:disabled {
 
 .panel .hero-overlay .prompt-list {
   margin-top: 14px;
+}
+
+.panel-nav .hero-overlay h2 {
+  max-width: none;
 }
 
 .search-form {
@@ -696,6 +731,11 @@ button:disabled {
   .map-overlay {
     bottom: 16px;
     left: 16px;
+  }
+
+  .panel-nav {
+    padding: 20px;
+    border-radius: 24px;
   }
 }
 

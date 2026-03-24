@@ -8,7 +8,7 @@
       rel="stylesheet"
       href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css"
     />
-    <link rel="stylesheet" href="./styles.css?v=20260319-1219" />
+    <link rel="stylesheet" href="./styles.css?v=20260319-1438" />
     <script
       defer
       src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"
@@ -18,33 +18,37 @@
   <body>
     <div class="app-shell">
       <aside class="panel">
-        <p class="eyebrow">Invitation-Only Investment Intelligence</p>
-        <h1>PRO X</h1>
-        <p class="intro">
-          Visionary Investments. Exclusive Access. Explore curated opportunities
-          through a cinematic 3D map experience built for high-ticket real
-          estate conversations.
-        </p>
+        <div class="panel-nav">
+          <div class="panel-brand">
+            <p class="eyebrow">Invitation-Only Investment Intelligence</p>
+            <h1>PRO X</h1>
+            <p class="intro">
+              Visionary Investments. Exclusive Access. Explore curated opportunities
+              through a cinematic 3D map experience built for high-ticket real
+              estate conversations.
+            </p>
+          </div>
 
-        <section class="hero-overlay">
-          <p class="hero-kicker">AI Omni-Search</p>
-          <h2>Find investable projects in natural language.</h2>
-          <form id="search-form" class="search-form">
-            <input
-              id="omni-search"
-              type="text"
-              placeholder="Projects in Tirana seeking co-investors with ROI above 8%"
-              autocomplete="off"
-            />
-            <button type="submit">Explore</button>
-          </form>
-          <div id="prompt-list" class="prompt-list"></div>
-        </section>
+          <section class="hero-overlay panel-nav-section">
+            <p class="hero-kicker">AI Omni-Search</p>
+            <h2>Find investable projects in natural language.</h2>
+            <form id="search-form" class="search-form">
+              <input
+                id="omni-search"
+                type="text"
+                placeholder="Projects in Tirana seeking co-investors with ROI above 8%"
+                autocomplete="off"
+              />
+              <button type="submit">Explore</button>
+            </form>
+            <div id="prompt-list" class="prompt-list"></div>
+          </section>
 
-        <section class="status-card">
-          <p class="status-label">Explore</p>
-          <div id="category-list" class="category-list"></div>
-        </section>
+          <section class="status-card panel-nav-section">
+            <p class="status-label">Explore</p>
+            <div id="category-list" class="category-list"></div>
+          </section>
+        </div>
 
         <section class="projects-section">
           <div class="section-head">
