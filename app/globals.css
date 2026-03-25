@@ -17,6 +17,10 @@
   --radius-xl: 30px;
   --radius-lg: 24px;
   --radius-md: 18px;
+  --experience-content-width: min(1520px, calc(100% - 48px));
+  --elevation-tower-min: 600px;
+  --elevation-tower-vw: 70vw;
+  --elevation-tower-max: 800px;
 }
 
 * {
@@ -47,6 +51,266 @@ input {
 
 button {
   cursor: pointer;
+}
+
+.experience-page {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow-y: auto;
+  color: var(--text);
+}
+
+.experience-backdrop {
+  position: fixed;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(6, 11, 18, 0.78), rgba(6, 11, 18, 0.92)),
+    radial-gradient(circle at top right, rgba(214, 180, 123, 0.12), transparent 24%);
+  backdrop-filter: blur(14px);
+}
+
+.experience-shell {
+  position: relative;
+  z-index: 1;
+  width: var(--experience-content-width);
+  margin: 24px auto 20px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 32px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
+    rgba(7, 14, 22, 0.88);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.34);
+}
+
+.experience-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.experience-back-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  padding: 10px 14px;
+}
+
+.experience-hero {
+  margin-top: 24px;
+}
+
+.experience-copy {
+  max-width: 820px;
+}
+
+.experience-stats {
+  margin-top: 18px;
+}
+
+.experience-elevation-below {
+  position: relative;
+  z-index: 1;
+  width: var(--experience-content-width);
+  margin: 0 auto 48px;
+}
+
+.experience-elevation-frame {
+  margin-top: 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.floor-elevation {
+  position: relative;
+  margin-top: 16px;
+  padding: 48px 16px 36px;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.1), transparent 24%),
+    linear-gradient(180deg, rgba(17, 28, 43, 0.92), rgba(8, 15, 23, 0.96));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  overflow: visible;
+}
+
+.floor-elevation::before {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: min(180px, 22%);
+  max-height: 32%;
+  background: linear-gradient(180deg, transparent, rgba(2, 6, 10, 0.34));
+  pointer-events: none;
+  border-radius: 0 0 20px 20px;
+}
+
+.elevation-caption {
+  position: absolute;
+  top: 16px;
+  left: 18px;
+  z-index: 2;
+  color: var(--text-faint);
+  font-size: 0.8rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.elevation-tower {
+  position: relative;
+  width: min(
+    100%,
+    clamp(var(--elevation-tower-min), var(--elevation-tower-vw), var(--elevation-tower-max))
+  );
+  max-width: 100%;
+  margin: 0 auto;
+  border-radius: 28px 28px 16px 16px;
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.26);
+  overflow: hidden;
+}
+
+.elevation-tower.is-tracing {
+  cursor: crosshair;
+}
+
+.elevation-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  object-position: center top;
+}
+
+.elevation-floor-stack {
+  position: absolute;
+  inset: 10% 19% 8%;
+  z-index: 2;
+}
+
+.elevation-floor {
+  position: absolute;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  clip-path: var(
+    --floor-clip-path,
+    polygon(2% 0%, 98% 0%, 100% 14%, 100% 86%, 98% 100%, 2% 100%, 0% 86%, 0% 14%)
+  );
+  background: rgba(214, 180, 123, 0);
+  color: rgba(247, 240, 228, 0);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    color 180ms ease;
+}
+
+.elevation-floor::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 0;
+  clip-path: inherit;
+  background: linear-gradient(180deg, rgba(241, 211, 161, 0), rgba(214, 180, 123, 0));
+  box-shadow: inset 0 0 0 1px rgba(255, 220, 164, 0);
+  pointer-events: none;
+  transition:
+    background 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.elevation-floor strong,
+.elevation-floor span {
+  position: relative;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 180ms ease;
+}
+
+.elevation-floor strong {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.elevation-floor span {
+  text-align: right;
+  color: var(--text-faint);
+  font-size: 0.72rem;
+}
+
+.elevation-floor:hover,
+.elevation-floor:focus-visible {
+  border-color: rgba(241, 211, 161, 0.62);
+  background: rgba(214, 180, 123, 0.16);
+  color: var(--text);
+  box-shadow:
+    0 0 0 1px rgba(241, 211, 161, 0.22),
+    0 12px 24px rgba(0, 0, 0, 0.14);
+}
+
+.elevation-floor:focus-visible::after,
+.elevation-floor:hover::after {
+  background: linear-gradient(180deg, rgba(241, 211, 161, 0.34), rgba(200, 148, 71, 0.18));
+  box-shadow: inset 0 0 0 1px rgba(255, 234, 187, 0.42);
+}
+
+.elevation-floor:hover strong,
+.elevation-floor:hover span,
+.elevation-floor:focus-visible strong,
+.elevation-floor:focus-visible span {
+  opacity: 1;
+}
+
+.floor-trace-preview-canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  z-index: 4;
+}
+
+.elevation-tower.is-tracing .floor-trace-preview-canvas {
+  filter: drop-shadow(0 0 6px rgba(142, 231, 255, 0.75));
+}
+
+.floor-trace-tool {
+  margin-top: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.floor-trace-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.floor-trace-floor {
+  min-width: 70px;
+  text-align: center;
+  color: var(--gold-bright);
+}
+
+.floor-trace-copy {
+  padding: 9px 12px;
+}
+
+.floor-trace-help {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: 0.78rem;
 }
 
 .sr-only {
@@ -346,6 +610,11 @@ h3 {
     background 180ms ease;
 }
 
+.switcher-card:focus-visible {
+  outline: 2px solid rgba(141, 211, 255, 0.7);
+  outline-offset: 3px;
+}
+
 .switcher-card.active {
   border-color: rgba(241, 211, 161, 0.34);
   background:
@@ -377,6 +646,19 @@ h3 {
 .access-pill {
   color: #081018;
   background: linear-gradient(135deg, var(--gold-bright), #c89447);
+}
+
+.access-pill-button {
+  border: none;
+  box-shadow: none;
+  font: inherit;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.access-pill-button:focus-visible {
+  outline: 2px solid rgba(141, 211, 255, 0.7);
+  outline-offset: 3px;
 }
 
 .deal-copy {

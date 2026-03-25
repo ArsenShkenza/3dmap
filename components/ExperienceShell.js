@@ -31,11 +31,14 @@ export default function ExperienceShell({
   assetLibrary,
   categories,
   projects,
-  prompts
+  prompts,
+  initialProjectId
 }) {
   const [activeCategory, setActiveCategory] = useState("all");
   const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState(projects[0]?.id ?? null);
+  const [selectedId, setSelectedId] = useState(
+    initialProjectId ?? projects[0]?.id ?? null
+  );
   const [selectedAssetId, setSelectedAssetId] = useState(
     projects[0]?.primaryAssetId ?? assetLibrary[0]?.id ?? null
   );
@@ -76,6 +79,18 @@ export default function ExperienceShell({
   useEffect(() => {
     setSelectedAssetId(selectedProject.primaryAssetId);
   }, [selectedProject.primaryAssetId]);
+
+  const openProjectInNewTab = (projectId) => {
+    if (!projectId || typeof window === "undefined") {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    url.pathname = `/experience/${projectId}`;
+    url.search = "";
+    url.hash = "";
+    window.open(url.toString(), "_blank", "noopener,noreferrer");
+  };
 
   const handlePrompt = (value) => {
     startTransition(() => {
@@ -191,13 +206,20 @@ export default function ExperienceShell({
               <div className="switcher-list">
                 {filteredProjects.length ? (
                   filteredProjects.map((project) => (
-                    <button
+                    <div
                       key={project.id}
-                      type="button"
                       className={`switcher-card${
                         project.id === selectedProject.id ? " active" : ""
                       }`}
                       onClick={() => setSelectedId(project.id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setSelectedId(project.id);
+                        }
+                      }}
                     >
                       <div className="switcher-card-head">
                         <div>
@@ -206,10 +228,25 @@ export default function ExperienceShell({
                           </p>
                           <strong>{project.name}</strong>
                         </div>
-                        <span className="access-pill">{project.access}</span>
+                        {project.access === "Open" ? (
+                          <button
+                            type="button"
+                            className="access-pill access-pill-button"
+                            onClick={(event) => {
+                              event.preventDefault();
+                              event.stopPropagation();
+                              openProjectInNewTab(project.id);
+                            }}
+                            aria-label={`Open ${project.name} in new tab`}
+                          >
+                            {project.access}
+                          </button>
+                        ) : (
+                          <span className="access-pill">{project.access}</span>
+                        )}
                       </div>
                       <p className="deal-copy">{project.stageSummary}</p>
-                    </button>
+                    </div>
                   ))
                 ) : (
                   <div className="empty-state">
@@ -240,7 +277,18 @@ export default function ExperienceShell({
               </article>
               <article>
                 <span className="stat-label">Access</span>
-                <strong>{selectedProject.access}</strong>
+                {selectedProject.access === "Open" ? (
+                  <button
+                    type="button"
+                    className="access-pill access-pill-button"
+                    onClick={() => openProjectInNewTab(selectedProject.id)}
+                    aria-label={`Open ${selectedProject.name} in new tab`}
+                  >
+                    {selectedProject.access}
+                  </button>
+                ) : (
+                  <strong>{selectedProject.access}</strong>
+                )}
               </article>
             </div>
 
