@@ -14,6 +14,7 @@ export default function FullProjectExperience({
 }) {
   const hasFloorExplorer = supportsFloorExplorer(project, asset);
   const separateFilesFlow = project.fullProjectFlow?.type === "separate-files";
+  const integratedBuildingFlow = project.fullProjectFlow?.type === "integrated-building";
   const unitAssetMap = useMemo(
     () => new Map(apartmentAssets.map((entry) => [entry.id, entry.asset])),
     [apartmentAssets]
@@ -128,6 +129,26 @@ export default function FullProjectExperience({
                     caption={selectedCaption}
                   />
                 </div>
+              ) : integratedBuildingFlow ? (
+                <>
+                  <ModelStage
+                    asset={asset}
+                    project={project}
+                    viewerMode={project.fullProjectFlow?.viewerMode}
+                    viewerConfig={project.fullProjectFlow?.viewerConfig}
+                    statusLabel={project.fullProjectFlow?.viewerLabel ?? "Interior Navigation"}
+                    caption={
+                      project.fullProjectFlow?.viewerCopy ??
+                      project.fullProjectFlow?.overviewCopy ??
+                      "Use the integrated building file for a single exterior-plus-interior project review."
+                    }
+                  />
+                  <p className="detail-copy compact">
+                    This project now uses one authored GLB that carries both the exterior identity and
+                    the interior atmosphere in the same review object. The map remains exterior-first;
+                    the detailed project room is where the integrated building model is explored.
+                  </p>
+                </>
               ) : (
                 <>
                   <ModelStage asset={asset} project={project} />
