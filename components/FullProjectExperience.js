@@ -45,6 +45,11 @@ export default function FullProjectExperience({
       ? project.fullProjectFlow?.overviewCopy ??
         "Review the whole building first, then switch into separate apartment files."
       : selectedUnit?.copy;
+  const selectedViewerMode = selectedAsset?.viewerMode;
+  const selectedViewerConfig = selectedAsset?.viewerConfig;
+  const selectedStatusLabel =
+    selectedAsset?.viewerLabel ??
+    (activeAssetKey === "building" ? "AR Ready" : "Interior Navigation");
   const handleAssetSelection = (nextAssetKey) => {
     setActiveAssetKey(nextAssetKey);
 
@@ -95,7 +100,7 @@ export default function FullProjectExperience({
               </div>
               {separateFilesFlow ? (
                 <div className="asset-switch-stack">
-                  <div className="asset-switch-row" role="tablist" aria-label="Building and apartment files">
+                  <div className="asset-switch-row" role="tablist" aria-label="Building and interior files">
                     <button
                       type="button"
                       role="tab"
@@ -127,6 +132,9 @@ export default function FullProjectExperience({
                     asset={selectedAsset}
                     project={project}
                     caption={selectedCaption}
+                    viewerMode={selectedViewerMode}
+                    viewerConfig={selectedViewerConfig}
+                    statusLabel={selectedStatusLabel}
                   />
                 </div>
               ) : integratedBuildingFlow ? (

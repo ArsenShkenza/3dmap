@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import InteriorExplorer3D from "@/components/InteriorExplorer3D";
 
 const DEFAULT_VIEWER_CONFIG = {
   autoRotate: true,
@@ -34,7 +35,46 @@ function getViewerConfig(viewerMode, viewerConfig) {
   };
 }
 
-export default function ModelStage({
+async function toggleFullscreen(container, isFullscreen) {
+  if (typeof document === "undefined") {
+    return;
+  }
+
+  if (isFullscreen) {
+    await document.exitFullscreen?.();
+    return;
+  }
+
+  await container?.requestFullscreen?.();
+}
+
+function FullscreenIcon({ isFullscreen }) {
+  return isFullscreen ? (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M9 4H5v4M15 4h4v4M9 20H5v-4M15 20h4v-4"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ) : (
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d="M9 3H4v5M15 3h5v5M9 21H4v-5M15 21h5v-5"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function StandardModelStage({
   asset,
   project,
   caption,
@@ -43,11 +83,24 @@ export default function ModelStage({
   statusLabel = "AR Ready"
 }) {
   const viewerRef = useRef(null);
+  const stageRef = useRef(null);
   const [status, setStatus] = useState("loading");
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const resolvedViewerConfig = useMemo(
     () => getViewerConfig(viewerMode, viewerConfig),
     [viewerConfig, viewerMode]
   );
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(document.fullscreenElement === stageRef.current);
+    };
+
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+    };
+  }, []);
 
   useEffect(() => {
     setStatus("loading");
@@ -145,7 +198,18 @@ export default function ModelStage({
         <span className="status-pill subtle">{statusLabel}</span>
       </div>
 
-      <div className="model-stage">
+      <div ref={stageRef} className={`model-stage${isFullscreen ? " is-fullscreen" : ""}`}>
+        <div className="viewer-toolbar">
+          <button
+            type="button"
+            className="viewer-toolbar-button"
+            onClick={() => toggleFullscreen(stageRef.current, isFullscreen)}
+            aria-label={isFullscreen ? "Exit fullscreen view" : "Expand viewer"}
+            title={isFullscreen ? "Exit fullscreen view" : "Expand viewer"}
+          >
+            <FullscreenIcon isFullscreen={isFullscreen} />
+          </button>
+        </div>
         <model-viewer
           key={asset.id}
           ref={viewerRef}
@@ -181,10 +245,26 @@ export default function ModelStage({
         ) : null}
       </div>
 
+      <p className="viewer-controls-note">Drag to rotate. Scroll to zoom. Use Expand View for closer review.</p>
       <p className="model-caption">{caption ?? project.virtualExperience}</p>
       <p className="model-meta">
         Current asset: <code>{asset.fileName}</code>
       </p>
     </article>
   );
+}
+
+export default function ModelStage(props) {
+  if (props.viewerMode === "interior-navigation") {
+    return (
+      <InteriorExplorer3D
+        asset={props.asset}
+        project={props.project}
+        caption={props.caption}
+        statusLabel={props.statusLabel}
+      />
+    );
+  }
+
+  return <StandardModelStage {...props} />;
 }
