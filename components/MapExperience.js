@@ -121,9 +121,9 @@ function getFocusView(project, hasModel) {
   return {
     center: hasModel ? getFootprintCentroid(project) : project.center,
     zoom: hasModel
-      ? project.mapModelZoom ?? Math.max(project.zoom + 1.2, 16.1)
+      ? project.mapModelZoom ?? Math.max(project.zoom + 2.1, 17.4)
       : project.zoom,
-    pitch: hasModel ? Math.max(project.pitch, 66) : project.pitch,
+    pitch: hasModel ? Math.max(project.pitch, 70) : project.pitch,
     bearing: project.bearing
   };
 }
