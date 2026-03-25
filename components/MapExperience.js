@@ -260,6 +260,7 @@ export default function MapExperience({
 
     return () => {
       disposed = true;
+      setReady(false);
       popupRef.current?.remove();
       mapRef.current?.remove();
       mapRef.current = null;
@@ -337,48 +338,24 @@ export default function MapExperience({
 
   return (
     <div className="map-frame">
-      <div className="map-copy">
+      <div className="map-summary-card">
         <p className="section-label">Market View</p>
         <h2>{selectedProject.name}</h2>
-        <p>
-          The map now reads closer to the brief: a darker Albania and Kosovo
-          context, glow-dot selection, and massing volumes that make the story
-          feel more 3D than a flat listing map. The imported GLB files are
-          previewed in the asset vault while these three hero opportunities stay
-          mapped here.
-        </p>
-      </div>
-
-      <div className="map-kpis">
-        <div>
-          <span className="stat-label">Selected Access</span>
-          <strong>{selectedProject.access}</strong>
+        <p>{selectedProject.stageSummary}</p>
+        <div className="map-summary-kpis">
+          <div>
+            <span className="stat-label">Access</span>
+            <strong>{selectedProject.access}</strong>
+          </div>
+          <div>
+            <span className="stat-label">Stage</span>
+            <strong>{selectedProject.stage}</strong>
+          </div>
+          <div>
+            <span className="stat-label">Return</span>
+            <strong>{selectedProject.roi}</strong>
+          </div>
         </div>
-        <div>
-          <span className="stat-label">Stage</span>
-          <strong>{selectedProject.stage}</strong>
-        </div>
-        <div>
-          <span className="stat-label">Target Return</span>
-          <strong>{selectedProject.roi}</strong>
-        </div>
-      </div>
-
-      <div className="map-rail">
-        {projects.map((project) => (
-          <button
-            key={project.id}
-            type="button"
-            className={`map-rail-card${
-              project.id === selectedProject.id ? " active" : ""
-            }`}
-            onClick={() => onSelectProject(project.id)}
-          >
-            <span>{project.city}</span>
-            <strong>{project.name}</strong>
-            <small>{project.modelLabel}</small>
-          </button>
-        ))}
       </div>
 
       <div ref={containerRef} className="map-canvas" />
