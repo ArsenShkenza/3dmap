@@ -31,8 +31,7 @@ Then open `http://localhost:3000`.
 - `app/`: Next.js entrypoints and global styling
 - `components/`: interactive UI and map experience
 - `lib/projects.js`: curated investment data for the concept pitch
-- `public/assets/`: models and static art carried forward from the prototype
-- `assets/`: editable source asset dropzone that syncs into `public/assets/` on `dev` and `build`
+- `public/assets/`: the single source of truth for models and other static media
 - `.codex/skills/`: project-specific skills for future iteration
 
 ## Project skills
@@ -43,5 +42,5 @@ Then open `http://localhost:3000`.
 ## Notes
 
 - The current map uses open raster tiles, glow-dot selection, and conceptual 3D massing for the concept deck.
-- Any new files added to `assets/` are copied into `public/assets/` automatically before `npm run dev` and `npm run build`.
+- Add new GLBs and other static media directly to `public/assets/`.
 - Authentication, a true data room, and AI-backed search are still concept-stage items.

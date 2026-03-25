@@ -1,10 +1,53 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-export default function ModelStage({ asset, project }) {
+const DEFAULT_VIEWER_CONFIG = {
+  autoRotate: true,
+  cameraOrbit: "-35deg 68deg 130%",
+  minCameraOrbit: "auto 35deg auto",
+  maxCameraOrbit: "auto 88deg auto",
+  interactionPrompt: "auto",
+  minFieldOfView: null,
+  maxFieldOfView: null
+};
+
+const INTERIOR_NAVIGATION_CONFIG = {
+  autoRotate: false,
+  cameraOrbit: "-18deg 78deg 42%",
+  minCameraOrbit: "auto 0deg 4%",
+  maxCameraOrbit: "auto 89deg 240%",
+  interactionPrompt: "auto",
+  minFieldOfView: "12deg",
+  maxFieldOfView: "56deg"
+};
+
+function getViewerConfig(viewerMode, viewerConfig) {
+  const baseConfig =
+    viewerMode === "interior-navigation"
+      ? INTERIOR_NAVIGATION_CONFIG
+      : DEFAULT_VIEWER_CONFIG;
+
+  return {
+    ...baseConfig,
+    ...viewerConfig
+  };
+}
+
+export default function ModelStage({
+  asset,
+  project,
+  caption,
+  viewerMode = "default",
+  viewerConfig,
+  statusLabel = "AR Ready"
+}) {
   const viewerRef = useRef(null);
   const [status, setStatus] = useState("loading");
+  const resolvedViewerConfig = useMemo(
+    () => getViewerConfig(viewerMode, viewerConfig),
+    [viewerConfig, viewerMode]
+  );
 
   useEffect(() => {
     setStatus("loading");
@@ -44,7 +87,35 @@ export default function ModelStage({ asset, project }) {
           viewer.removeEventListener("error", handleError);
         };
 
-        viewer.poster = asset.posterSrc;
+        if (asset.posterSrc) {
+          viewer.poster = asset.posterSrc;
+        } else {
+          viewer.removeAttribute("poster");
+        }
+
+        viewer.setAttribute("camera-orbit", resolvedViewerConfig.cameraOrbit);
+        viewer.setAttribute("min-camera-orbit", resolvedViewerConfig.minCameraOrbit);
+        viewer.setAttribute("max-camera-orbit", resolvedViewerConfig.maxCameraOrbit);
+        viewer.setAttribute("interaction-prompt", resolvedViewerConfig.interactionPrompt);
+
+        if (resolvedViewerConfig.minFieldOfView) {
+          viewer.setAttribute("min-field-of-view", resolvedViewerConfig.minFieldOfView);
+        } else {
+          viewer.removeAttribute("min-field-of-view");
+        }
+
+        if (resolvedViewerConfig.maxFieldOfView) {
+          viewer.setAttribute("max-field-of-view", resolvedViewerConfig.maxFieldOfView);
+        } else {
+          viewer.removeAttribute("max-field-of-view");
+        }
+
+        if (resolvedViewerConfig.autoRotate) {
+          viewer.setAttribute("auto-rotate", "");
+        } else {
+          viewer.removeAttribute("auto-rotate");
+        }
+
         viewer.src = asset.src;
         if (typeof viewer.load === "function") {
           viewer.load();
@@ -62,7 +133,7 @@ export default function ModelStage({ asset, project }) {
       cancelled = true;
       cleanup();
     };
-  }, [asset.id, asset.posterSrc, asset.src]);
+  }, [asset.id, asset.posterSrc, asset.src, resolvedViewerConfig]);
 
   return (
     <article className="model-card">
@@ -71,7 +142,7 @@ export default function ModelStage({ asset, project }) {
           <p className="section-label">Virtual Experience</p>
           <h3>{asset.label}</h3>
         </div>
-        <span className="status-pill subtle">AR Ready</span>
+        <span className="status-pill subtle">{statusLabel}</span>
       </div>
 
       <div className="model-stage">
@@ -81,19 +152,14 @@ export default function ModelStage({ asset, project }) {
           poster={asset.posterSrc}
           alt={asset.label}
           camera-controls
-          auto-rotate
           ar
           shadow-intensity="1"
           environment-image="neutral"
           exposure="1.05"
-          interaction-prompt="auto"
-          camera-orbit="-35deg 68deg 130%"
-          min-camera-orbit="auto 35deg auto"
-          max-camera-orbit="auto 88deg auto"
           className="model-viewer"
         />
 
-        {status === "error" ? (
+        {status === "error" && asset.posterSrc ? (
           <img
             className="model-fallback"
             src={asset.posterSrc}
@@ -115,7 +181,7 @@ export default function ModelStage({ asset, project }) {
         ) : null}
       </div>
 
-      <p className="model-caption">{project.virtualExperience}</p>
+      <p className="model-caption">{caption ?? project.virtualExperience}</p>
       <p className="model-meta">
         Current asset: <code>{asset.fileName}</code>
       </p>

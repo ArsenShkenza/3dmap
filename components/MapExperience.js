@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const MODEL_LAYER_ID = "selected-project-model";
+const MAX_EXTERIOR_MAP_ZOOM = 20;
 
 function polygonCollection(projects) {
   return {
@@ -121,8 +122,11 @@ function getFocusView(project, hasModel) {
   return {
     center: hasModel ? getFootprintCentroid(project) : project.center,
     zoom: hasModel
-      ? project.mapModelZoom ?? Math.max(project.zoom + 2.1, 17.4)
-      : project.zoom,
+      ? Math.min(
+          project.mapModelZoom ?? Math.max(project.zoom + 2.1, 17.4),
+          MAX_EXTERIOR_MAP_ZOOM
+        )
+      : Math.min(project.zoom, MAX_EXTERIOR_MAP_ZOOM),
     pitch: hasModel ? Math.max(project.pitch, 70) : project.pitch,
     bearing: project.bearing
   };
@@ -208,6 +212,7 @@ export default function MapExperience({
         style: mapStyle(),
         center: [20.15, 41.72],
         zoom: 7.2,
+        maxZoom: MAX_EXTERIOR_MAP_ZOOM,
         pitch: 46,
         bearing: -8,
         antialias: true
