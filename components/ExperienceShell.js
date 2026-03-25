@@ -96,6 +96,22 @@ export default function ExperienceShell({
     []
   );
 
+  const handleOpenProject = useCallback(() => {
+    if (!selectedProject?.id) {
+      return;
+    }
+
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const url = new URL(window.location.href);
+    url.pathname = `/experience/${selectedProject.id}`;
+    url.search = "";
+    url.hash = "";
+    window.open(url.toString(), "_blank", "noopener,noreferrer");
+  }, [selectedProject?.id]);
+
   const discoverContent = (
     <section className="detail-card">
       <div className="detail-hero">
@@ -325,6 +341,27 @@ export default function ExperienceShell({
                 </button>
               ))}
             </div>
+            <button
+              type="button"
+              className="switcher-card"
+              onClick={handleOpenProject}
+              disabled={!selectedProject?.id}
+              aria-label={
+                selectedProject?.name
+                  ? `Open ${selectedProject.name} details in new tab`
+                  : "Open project details in new tab"
+              }
+              style={{ marginTop: 12 }}
+            >
+              <div className="switcher-card-head">
+                <div>
+                  <p className="deal-city">Project Experience</p>
+                  <strong>Open {selectedProject?.name ?? "details"}</strong>
+                </div>
+                <span className="access-pill">Open</span>
+              </div>
+              <p className="deal-copy">Launch the full project memo & elevation.</p>
+            </button>
           </div>
         </div>
 

@@ -4,8 +4,24 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { FLOOR_POLYGONS_ABSOLUTE } from "@/lib/floor-polygons";
 
+function getTracedFloorCount(projectId) {
+  const floors = FLOOR_POLYGONS_ABSOLUTE?.[projectId]?.floors;
+  if (!floors) {
+    return 0;
+  }
+
+  return Object.values(floors).filter(
+    (coords) => Array.isArray(coords) && coords.length >= 6
+  ).length;
+}
+
 function buildFloors(project) {
-  const floorCount = Math.max(Number(project.floorCount) || 0, project.objectKind === "land" ? 6 : 4);
+  const tracedFloorCount = getTracedFloorCount(project.id);
+  const floorCount = Math.max(
+    Number(project.floorCount) || 0,
+    tracedFloorCount,
+    project.objectKind === "land" ? 6 : 4
+  );
   return Array.from({ length: floorCount }, (_, index) => {
     const floorNumber = floorCount - index;
     return {
