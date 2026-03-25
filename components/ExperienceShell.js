@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   startTransition,
   useCallback,
@@ -234,6 +235,29 @@ export default function ExperienceShell({
         </div>
 
         <ModelStage asset={selectedAsset} project={selectedProject} />
+
+        <div className="view-section view-section-divided">
+          <div className="section-head">
+            <div>
+              <p className="section-label">Project Access</p>
+              <h3>Open the full project room for deeper exploration.</h3>
+            </div>
+          </div>
+          <p className="detail-copy compact">
+            Keep the opportunity surface focused on the exterior story and headline
+            investment case, then move into a dedicated project space for floors,
+            program depth, and richer building review.
+          </p>
+          <div className="cta-row">
+            <Link href={`/project/${selectedProject.id}`} className="primary-link-button">
+              View Full Project
+            </Link>
+            <p className="cta-note">
+              Inside the full project room you can inspect the floor explorer and
+              the expanded diligence narrative.
+            </p>
+          </div>
+        </div>
       </div>
     </section>
   );
