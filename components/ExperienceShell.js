@@ -338,6 +338,7 @@ export default function ExperienceShell({
         <MapExperience
           projects={filteredProjects.length ? filteredProjects : projects}
           selectedProject={selectedProject}
+          selectedAsset={selectedAsset}
           onSelectProject={handleSelectProject}
         />
       </section>

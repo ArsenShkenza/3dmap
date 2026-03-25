@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+const MODEL_LAYER_ID = "selected-project-model";
+
 function polygonCollection(projects) {
   return {
     type: "FeatureCollection",
@@ -70,14 +72,44 @@ function setPaintIfLayerExists(map, layerId, property, value) {
   map.setPaintProperty(layerId, property, value);
 }
 
+function getMassingOpacity(selectedId, hasModel) {
+  return [
+    "case",
+    ["==", ["get", "id"], selectedId],
+    hasModel ? 0.08 : 0.58,
+    0.42
+  ];
+}
+
+function getModelTransform(maplibregl, project) {
+  const [lng, lat] = project.center;
+  const coordinate = maplibregl.MercatorCoordinate.fromLngLat({ lng, lat }, 0);
+
+  return {
+    translateX: coordinate.x,
+    translateY: coordinate.y,
+    translateZ: coordinate.z,
+    rotateX: Math.PI / 2,
+    rotateY: 0,
+    rotateZ: ((project.mapModelRotation ?? 0) * Math.PI) / 180,
+    scale: coordinate.meterInMercatorCoordinateUnits()
+  };
+}
+
 export default function MapExperience({
   projects,
   selectedProject,
+  selectedAsset,
   onSelectProject
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
   const popupRef = useRef(null);
+  const modelCacheRef = useRef(new Map());
+  const modelLayerRef = useRef(null);
+  const modelGroupRef = useRef(null);
+  const modelTransformRef = useRef(null);
+  const threeStateRef = useRef(null);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -85,6 +117,10 @@ export default function MapExperience({
 
     async function setup() {
       const maplibregl = (await import("maplibre-gl")).default;
+      const THREE = await import("three");
+      const { GLTFLoader } = await import(
+        "three/examples/jsm/loaders/GLTFLoader.js"
+      );
       if (!containerRef.current || disposed || mapRef.current) {
         return;
       }
@@ -105,6 +141,12 @@ export default function MapExperience({
         closeOnClick: false,
         offset: 18
       });
+      threeStateRef.current = {
+        GLTFLoader,
+        THREE,
+        map,
+        maplibregl
+      };
 
       map.addControl(new maplibregl.NavigationControl({ showCompass: false }));
 
@@ -147,7 +189,10 @@ export default function MapExperience({
             ],
             "fill-extrusion-height": ["get", "height"],
             "fill-extrusion-base": 0,
-            "fill-extrusion-opacity": 0.58
+            "fill-extrusion-opacity": getMassingOpacity(
+              selectedProject.id,
+              Boolean(selectedAsset?.src)
+            )
           }
         });
 
@@ -193,6 +238,83 @@ export default function MapExperience({
             "circle-opacity": 0.48
           }
         });
+
+        const customLayer = {
+          id: MODEL_LAYER_ID,
+          type: "custom",
+          renderingMode: "3d",
+          onAdd(mapInstance, gl) {
+            this.camera = new THREE.Camera();
+            this.scene = new THREE.Scene();
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 1.7);
+            const keyLight = new THREE.DirectionalLight(0xf6e3bf, 1.8);
+            keyLight.position.set(120, -90, 180);
+            const fillLight = new THREE.DirectionalLight(0x7ab9db, 0.85);
+            fillLight.position.set(-140, 80, 120);
+
+            this.scene.add(ambientLight, keyLight, fillLight);
+
+            this.renderer = new THREE.WebGLRenderer({
+              antialias: true,
+              canvas: map.getCanvas(),
+              context: gl
+            });
+            this.renderer.autoClear = false;
+
+            if ("outputColorSpace" in this.renderer) {
+              this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+            }
+
+            modelLayerRef.current = this;
+          },
+          render(gl, matrix) {
+            const transform = modelTransformRef.current;
+
+            this.renderer.resetState();
+
+            if (!transform || !modelGroupRef.current) {
+              return;
+            }
+
+            const rotationX = new THREE.Matrix4().makeRotationAxis(
+              new THREE.Vector3(1, 0, 0),
+              transform.rotateX
+            );
+            const rotationY = new THREE.Matrix4().makeRotationAxis(
+              new THREE.Vector3(0, 1, 0),
+              transform.rotateY
+            );
+            const rotationZ = new THREE.Matrix4().makeRotationAxis(
+              new THREE.Vector3(0, 0, 1),
+              transform.rotateZ
+            );
+
+            const viewMatrix = new THREE.Matrix4().fromArray(matrix);
+            const modelMatrix = new THREE.Matrix4()
+              .makeTranslation(
+                transform.translateX,
+                transform.translateY,
+                transform.translateZ
+              )
+              .scale(
+                new THREE.Vector3(
+                  transform.scale,
+                  -transform.scale,
+                  transform.scale
+                )
+              )
+              .multiply(rotationX)
+              .multiply(rotationY)
+              .multiply(rotationZ);
+
+            this.camera.projectionMatrix = viewMatrix.multiply(modelMatrix);
+            this.renderer.render(this.scene, this.camera);
+            map.triggerRepaint();
+          }
+        };
+
+        map.addLayer(customLayer, "project-marker-glow");
 
         map.addLayer({
           id: "project-markers",
@@ -261,6 +383,10 @@ export default function MapExperience({
     return () => {
       disposed = true;
       setReady(false);
+      modelGroupRef.current = null;
+      modelTransformRef.current = null;
+      modelLayerRef.current = null;
+      threeStateRef.current = null;
       popupRef.current?.remove();
       mapRef.current?.remove();
       mapRef.current = null;
@@ -300,6 +426,12 @@ export default function MapExperience({
       "#f1d3a1",
       "#4d7a97"
     ]);
+    setPaintIfLayerExists(
+      map,
+      "project-massing",
+      "fill-extrusion-opacity",
+      getMassingOpacity(selectedProject.id, Boolean(selectedAsset?.src))
+    );
     setPaintIfLayerExists(map, "project-marker-glow", "circle-radius", [
       "case",
       ["==", ["get", "id"], selectedProject.id],
@@ -334,7 +466,95 @@ export default function MapExperience({
       curve: 1.15,
       essential: true
     });
-  }, [projects, ready, selectedProject]);
+  }, [projects, ready, selectedAsset?.src, selectedProject]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function syncSelectedModel() {
+      const modelLayer = modelLayerRef.current;
+      const threeState = threeStateRef.current;
+      if (!ready || !modelLayer || !threeState) {
+        return;
+      }
+
+      const { GLTFLoader, THREE, map, maplibregl } = threeState;
+      const scene = modelLayer.scene;
+
+      if (modelGroupRef.current) {
+        scene.remove(modelGroupRef.current);
+        modelGroupRef.current = null;
+      }
+      modelTransformRef.current = null;
+
+      if (!selectedAsset?.src) {
+        map.triggerRepaint();
+        return;
+      }
+
+      try {
+        let cachedModel = modelCacheRef.current.get(selectedAsset.src);
+        if (!cachedModel) {
+          const loader = new GLTFLoader();
+          cachedModel = loader.loadAsync(selectedAsset.src).then((gltf) => gltf.scene);
+          modelCacheRef.current.set(selectedAsset.src, cachedModel);
+        }
+
+        const baseScene = await cachedModel;
+        if (cancelled || !baseScene) {
+          return;
+        }
+
+        const modelScene = baseScene.clone(true);
+        modelScene.traverse((node) => {
+          if (!node.isMesh) {
+            return;
+          }
+
+          node.castShadow = true;
+          node.receiveShadow = true;
+
+          if (node.material) {
+            node.material.needsUpdate = true;
+          }
+        });
+
+        const initialBox = new THREE.Box3().setFromObject(modelScene);
+        const initialSize = initialBox.getSize(new THREE.Vector3());
+        const targetHeight = Math.max(selectedProject.massingHeight ?? 24, 12);
+        const scaleFactor = targetHeight / Math.max(initialSize.y, 0.001);
+        modelScene.scale.setScalar(scaleFactor);
+
+        const scaledBox = new THREE.Box3().setFromObject(modelScene);
+        const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
+        modelScene.position.set(
+          -scaledCenter.x,
+          -scaledBox.min.y,
+          -scaledCenter.z
+        );
+
+        const modelGroup = new THREE.Group();
+        modelGroup.add(modelScene);
+
+        if (cancelled) {
+          return;
+        }
+
+        scene.add(modelGroup);
+        modelGroupRef.current = modelGroup;
+        modelTransformRef.current = getModelTransform(maplibregl, selectedProject);
+        map.triggerRepaint();
+      } catch (error) {
+        console.error("Failed to place 3D model on map", error);
+      }
+    }
+
+    syncSelectedModel();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, selectedAsset?.src, selectedProject]);
 
   return (
     <div className="map-frame">
