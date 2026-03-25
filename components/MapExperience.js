@@ -72,17 +72,64 @@ function setPaintIfLayerExists(map, layerId, property, value) {
   map.setPaintProperty(layerId, property, value);
 }
 
-function getMassingOpacity(selectedId, hasModel) {
-  return [
-    "case",
-    ["==", ["get", "id"], selectedId],
-    hasModel ? 0.08 : 0.58,
-    0.42
-  ];
+function setFilterIfLayerExists(map, layerId, filter) {
+  if (!map.getLayer(layerId)) {
+    return;
+  }
+
+  map.setFilter(layerId, filter);
+}
+
+function getSelectedMassingOpacity(hasModel) {
+  return hasModel ? 0.22 : 0.58;
+}
+
+function getSelectedMassingHeight(project, hasModel) {
+  if (!hasModel) {
+    return ["get", "height"];
+  }
+
+  return project.mapModelBaseHeight ?? 1.4;
+}
+
+function getFootprintCentroid(project) {
+  const footprint = project.footprint ?? [];
+  if (!footprint.length) {
+    return project.center;
+  }
+
+  const ring =
+    footprint.length > 1 &&
+    footprint[0][0] === footprint[footprint.length - 1][0] &&
+    footprint[0][1] === footprint[footprint.length - 1][1]
+      ? footprint.slice(0, -1)
+      : footprint;
+
+  const total = ring.reduce(
+    (accumulator, [lng, lat]) => {
+      accumulator.lng += lng;
+      accumulator.lat += lat;
+      return accumulator;
+    },
+    { lng: 0, lat: 0 }
+  );
+
+  return [total.lng / ring.length, total.lat / ring.length];
+}
+
+function getFocusView(project, hasModel) {
+  return {
+    center: hasModel ? getFootprintCentroid(project) : project.center,
+    zoom: hasModel
+      ? project.mapModelZoom ?? Math.max(project.zoom + 1.2, 16.1)
+      : project.zoom,
+    pitch: hasModel ? Math.max(project.pitch, 66) : project.pitch,
+    bearing: project.bearing
+  };
 }
 
 function getModelTransform(maplibregl, project) {
-  const [lng, lat] = project.center;
+  const [lng, lat] = getFootprintCentroid(project);
   const coordinate = maplibregl.MercatorCoordinate.fromLngLat({ lng, lat }, 0);
 
   return {
@@ -93,6 +140,37 @@ function getModelTransform(maplibregl, project) {
     rotateY: 0,
     rotateZ: ((project.mapModelRotation ?? 0) * Math.PI) / 180,
     scale: coordinate.meterInMercatorCoordinateUnits()
+  };
+}
+
+function getFootprintDimensions(project) {
+  const footprint = project.footprint ?? [];
+  if (!footprint.length) {
+    return { width: 0, depth: 0 };
+  }
+
+  const [centerLng, centerLat] = project.center;
+  const latFactor = 111320;
+  const lngFactor = Math.cos((centerLat * Math.PI) / 180) * 111320;
+
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minZ = Infinity;
+  let maxZ = -Infinity;
+
+  footprint.forEach(([lng, lat]) => {
+    const x = (lng - centerLng) * lngFactor;
+    const z = (lat - centerLat) * latFactor;
+
+    minX = Math.min(minX, x);
+    maxX = Math.max(maxX, x);
+    minZ = Math.min(minZ, z);
+    maxZ = Math.max(maxZ, z);
+  });
+
+  return {
+    width: Math.max(maxX - minX, 0),
+    depth: Math.max(maxZ - minZ, 0)
   };
 }
 
@@ -177,20 +255,31 @@ export default function MapExperience({
         });
 
         map.addLayer({
-          id: "project-massing",
+          id: "project-massing-base",
           type: "fill-extrusion",
           source: "projects",
+          filter: ["!=", ["get", "id"], selectedProject.id],
           paint: {
-            "fill-extrusion-color": [
-              "case",
-              ["==", ["get", "id"], selectedProject.id],
-              "#f1d3a1",
-              "#4d7a97"
-            ],
+            "fill-extrusion-color": "#4d7a97",
             "fill-extrusion-height": ["get", "height"],
             "fill-extrusion-base": 0,
-            "fill-extrusion-opacity": getMassingOpacity(
-              selectedProject.id,
+            "fill-extrusion-opacity": 0.42
+          }
+        });
+
+        map.addLayer({
+          id: "project-massing-selected",
+          type: "fill-extrusion",
+          source: "projects",
+          filter: ["==", ["get", "id"], selectedProject.id],
+          paint: {
+            "fill-extrusion-color": "#f1d3a1",
+            "fill-extrusion-height": getSelectedMassingHeight(
+              selectedProject,
+              Boolean(selectedAsset?.src)
+            ),
+            "fill-extrusion-base": 0,
+            "fill-extrusion-opacity": getSelectedMassingOpacity(
               Boolean(selectedAsset?.src)
             )
           }
@@ -366,7 +455,12 @@ export default function MapExperience({
           popupRef.current?.remove();
         };
 
-        ["project-markers", "project-marker-glow", "project-massing"].forEach(
+        [
+          "project-markers",
+          "project-marker-glow",
+          "project-massing-base",
+          "project-massing-selected"
+        ].forEach(
           (layerId) => {
             map.on("click", layerId, handleSelect);
             map.on("mouseenter", layerId, handleEnter);
@@ -420,17 +514,27 @@ export default function MapExperience({
       3,
       1.25
     ]);
-    setPaintIfLayerExists(map, "project-massing", "fill-extrusion-color", [
-      "case",
-      ["==", ["get", "id"], selectedProject.id],
-      "#f1d3a1",
-      "#4d7a97"
+    setFilterIfLayerExists(map, "project-massing-base", [
+      "!=",
+      ["get", "id"],
+      selectedProject.id
+    ]);
+    setFilterIfLayerExists(map, "project-massing-selected", [
+      "==",
+      ["get", "id"],
+      selectedProject.id
     ]);
     setPaintIfLayerExists(
       map,
-      "project-massing",
+      "project-massing-selected",
+      "fill-extrusion-height",
+      getSelectedMassingHeight(selectedProject, Boolean(selectedAsset?.src))
+    );
+    setPaintIfLayerExists(
+      map,
+      "project-massing-selected",
       "fill-extrusion-opacity",
-      getMassingOpacity(selectedProject.id, Boolean(selectedAsset?.src))
+      getSelectedMassingOpacity(Boolean(selectedAsset?.src))
     );
     setPaintIfLayerExists(map, "project-marker-glow", "circle-radius", [
       "case",
@@ -457,11 +561,13 @@ export default function MapExperience({
       "#8dd3ff"
     ]);
 
+    const focusView = getFocusView(selectedProject, Boolean(selectedAsset?.src));
+
     map.flyTo({
-      center: selectedProject.center,
-      zoom: selectedProject.zoom,
-      pitch: selectedProject.pitch,
-      bearing: selectedProject.bearing,
+      center: focusView.center,
+      zoom: focusView.zoom,
+      pitch: focusView.pitch,
+      bearing: focusView.bearing,
       speed: 0.7,
       curve: 1.15,
       essential: true
@@ -522,7 +628,20 @@ export default function MapExperience({
         const initialBox = new THREE.Box3().setFromObject(modelScene);
         const initialSize = initialBox.getSize(new THREE.Vector3());
         const targetHeight = Math.max(selectedProject.massingHeight ?? 24, 12);
-        const scaleFactor = targetHeight / Math.max(initialSize.y, 0.001);
+        const { width, depth } = getFootprintDimensions(selectedProject);
+        const footprintFill = selectedProject.mapModelFootprintFill ?? 0.78;
+        const targetWidth = Math.max(width * footprintFill, 12);
+        const targetDepth = Math.max(depth * footprintFill, 12);
+        const heightScale = targetHeight / Math.max(initialSize.y, 0.001);
+        const widthScale = targetWidth / Math.max(initialSize.x, 0.001);
+        const depthScale = targetDepth / Math.max(initialSize.z, 0.001);
+        const footprintScale = Math.min(widthScale, depthScale);
+        const maxHeightScale =
+          heightScale * (selectedProject.mapModelMaxHeightFactor ?? 1.8);
+        const scaleFactor =
+          Math.min(footprintScale, maxHeightScale) *
+          (selectedProject.mapModelScale ?? 1);
+
         modelScene.scale.setScalar(scaleFactor);
 
         const scaledBox = new THREE.Box3().setFromObject(modelScene);
