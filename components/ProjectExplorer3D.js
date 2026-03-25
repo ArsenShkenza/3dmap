@@ -403,7 +403,7 @@ export default function ProjectExplorer3D({ asset, project }) {
       <div className="model-stage floor-model-stage">
         <div ref={stageRef} className="three-model-shell" />
 
-        {status === "error" ? (
+        {status === "error" && asset.posterSrc ? (
           <img className="model-fallback" src={asset.posterSrc} alt={asset.label} />
         ) : null}
 

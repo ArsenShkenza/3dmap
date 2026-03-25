@@ -44,7 +44,11 @@ export default function ModelStage({ asset, project }) {
           viewer.removeEventListener("error", handleError);
         };
 
-        viewer.poster = asset.posterSrc;
+        if (asset.posterSrc) {
+          viewer.poster = asset.posterSrc;
+        } else {
+          viewer.removeAttribute("poster");
+        }
         viewer.src = asset.src;
         if (typeof viewer.load === "function") {
           viewer.load();
@@ -93,7 +97,7 @@ export default function ModelStage({ asset, project }) {
           className="model-viewer"
         />
 
-        {status === "error" ? (
+        {status === "error" && asset.posterSrc ? (
           <img
             className="model-fallback"
             src={asset.posterSrc}

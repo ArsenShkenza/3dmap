@@ -6,6 +6,7 @@
     "predev": "node scripts/sync-assets.mjs",
     "prebuild": "node scripts/sync-assets.mjs",
     "dev": "next dev",
+    "dev:clean": "rm -rf .next && npm run dev",
     "build": "next build",
     "start": "next start"
   },
