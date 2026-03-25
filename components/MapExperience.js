@@ -90,7 +90,7 @@ function getSelectedMassingHeight(project, hasModel) {
     return ["get", "height"];
   }
 
-  return project.mapModelBaseHeight ?? 1.4;
+  return project.mapModelBaseHeight ?? 0.01;
 }
 
 function getFootprintCentroid(project) {
@@ -134,7 +134,10 @@ function getFocusView(project, hasModel) {
 
 function getModelTransform(maplibregl, project) {
   const [lng, lat] = getFootprintCentroid(project);
-  const coordinate = maplibregl.MercatorCoordinate.fromLngLat({ lng, lat }, 0);
+  const coordinate = maplibregl.MercatorCoordinate.fromLngLat(
+    { lng, lat },
+    project.mapModelElevation ?? 0
+  );
 
   return {
     translateX: coordinate.x,
@@ -625,7 +628,19 @@ export default function MapExperience({
           node.castShadow = true;
           node.receiveShadow = true;
 
+          if (Array.isArray(node.material)) {
+            node.material = node.material.map((material) => {
+              const clonedMaterial = material.clone();
+              clonedMaterial.side = THREE.DoubleSide;
+              clonedMaterial.needsUpdate = true;
+              return clonedMaterial;
+            });
+            return;
+          }
+
           if (node.material) {
+            node.material = node.material.clone();
+            node.material.side = THREE.DoubleSide;
             node.material.needsUpdate = true;
           }
         });
