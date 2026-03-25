@@ -13,7 +13,7 @@ export default function ModelStage({ asset, project }) {
 
     async function attachViewer() {
       try {
-        await import("@google/model-viewer/dist/model-viewer.min.js");
+        await import("@google/model-viewer/dist/model-viewer-module.min.js");
         await customElements.whenDefined("model-viewer");
 
         if (cancelled) {
