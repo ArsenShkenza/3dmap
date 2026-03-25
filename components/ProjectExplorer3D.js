@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   clampFloorValue,
   FLOOR_OVERVIEW_VALUE,
-  getFloorCount,
   getFloorFocusCopy,
   getFloorLabel,
   getFloorOptions
@@ -79,30 +78,6 @@ function applyNamedFloorVisibility(root, namedFloorNodes, selectedFloor) {
   );
 }
 
-function cloneMaterials(root) {
-  const materials = [];
-
-  root.traverse((node) => {
-    if (!node.isMesh || !node.material) {
-      return;
-    }
-
-    if (Array.isArray(node.material)) {
-      node.material = node.material.map((material) => {
-        const clone = material.clone();
-        materials.push(clone);
-        return clone;
-      });
-      return;
-    }
-
-    node.material = node.material.clone();
-    materials.push(node.material);
-  });
-
-  return materials;
-}
-
 function normalizeModel(root, THREE) {
   const initialBox = new THREE.Box3().setFromObject(root);
   const initialSize = initialBox.getSize(new THREE.Vector3());
@@ -118,33 +93,11 @@ function normalizeModel(root, THREE) {
   return new THREE.Box3().setFromObject(root);
 }
 
-function getSliceRange(bounds, floorCount, selectedFloor, padding = 0.06) {
-  const height = Math.max(bounds.max.y - bounds.min.y, 0.001);
-  const floorHeight = height / Math.max(floorCount, 1);
-  const rawLower = bounds.min.y + floorHeight * (selectedFloor - 1);
-  const rawUpper = bounds.min.y + floorHeight * selectedFloor;
-  const inset = floorHeight * padding;
-  const lower = rawLower + inset;
-  const upper = Math.max(lower + floorHeight * 0.18, rawUpper - inset);
-
-  return { lower, upper };
-}
-
-function setMaterialClipping(materials, planes) {
-  materials.forEach((material) => {
-    material.clippingPlanes = planes;
-    material.needsUpdate = true;
-  });
-}
-
-function focusCamera(viewerState, selectedFloor, project, sliceRange) {
+function focusCamera(viewerState, selectedFloor, project) {
   const { camera, controls, bounds } = viewerState;
   const size = bounds.getSize(viewerState.size);
   const maxDimension = Math.max(size.x, size.y, size.z, 0.001);
-  const focusHeight =
-    selectedFloor === FLOOR_OVERVIEW_VALUE || !sliceRange
-      ? bounds.min.y + size.y * 0.56
-      : (sliceRange.lower + sliceRange.upper) / 2;
+  const focusHeight = bounds.min.y + size.y * 0.56;
 
   controls.target.set(0, focusHeight, 0);
   controls.autoRotate = selectedFloor === FLOOR_OVERVIEW_VALUE;
@@ -166,36 +119,23 @@ function syncFloorPresentation(viewerState, asset, project, selectedFloor) {
     return;
   }
 
-  const mode = asset.floorExplorer?.mode ?? "slice";
-  const floorCount = getFloorCount(project);
   const hasNamedNodes = viewerState.namedFloorNodes.floorNodes.size > 0;
 
   showAllNodes(viewerState.root);
-  setMaterialClipping(viewerState.materials, null);
 
   if (selectedFloor === FLOOR_OVERVIEW_VALUE) {
-    focusCamera(viewerState, selectedFloor, project, null);
+    focusCamera(viewerState, selectedFloor, project);
     return;
   }
 
-  if (mode === "namedNodes" && hasNamedNodes) {
+  if (hasNamedNodes) {
     applyNamedFloorVisibility(viewerState.root, viewerState.namedFloorNodes, selectedFloor);
-    focusCamera(viewerState, selectedFloor, project, null);
+    focusCamera(viewerState, selectedFloor, project);
     return;
   }
 
-  const sliceRange = getSliceRange(
-    viewerState.bounds,
-    floorCount,
-    selectedFloor,
-    asset.floorExplorer?.slicePadding ?? 0.06
-  );
-
-  setMaterialClipping(viewerState.materials, [
-    new viewerState.THREE.Plane(new viewerState.THREE.Vector3(0, 1, 0), -sliceRange.lower),
-    new viewerState.THREE.Plane(new viewerState.THREE.Vector3(0, -1, 0), sliceRange.upper)
-  ]);
-  focusCamera(viewerState, selectedFloor, project, sliceRange);
+  showAllNodes(viewerState.root);
+  focusCamera(viewerState, FLOOR_OVERVIEW_VALUE, project);
 }
 
 export default function ProjectExplorer3D({ asset, project }) {
@@ -236,7 +176,6 @@ export default function ProjectExplorer3D({ asset, project }) {
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-        renderer.localClippingEnabled = true;
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.domElement.className = "three-model-stage";
 
@@ -289,7 +228,6 @@ export default function ProjectExplorer3D({ asset, project }) {
         }
 
         const modelScene = baseScene.clone(true);
-        const materials = cloneMaterials(modelScene);
         const bounds = normalizeModel(modelScene, THREE);
         const namedFloorNodes = collectNamedFloorNodes(modelScene, asset.floorExplorer);
 
@@ -300,7 +238,6 @@ export default function ProjectExplorer3D({ asset, project }) {
           bounds,
           camera,
           controls,
-          materials,
           namedFloorNodes,
           renderer,
           root: modelScene,
@@ -366,7 +303,7 @@ export default function ProjectExplorer3D({ asset, project }) {
           <div className="floor-directory-head">
             <p className="section-label">Floor Directory</p>
             <p className="floor-directory-copy">
-              Choose the exact level instead of scrubbing through the tower.
+              Choose an authored floor group from the structured building model.
             </p>
           </div>
 
@@ -423,7 +360,7 @@ export default function ProjectExplorer3D({ asset, project }) {
 
       <p className="model-caption">{getFloorFocusCopy(project, selectedFloor)}</p>
       <p className="model-meta">
-        Pilot mode: <code>{asset.floorExplorer?.mode ?? "slice"}</code>. Preferred export:
+        Explorer mode: <code>{asset.floorExplorer?.mode ?? "namedNodes"}</code>. Required export:
         <code> {asset.floorExplorer?.namedNodePattern ?? "floor_01"}</code>
       </p>
     </article>

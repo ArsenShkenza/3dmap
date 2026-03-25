@@ -45,7 +45,7 @@ export default function ExperienceShell({
     { id: "platform", label: "Platform" }
   ];
   const [activeCategory, setActiveCategory] = useState("all");
-  const [activeView, setActiveView] = useState("opportunity");
+  const [activeView, setActiveView] = useState("discover");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState(projects[0]?.id ?? null);
   const deferredQuery = useDeferredValue(query);

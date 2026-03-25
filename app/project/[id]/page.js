@@ -22,8 +22,9 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function ProjectPage({ params }) {
+export default async function ProjectPage({ params, searchParams }) {
   const { id } = await params;
+  const resolvedSearchParams = await searchParams;
   const project = projects.find((entry) => entry.id === id);
 
   if (!project) {
@@ -32,6 +33,24 @@ export default async function ProjectPage({ params }) {
 
   const asset =
     assetLibrary.find((entry) => entry.id === project.primaryAssetId) ?? assetLibrary[0];
+  const apartmentAssets =
+    project.fullProjectFlow?.unitAssets
+      ?.map((unit) => {
+        const asset = assetLibrary.find((entry) => entry.id === unit.assetId);
+        return asset ? { id: unit.id, asset } : null;
+      })
+      .filter(Boolean) ?? [];
+  const initialAssetKey =
+    typeof resolvedSearchParams?.asset === "string"
+      ? resolvedSearchParams.asset
+      : "building";
 
-  return <FullProjectExperience project={project} asset={asset} />;
+  return (
+    <FullProjectExperience
+      project={project}
+      asset={asset}
+      apartmentAssets={apartmentAssets}
+      initialAssetKey={initialAssetKey}
+    />
+  );
 }

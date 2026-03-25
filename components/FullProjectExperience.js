@@ -1,12 +1,68 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
 import ModelStage from "@/components/ModelStage";
 import ProjectExplorer3D from "@/components/ProjectExplorer3D";
 import { supportsFloorExplorer } from "@/lib/floor-explorer";
 
-export default function FullProjectExperience({ project, asset }) {
+export default function FullProjectExperience({
+  project,
+  asset,
+  apartmentAssets = [],
+  initialAssetKey = "building"
+}) {
   const hasFloorExplorer = supportsFloorExplorer(project, asset);
+  const separateFilesFlow = project.fullProjectFlow?.type === "separate-files";
+  const unitAssetMap = useMemo(
+    () => new Map(apartmentAssets.map((entry) => [entry.id, entry.asset])),
+    [apartmentAssets]
+  );
+  const availableAssetKeys = useMemo(
+    () => new Set(["building", ...(project.fullProjectFlow?.unitAssets?.map((unit) => unit.id) ?? [])]),
+    [project.fullProjectFlow?.unitAssets]
+  );
+  const preferredAssetKey =
+    separateFilesFlow && initialAssetKey && availableAssetKeys.has(initialAssetKey)
+      ? initialAssetKey
+      : "building";
+  const [activeAssetKey, setActiveAssetKey] = useState(preferredAssetKey);
+
+  useEffect(() => {
+    setActiveAssetKey(preferredAssetKey);
+  }, [preferredAssetKey]);
+
+  const selectedUnit = useMemo(
+    () =>
+      project.fullProjectFlow?.unitAssets?.find((entry) => entry.id === activeAssetKey) ?? null,
+    [activeAssetKey, project.fullProjectFlow?.unitAssets]
+  );
+  const selectedAsset =
+    activeAssetKey === "building" ? asset : unitAssetMap.get(activeAssetKey) ?? asset;
+  const selectedCaption =
+    activeAssetKey === "building"
+      ? project.fullProjectFlow?.overviewCopy ??
+        "Review the whole building first, then switch into separate apartment files."
+      : selectedUnit?.copy;
+  const handleAssetSelection = (nextAssetKey) => {
+    setActiveAssetKey(nextAssetKey);
+
+    if (typeof window !== "undefined") {
+      const nextParams = new URLSearchParams(window.location.search);
+      if (nextAssetKey === "building") {
+        nextParams.delete("asset");
+      } else {
+        nextParams.set("asset", nextAssetKey);
+      }
+
+      const nextQuery = nextParams.toString();
+      const nextUrl = nextQuery
+        ? `${window.location.pathname}?${nextQuery}`
+        : window.location.pathname;
+
+      window.history.replaceState(null, "", nextUrl);
+    }
+  };
 
   return (
     <main className="project-page-shell">
@@ -29,33 +85,82 @@ export default function FullProjectExperience({ project, asset }) {
           {hasFloorExplorer ? (
             <ProjectExplorer3D asset={asset} project={project} />
           ) : (
-            <div className="project-detail-card">
+            <div className="project-detail-card project-preview-card">
               <div className="section-head">
                 <div>
                   <p className="section-label">Project Preview</p>
                   <h3>Exterior review</h3>
                 </div>
               </div>
-              <ModelStage asset={asset} project={project} />
-              <p className="detail-copy compact">
-                This project currently opens with an exterior-only model review.
-                Floor-by-floor exploration can be added once a structured building
-                asset is available.
-              </p>
+              {separateFilesFlow ? (
+                <div className="asset-switch-stack">
+                  <div className="asset-switch-row" role="tablist" aria-label="Building and apartment files">
+                    <button
+                      type="button"
+                      role="tab"
+                      aria-selected={activeAssetKey === "building"}
+                      className={`asset-switch-button${
+                        activeAssetKey === "building" ? " active" : ""
+                      }`}
+                      onClick={() => handleAssetSelection("building")}
+                    >
+                      Whole Building
+                    </button>
+                    {project.fullProjectFlow?.unitAssets?.map((unit) => (
+                      <button
+                        key={unit.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={activeAssetKey === unit.id}
+                        className={`asset-switch-button${
+                          activeAssetKey === unit.id ? " active" : ""
+                        }`}
+                        onClick={() => handleAssetSelection(unit.id)}
+                      >
+                        {unit.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <ModelStage
+                    asset={selectedAsset}
+                    project={project}
+                    caption={selectedCaption}
+                  />
+                </div>
+              ) : (
+                <>
+                  <ModelStage asset={asset} project={project} />
+                  <p className="detail-copy compact">
+                    This project currently opens with an exterior-only model review.
+                    Floor-by-floor exploration is reserved for a structured building
+                    GLB with authored floor groups.
+                  </p>
+                </>
+              )}
             </div>
           )}
 
-          <article className="project-detail-card">
+          <article className="project-detail-card project-memo-card">
             <div className="section-head">
               <div>
                 <p className="section-label">Investment Memo</p>
                 <h3>Main project narrative</h3>
               </div>
             </div>
-            <div className="project-copy-stack">
-              <p className="detail-copy compact">{project.memo}</p>
-              <p className="detail-copy compact">{project.thesis}</p>
-              <p className="detail-copy compact">{project.narrative}</p>
+            <div className="memo-grid">
+              <article className="memo-block">
+                <p className="memo-block-label">Investment Case</p>
+                <p className="detail-copy compact">{project.memo}</p>
+              </article>
+              <article className="memo-block">
+                <p className="memo-block-label">Why This Project</p>
+                <p className="detail-copy compact">{project.thesis}</p>
+              </article>
+              <article className="memo-block">
+                <p className="memo-block-label">Pitch Direction</p>
+                <p className="detail-copy compact">{project.narrative}</p>
+              </article>
             </div>
           </article>
         </div>

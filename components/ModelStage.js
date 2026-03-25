@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-export default function ModelStage({ asset, project }) {
+export default function ModelStage({ asset, project, caption }) {
   const viewerRef = useRef(null);
   const [status, setStatus] = useState("loading");
 
@@ -119,7 +119,7 @@ export default function ModelStage({ asset, project }) {
         ) : null}
       </div>
 
-      <p className="model-caption">{project.virtualExperience}</p>
+      <p className="model-caption">{caption ?? project.virtualExperience}</p>
       <p className="model-meta">
         Current asset: <code>{asset.fileName}</code>
       </p>

@@ -37,7 +37,8 @@ body {
     radial-gradient(circle at top left, rgba(214, 180, 123, 0.18), transparent 26%),
     radial-gradient(circle at 80% 20%, rgba(77, 135, 173, 0.2), transparent 28%),
     linear-gradient(135deg, #04070c 0%, #08111b 42%, #0a1825 100%);
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 button,
@@ -805,6 +806,9 @@ h3 {
 }
 
 .project-detail-card {
+  display: grid;
+  gap: 16px;
+  align-content: start;
   padding: 20px;
   border-radius: 24px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -812,6 +816,88 @@ h3 {
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
     rgba(255, 255, 255, 0.02);
   box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.asset-switch-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.project-preview-card {
+  gap: 18px;
+}
+
+.project-preview-card .detail-copy.compact {
+  margin: 0;
+}
+
+.project-preview-card .model-card {
+  min-height: auto;
+}
+
+.project-memo-card {
+  gap: 18px;
+  background:
+    radial-gradient(circle at top right, rgba(214, 180, 123, 0.1), transparent 36%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
+    rgba(255, 255, 255, 0.02);
+}
+
+.memo-grid {
+  display: grid;
+  gap: 12px;
+}
+
+.memo-block {
+  padding: 14px 16px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.memo-block-label {
+  margin: 0 0 8px;
+  color: var(--gold-bright);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.asset-switch-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.asset-switch-button {
+  padding: 10px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-soft);
+  font: inherit;
+  letter-spacing: 0.04em;
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    color 180ms ease,
+    transform 180ms ease;
+}
+
+.asset-switch-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(241, 211, 161, 0.24);
+  color: var(--text);
+}
+
+.asset-switch-button.active {
+  border-color: rgba(241, 211, 161, 0.36);
+  background:
+    linear-gradient(180deg, rgba(214, 180, 123, 0.12), rgba(214, 180, 123, 0.05)),
+    rgba(255, 255, 255, 0.04);
+  color: var(--gold-bright);
 }
 
 .project-copy-stack,
