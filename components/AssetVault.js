@@ -10,7 +10,7 @@ export default function AssetVault({
       <div className="section-head">
         <div>
           <p className="section-label">Imported 3D Assets</p>
-          <h3>Everything currently in `assets/`.</h3>
+          <h3>Everything currently in `public/assets/`.</h3>
         </div>
         <span className="count-pill">{assets.length} models</span>
       </div>
