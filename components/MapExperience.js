@@ -220,7 +220,30 @@ function getFootprintDimensions(project) {
   };
 }
 
+function getClosestProject(projects, center) {
+  if (!projects.length || !center) {
+    return null;
+  }
+
+  return projects.reduce((closestProject, project) => {
+    if (!closestProject) {
+      return project;
+    }
+
+    const [centerLng, centerLat] = center;
+    const [projectLng, projectLat] = project.center;
+    const [closestLng, closestLat] = closestProject.center;
+    const projectDistance =
+      (projectLng - centerLng) ** 2 + (projectLat - centerLat) ** 2;
+    const closestDistance =
+      (closestLng - centerLng) ** 2 + (closestLat - centerLat) ** 2;
+
+    return projectDistance < closestDistance ? project : closestProject;
+  }, null);
+}
+
 export default function MapExperience({
+  assetLibrary,
   projects,
   selectedProject,
   selectedAsset,
@@ -239,12 +262,24 @@ export default function MapExperience({
   const threeStateRef = useRef(null);
   const [ready, setReady] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(DISCOVER_OVERVIEW.zoom);
+  const [currentCenter, setCurrentCenter] = useState(DISCOVER_OVERVIEW.center);
+  const inferredMapProject =
+    currentZoom >= MANUAL_MODEL_ZOOM_THRESHOLD
+      ? getClosestProject(projects, currentCenter)
+      : null;
   const activeMapProject = selectedProject
     ? projects.find((project) => project.id === selectedProject.id) ?? selectedProject
-    : null;
+    : inferredMapProject;
   const selectedProjectId = activeMapProject?.id ?? "__none__";
+  const activeMapAsset =
+    selectedProject && selectedAsset
+      ? selectedAsset
+      : activeMapProject
+        ? assetLibrary.find((asset) => asset.id === activeMapProject.primaryAssetId) ??
+          null
+        : null;
   const showSelectedModel =
-    Boolean(selectedAsset?.src) &&
+    Boolean(activeMapAsset?.src) &&
     Boolean(activeMapProject) &&
     (viewMode !== "discover" || currentZoom >= MANUAL_MODEL_ZOOM_THRESHOLD);
   const landResultCount = projects.filter(
@@ -292,8 +327,10 @@ export default function MapExperience({
       map.addControl(new maplibregl.NavigationControl({ showCompass: false }));
 
       map.on("load", () => {
-        const syncZoomState = () => {
+        const syncViewportState = () => {
           setCurrentZoom(map.getZoom());
+          const mapCenter = map.getCenter();
+          setCurrentCenter([mapCenter.lng, mapCenter.lat]);
         };
 
         map.addSource("projects", {
@@ -533,8 +570,9 @@ export default function MapExperience({
           }
         );
 
-        map.on("moveend", syncZoomState);
-        syncZoomState();
+        map.on("moveend", syncViewportState);
+        map.on("zoomend", syncViewportState);
+        syncViewportState();
         setReady(true);
       });
     }
@@ -679,17 +717,17 @@ export default function MapExperience({
       }
       modelTransformRef.current = null;
 
-      if (!showSelectedModel || !selectedAsset?.src || !activeMapProject) {
+      if (!showSelectedModel || !activeMapAsset?.src || !activeMapProject) {
         map.triggerRepaint();
         return;
       }
 
       try {
-        let cachedModel = modelCacheRef.current.get(selectedAsset.src);
+        let cachedModel = modelCacheRef.current.get(activeMapAsset.src);
         if (!cachedModel) {
           const loader = new GLTFLoader();
-          cachedModel = loader.loadAsync(selectedAsset.src).then((gltf) => gltf.scene);
-          modelCacheRef.current.set(selectedAsset.src, cachedModel);
+          cachedModel = loader.loadAsync(activeMapAsset.src).then((gltf) => gltf.scene);
+          modelCacheRef.current.set(activeMapAsset.src, cachedModel);
         }
 
         const baseScene = await cachedModel;
@@ -771,7 +809,7 @@ export default function MapExperience({
     return () => {
       cancelled = true;
     };
-  }, [activeMapProject, ready, selectedAsset?.src, showSelectedModel]);
+  }, [activeMapAsset?.src, activeMapProject, ready, showSelectedModel]);
 
   return (
     <div className="map-frame">

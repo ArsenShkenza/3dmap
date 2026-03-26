@@ -119,12 +119,12 @@ export default function ExperienceShell({
   };
 
   const handleSelectProject = useCallback(
-    (projectId, nextView = "opportunity") => {
+    (projectId, nextView = activeView) => {
       setSelectedId(projectId);
       setActiveView(nextView);
       setMapFocusRequest((currentValue) => currentValue + 1);
     },
-    []
+    [activeView]
   );
 
   const discoverContent = (
@@ -153,7 +153,7 @@ export default function ExperienceShell({
             <div className="section-head">
               <div>
                 <p className="section-label">Results</p>
-                <h3>Select a property to open the memo.</h3>
+                <h3>Select a property to focus it on the map.</h3>
               </div>
               <span className="count-pill">
                 {filteredProjects.length} result
@@ -372,6 +372,7 @@ export default function ExperienceShell({
 
       <section className="map-shell">
         <MapExperience
+          assetLibrary={assetLibrary}
           projects={filteredProjects.length ? filteredProjects : projects}
           selectedProject={selectedProject}
           selectedAsset={selectedAsset}
