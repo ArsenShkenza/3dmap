@@ -685,7 +685,8 @@ export default function MapExperience({
       return;
     }
 
-    const focusView = getFocusView(activeMapProject, showSelectedModel);
+    const shouldZoomForModel = Boolean(activeMapAsset?.src);
+    const focusView = getFocusView(activeMapProject, shouldZoomForModel);
 
     map.flyTo({
       center: focusView.center,
@@ -696,7 +697,7 @@ export default function MapExperience({
       curve: 1.15,
       essential: true
     });
-  }, [activeMapProject, focusRequest, ready, showSelectedModel]);
+  }, [activeMapAsset?.src, activeMapProject, focusRequest, ready]);
 
   useEffect(() => {
     let cancelled = false;

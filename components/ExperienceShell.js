@@ -81,7 +81,6 @@ export default function ExperienceShell({
 }) {
   const panelViews = [
     { id: "discover", label: "Discover" },
-    { id: "opportunity", label: "Opportunity" },
     { id: "platform", label: "Platform" }
   ];
   const [activeView, setActiveView] = useState("discover");
@@ -127,6 +126,10 @@ export default function ExperienceShell({
     [activeView]
   );
 
+  const handleBackToResults = useCallback(() => {
+    setSelectedId(null);
+  }, []);
+
   const discoverContent = (
     <section className="detail-card">
       <div className="detail-hero">
@@ -153,7 +156,7 @@ export default function ExperienceShell({
             <div className="section-head">
               <div>
                 <p className="section-label">Results</p>
-                <h3>Select a property to focus it on the map.</h3>
+                <h3>Select a property to review it below.</h3>
               </div>
               <span className="count-pill">
                 {filteredProjects.length} result
@@ -179,7 +182,6 @@ export default function ExperienceShell({
                         </p>
                         <strong>{project.name}</strong>
                       </div>
-                      <span className="access-pill">{project.access}</span>
                     </div>
                     <p className="deal-copy">{project.stageSummary}</p>
                   </button>
@@ -200,79 +202,88 @@ export default function ExperienceShell({
     </section>
   );
 
-  const opportunityContent = (
+  const opportunityContent = selectedProject ? (
     <section className="detail-card">
-      {selectedProject ? (
-        <>
-          <div className="detail-hero">
-            <div>
-              <p className="section-label">Opportunity</p>
-              <h2>{selectedProject.name}</h2>
-            </div>
-            <span className="status-pill">{selectedProject.stage}</span>
-          </div>
-
-          <div className="view-stack">
-            <div className="view-section">
-              <p className="detail-copy compact">{selectedProject.memo}</p>
-            </div>
-
-            <div className="detail-stats tight">
-              <article>
-                <span className="stat-label">Target ROI</span>
-                <strong>{selectedProject.roi}</strong>
-              </article>
-              <article>
-                <span className="stat-label">Funding Ask</span>
-                <strong>{selectedProject.ticket}</strong>
-              </article>
-              <article>
-                <span className="stat-label">Program</span>
-                <strong>{selectedProject.program}</strong>
-              </article>
-              <article>
-                <span className="stat-label">Access</span>
-                <strong>{selectedProject.access}</strong>
-              </article>
-            </div>
-
-            <ModelStage asset={selectedAsset} project={selectedProject} />
-
-            <div className="view-section view-section-divided">
-              <div className="section-head">
-                <div>
-                  <p className="section-label">Project Access</p>
-                  <h3>Open the full project room for deeper exploration.</h3>
-                </div>
-              </div>
-              <p className="detail-copy compact">
-                Keep the opportunity surface focused on the exterior story and headline
-                investment case, then move into a dedicated project space for floors,
-                program depth, and richer building review.
-              </p>
-              <div className="cta-row">
-                <Link
-                  href={`/project/${selectedProject.id}`}
-                  className="primary-link-button"
-                >
-                  View Full Project
-                </Link>
-                <p className="cta-note">
-                  Inside the full project room you can inspect the floor explorer and
-                  the expanded diligence narrative.
-                </p>
-              </div>
-            </div>
-          </div>
-        </>
-      ) : (
-        <div className="empty-state">
+      <div className="detail-hero">
+        <div>
           <p className="section-label">Opportunity</p>
-          <p>Select a property from Discover to open the memo.</p>
+          <h2>{selectedProject.name}</h2>
         </div>
-      )}
+        <button
+          type="button"
+          className="ghost-link-button"
+          onClick={handleBackToResults}
+          aria-label="Back"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M15 18l-6-6 6-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+          <span className="sr-only">Back</span>
+        </button>
+      </div>
+
+      <div className="view-stack">
+        <span className="status-pill">{selectedProject.stage}</span>
+        <div className="view-section">
+          <p className="detail-copy compact">{selectedProject.memo}</p>
+        </div>
+
+        <div className="detail-stats tight">
+          <article>
+            <span className="stat-label">Target ROI</span>
+            <strong>{selectedProject.roi}</strong>
+          </article>
+          <article>
+            <span className="stat-label">Funding Ask</span>
+            <strong>{selectedProject.ticket}</strong>
+          </article>
+          <article>
+            <span className="stat-label">Program</span>
+            <strong>{selectedProject.program}</strong>
+          </article>
+          <article>
+            <span className="stat-label">Access</span>
+            <strong>{selectedProject.access}</strong>
+          </article>
+        </div>
+
+        <ModelStage asset={selectedAsset} project={selectedProject} />
+
+        <div className="view-section view-section-divided">
+          <div className="section-head">
+            <div>
+              <p className="section-label">Project Access</p>
+              <h3>Open the full project room for deeper exploration.</h3>
+            </div>
+          </div>
+          <p className="detail-copy compact">
+            Keep the opportunity surface focused on the exterior story and headline
+            investment case, then move into a dedicated project space for floors,
+            program depth, and richer building review.
+          </p>
+          <div className="cta-row">
+            <Link
+              href={`/project/${selectedProject.id}`}
+              className="primary-link-button"
+            >
+              View Full Project
+            </Link>
+            <p className="cta-note">
+              Inside the full project room you can inspect the floor explorer and
+              the expanded diligence narrative.
+            </p>
+          </div>
+        </div>
+      </div>
     </section>
-  );
+  ) : null;
 
   const platformContent = (
     <section className="detail-card">
@@ -363,10 +374,12 @@ export default function ExperienceShell({
 
         <div className="content-grid">
           {activeView === "discover"
-            ? discoverContent
+            ? selectedProject
+              ? opportunityContent
+              : discoverContent
             : activeView === "platform"
               ? platformContent
-              : opportunityContent}
+              : null}
         </div>
       </section>
 

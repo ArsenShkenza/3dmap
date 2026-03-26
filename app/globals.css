@@ -126,7 +126,7 @@ button {
 
 .panel-nav {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   gap: 10px;
   margin-top: 18px;
 }
@@ -800,6 +800,13 @@ h3 {
   transform: translateY(-1px);
   border-color: rgba(241, 211, 161, 0.32);
   color: var(--gold-bright);
+}
+
+.ghost-link-button svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  flex: none;
 }
 
 .cta-note {
