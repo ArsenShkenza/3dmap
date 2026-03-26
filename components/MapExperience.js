@@ -4,6 +4,13 @@ import { useEffect, useRef, useState } from "react";
 
 const MODEL_LAYER_ID = "selected-project-model";
 const MAX_EXTERIOR_MAP_ZOOM = 20;
+const MANUAL_MODEL_ZOOM_THRESHOLD = 15.2;
+const DISCOVER_OVERVIEW = {
+  center: [20.15, 41.72],
+  zoom: 7.2,
+  pitch: 38,
+  bearing: -8
+};
 
 function polygonCollection(projects) {
   return {
@@ -132,6 +139,38 @@ function getFocusView(project, hasModel) {
   };
 }
 
+function focusOverview(map, maplibregl, projects) {
+  if (!projects.length) {
+    map.easeTo({
+      ...DISCOVER_OVERVIEW,
+      duration: 900,
+      essential: true
+    });
+    return;
+  }
+
+  const bounds = new maplibregl.LngLatBounds();
+
+  projects.forEach((project) => {
+    bounds.extend(project.center);
+    (project.footprint ?? []).forEach((coordinate) => bounds.extend(coordinate));
+  });
+
+  const camera = map.cameraForBounds(bounds, {
+    padding: { top: 132, right: 132, bottom: 120, left: 132 },
+    maxZoom: 8.8
+  });
+
+  map.easeTo({
+    center: camera.center,
+    zoom: camera.zoom,
+    pitch: DISCOVER_OVERVIEW.pitch,
+    bearing: DISCOVER_OVERVIEW.bearing,
+    duration: 900,
+    essential: true
+  });
+}
+
 function getModelTransform(maplibregl, project) {
   const [lng, lat] = getFootprintCentroid(project);
   const coordinate = maplibregl.MercatorCoordinate.fromLngLat(
@@ -185,7 +224,10 @@ export default function MapExperience({
   projects,
   selectedProject,
   selectedAsset,
-  onSelectProject
+  onSelectProject,
+  viewMode,
+  focusRequest,
+  resultCount
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -196,6 +238,19 @@ export default function MapExperience({
   const modelTransformRef = useRef(null);
   const threeStateRef = useRef(null);
   const [ready, setReady] = useState(false);
+  const [currentZoom, setCurrentZoom] = useState(DISCOVER_OVERVIEW.zoom);
+  const activeMapProject = selectedProject
+    ? projects.find((project) => project.id === selectedProject.id) ?? selectedProject
+    : null;
+  const selectedProjectId = activeMapProject?.id ?? "__none__";
+  const showSelectedModel =
+    Boolean(selectedAsset?.src) &&
+    Boolean(activeMapProject) &&
+    (viewMode !== "discover" || currentZoom >= MANUAL_MODEL_ZOOM_THRESHOLD);
+  const landResultCount = projects.filter(
+    (project) => project.propertyType === "land"
+  ).length;
+  const buildingResultCount = projects.length - landResultCount;
 
   useEffect(() => {
     let disposed = false;
@@ -237,6 +292,10 @@ export default function MapExperience({
       map.addControl(new maplibregl.NavigationControl({ showCompass: false }));
 
       map.on("load", () => {
+        const syncZoomState = () => {
+          setCurrentZoom(map.getZoom());
+        };
+
         map.addSource("projects", {
           type: "geojson",
           data: polygonCollection(projects)
@@ -254,7 +313,7 @@ export default function MapExperience({
           paint: {
             "fill-color": [
               "case",
-              ["==", ["get", "id"], selectedProject.id],
+              ["==", ["get", "id"], selectedProjectId],
               "#d6b47b",
               "#27455a"
             ],
@@ -266,7 +325,7 @@ export default function MapExperience({
           id: "project-massing-base",
           type: "fill-extrusion",
           source: "projects",
-          filter: ["!=", ["get", "id"], selectedProject.id],
+          filter: ["!=", ["get", "id"], selectedProjectId],
           paint: {
             "fill-extrusion-color": "#4d7a97",
             "fill-extrusion-height": ["get", "height"],
@@ -279,17 +338,15 @@ export default function MapExperience({
           id: "project-massing-selected",
           type: "fill-extrusion",
           source: "projects",
-          filter: ["==", ["get", "id"], selectedProject.id],
+          filter: ["==", ["get", "id"], selectedProjectId],
           paint: {
             "fill-extrusion-color": "#f1d3a1",
             "fill-extrusion-height": getSelectedMassingHeight(
-              selectedProject,
-              Boolean(selectedAsset?.src)
+              activeMapProject ?? projects[0],
+              showSelectedModel
             ),
             "fill-extrusion-base": 0,
-            "fill-extrusion-opacity": getSelectedMassingOpacity(
-              Boolean(selectedAsset?.src)
-            )
+            "fill-extrusion-opacity": getSelectedMassingOpacity(showSelectedModel)
           }
         });
 
@@ -300,13 +357,13 @@ export default function MapExperience({
           paint: {
             "line-color": [
               "case",
-              ["==", ["get", "id"], selectedProject.id],
+              ["==", ["get", "id"], selectedProjectId],
               "#f3d39c",
               "#7ab9db"
             ],
             "line-width": [
               "case",
-              ["==", ["get", "id"], selectedProject.id],
+              ["==", ["get", "id"], selectedProjectId],
               3,
               1.25
             ],
@@ -321,13 +378,13 @@ export default function MapExperience({
           paint: {
             "circle-radius": [
               "case",
-              ["==", ["get", "id"], selectedProject.id],
+              ["==", ["get", "id"], selectedProjectId],
               18,
               12
             ],
             "circle-color": [
               "case",
-              ["==", ["get", "id"], selectedProject.id],
+              ["==", ["get", "id"], selectedProjectId],
               "#f3d39c",
               "#67b2df"
             ],
@@ -420,13 +477,13 @@ export default function MapExperience({
           paint: {
             "circle-radius": [
               "case",
-              ["==", ["get", "id"], selectedProject.id],
+              ["==", ["get", "id"], selectedProjectId],
               8,
               5
             ],
             "circle-color": [
               "case",
-              ["==", ["get", "id"], selectedProject.id],
+              ["==", ["get", "id"], selectedProjectId],
               "#fff1cf",
               "#8dd3ff"
             ],
@@ -476,6 +533,8 @@ export default function MapExperience({
           }
         );
 
+        map.on("moveend", syncZoomState);
+        syncZoomState();
         setReady(true);
       });
     }
@@ -506,70 +565,89 @@ export default function MapExperience({
 
     setPaintIfLayerExists(map, "project-footprints", "fill-color", [
       "case",
-      ["==", ["get", "id"], selectedProject.id],
+      ["==", ["get", "id"], selectedProjectId],
       "#d6b47b",
       "#27455a"
     ]);
     setPaintIfLayerExists(map, "project-footprints-outline", "line-color", [
       "case",
-      ["==", ["get", "id"], selectedProject.id],
+      ["==", ["get", "id"], selectedProjectId],
       "#f3d39c",
       "#7ab9db"
     ]);
     setPaintIfLayerExists(map, "project-footprints-outline", "line-width", [
       "case",
-      ["==", ["get", "id"], selectedProject.id],
+      ["==", ["get", "id"], selectedProjectId],
       3,
       1.25
     ]);
     setFilterIfLayerExists(map, "project-massing-base", [
       "!=",
       ["get", "id"],
-      selectedProject.id
+      selectedProjectId
     ]);
     setFilterIfLayerExists(map, "project-massing-selected", [
       "==",
       ["get", "id"],
-      selectedProject.id
+      selectedProjectId
     ]);
-    setPaintIfLayerExists(
-      map,
-      "project-massing-selected",
-      "fill-extrusion-height",
-      getSelectedMassingHeight(selectedProject, Boolean(selectedAsset?.src))
-    );
+    if (activeMapProject) {
+      setPaintIfLayerExists(
+        map,
+        "project-massing-selected",
+        "fill-extrusion-height",
+        getSelectedMassingHeight(activeMapProject, showSelectedModel)
+      );
+    }
     setPaintIfLayerExists(
       map,
       "project-massing-selected",
       "fill-extrusion-opacity",
-      getSelectedMassingOpacity(Boolean(selectedAsset?.src))
+      getSelectedMassingOpacity(showSelectedModel)
     );
     setPaintIfLayerExists(map, "project-marker-glow", "circle-radius", [
       "case",
-      ["==", ["get", "id"], selectedProject.id],
+      ["==", ["get", "id"], selectedProjectId],
       18,
       12
     ]);
     setPaintIfLayerExists(map, "project-marker-glow", "circle-color", [
       "case",
-      ["==", ["get", "id"], selectedProject.id],
+      ["==", ["get", "id"], selectedProjectId],
       "#f3d39c",
       "#67b2df"
     ]);
     setPaintIfLayerExists(map, "project-markers", "circle-radius", [
       "case",
-      ["==", ["get", "id"], selectedProject.id],
+      ["==", ["get", "id"], selectedProjectId],
       8,
       5
     ]);
     setPaintIfLayerExists(map, "project-markers", "circle-color", [
       "case",
-      ["==", ["get", "id"], selectedProject.id],
+      ["==", ["get", "id"], selectedProjectId],
       "#fff1cf",
       "#8dd3ff"
     ]);
+  }, [activeMapProject, projects, ready, selectedProjectId, showSelectedModel]);
 
-    const focusView = getFocusView(selectedProject, Boolean(selectedAsset?.src));
+  useEffect(() => {
+    const map = mapRef.current;
+    const threeState = threeStateRef.current;
+    if (!map || !ready || !threeState || viewMode !== "discover") {
+      return;
+    }
+
+    focusOverview(map, threeState.maplibregl, projects);
+  }, [projects, ready, viewMode]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !activeMapProject || !focusRequest) {
+      return;
+    }
+
+    const focusView = getFocusView(activeMapProject, showSelectedModel);
 
     map.flyTo({
       center: focusView.center,
@@ -580,7 +658,7 @@ export default function MapExperience({
       curve: 1.15,
       essential: true
     });
-  }, [projects, ready, selectedAsset?.src, selectedProject]);
+  }, [activeMapProject, focusRequest, ready, showSelectedModel]);
 
   useEffect(() => {
     let cancelled = false;
@@ -601,7 +679,7 @@ export default function MapExperience({
       }
       modelTransformRef.current = null;
 
-      if (!selectedAsset?.src) {
+      if (!showSelectedModel || !selectedAsset?.src || !activeMapProject) {
         map.triggerRepaint();
         return;
       }
@@ -647,9 +725,9 @@ export default function MapExperience({
 
         const initialBox = new THREE.Box3().setFromObject(modelScene);
         const initialSize = initialBox.getSize(new THREE.Vector3());
-        const targetHeight = Math.max(selectedProject.massingHeight ?? 24, 12);
-        const { width, depth } = getFootprintDimensions(selectedProject);
-        const footprintFill = selectedProject.mapModelFootprintFill ?? 0.78;
+        const targetHeight = Math.max(activeMapProject.massingHeight ?? 24, 12);
+        const { width, depth } = getFootprintDimensions(activeMapProject);
+        const footprintFill = activeMapProject.mapModelFootprintFill ?? 0.78;
         const targetWidth = Math.max(width * footprintFill, 12);
         const targetDepth = Math.max(depth * footprintFill, 12);
         const heightScale = targetHeight / Math.max(initialSize.y, 0.001);
@@ -657,10 +735,10 @@ export default function MapExperience({
         const depthScale = targetDepth / Math.max(initialSize.z, 0.001);
         const footprintScale = Math.min(widthScale, depthScale);
         const maxHeightScale =
-          heightScale * (selectedProject.mapModelMaxHeightFactor ?? 1.8);
+          heightScale * (activeMapProject.mapModelMaxHeightFactor ?? 1.8);
         const scaleFactor =
           Math.min(footprintScale, maxHeightScale) *
-          (selectedProject.mapModelScale ?? 1);
+          (activeMapProject.mapModelScale ?? 1);
 
         modelScene.scale.setScalar(scaleFactor);
 
@@ -681,7 +759,7 @@ export default function MapExperience({
 
         scene.add(modelGroup);
         modelGroupRef.current = modelGroup;
-        modelTransformRef.current = getModelTransform(maplibregl, selectedProject);
+        modelTransformRef.current = getModelTransform(maplibregl, activeMapProject);
         map.triggerRepaint();
       } catch (error) {
         console.error("Failed to place 3D model on map", error);
@@ -693,26 +771,53 @@ export default function MapExperience({
     return () => {
       cancelled = true;
     };
-  }, [ready, selectedAsset?.src, selectedProject]);
+  }, [activeMapProject, ready, selectedAsset?.src, showSelectedModel]);
 
   return (
     <div className="map-frame">
       <div className="map-summary-card">
         <p className="section-label">Market View</p>
-        <h2>{selectedProject.name}</h2>
-        <p>{selectedProject.stageSummary}</p>
+        <h2>
+          {viewMode === "discover"
+            ? "Search Results Overview"
+            : activeMapProject?.name ?? "No Property Selected"}
+        </h2>
+        <p>
+          {viewMode === "discover"
+            ? "The map stays zoomed out while you search. Click a property card or a map marker to focus a specific opportunity."
+            : activeMapProject?.stageSummary ??
+              "Select a property from Discover to move the map and open its memo."}
+        </p>
         <div className="map-summary-kpis">
           <div>
-            <span className="stat-label">Access</span>
-            <strong>{selectedProject.access}</strong>
+            <span className="stat-label">
+              {viewMode === "discover" ? "Results" : "Access"}
+            </span>
+            <strong>
+              {viewMode === "discover"
+                ? resultCount
+                : activeMapProject?.access ?? "None"}
+            </strong>
           </div>
           <div>
-            <span className="stat-label">Stage</span>
-            <strong>{selectedProject.stage}</strong>
+            <span className="stat-label">
+              {viewMode === "discover" ? "Buildings" : "Stage"}
+            </span>
+            <strong>
+              {viewMode === "discover"
+                ? buildingResultCount
+                : activeMapProject?.stage ?? "Waiting"}
+            </strong>
           </div>
           <div>
-            <span className="stat-label">Return</span>
-            <strong>{selectedProject.roi}</strong>
+            <span className="stat-label">
+              {viewMode === "discover" ? "Land" : "Return"}
+            </span>
+            <strong>
+              {viewMode === "discover"
+                ? landResultCount
+                : activeMapProject?.roi ?? "--"}
+            </strong>
           </div>
         </div>
       </div>
