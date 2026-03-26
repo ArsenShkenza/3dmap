@@ -6,6 +6,22 @@ import ModelStage from "@/components/ModelStage";
 import ProjectExplorer3D from "@/components/ProjectExplorer3D";
 import { supportsFloorExplorer } from "@/lib/floor-explorer";
 
+function ProjectExperienceDescription({ project }) {
+  if (!project.memo && !project.thesis) {
+    return null;
+  }
+
+  return (
+    <div className="project-experience-description">
+      <p className="experience-description-label">About this project</p>
+      {project.memo ? <p className="detail-copy">{project.memo}</p> : null}
+      {project.thesis ? (
+        <p className="detail-copy compact experience-description-thesis">{project.thesis}</p>
+      ) : null}
+    </div>
+  );
+}
+
 export default function FullProjectExperience({
   project,
   asset,
@@ -41,10 +57,12 @@ export default function FullProjectExperience({
   const selectedAsset =
     activeAssetKey === "building" ? asset : unitAssetMap.get(activeAssetKey) ?? asset;
   const selectedCaption =
-    activeAssetKey === "building"
-      ? project.fullProjectFlow?.overviewCopy ??
-        "Review the whole building first, then switch into separate apartment files."
-      : selectedUnit?.copy;
+    activeAssetKey === "building" ? null : selectedUnit?.copy;
+  const selectedViewerMode = selectedAsset?.viewerMode;
+  const selectedViewerConfig = selectedAsset?.viewerConfig;
+  const selectedStatusLabel =
+    selectedAsset?.viewerLabel ??
+    (activeAssetKey === "building" ? "AR Ready" : "Interior Navigation");
   const handleAssetSelection = (nextAssetKey) => {
     setActiveAssetKey(nextAssetKey);
 
@@ -77,14 +95,16 @@ export default function FullProjectExperience({
           <Link href="/" className="ghost-link-button">
             Back To Market View
           </Link>
-          <span className="status-pill">{project.stage}</span>
         </div>
       </section>
 
       <section className="project-page-grid">
         <div className="project-main-column">
           {hasFloorExplorer ? (
-            <ProjectExplorer3D asset={asset} project={project} />
+            <>
+              <ProjectExplorer3D asset={asset} project={project} />
+              <ProjectExperienceDescription project={project} />
+            </>
           ) : (
             <div className="project-detail-card project-preview-card">
               <div className="section-head">
@@ -95,7 +115,7 @@ export default function FullProjectExperience({
               </div>
               {separateFilesFlow ? (
                 <div className="asset-switch-stack">
-                  <div className="asset-switch-row" role="tablist" aria-label="Building and apartment files">
+                  <div className="asset-switch-row" role="tablist" aria-label="Building and interior files">
                     <button
                       type="button"
                       role="tab"
@@ -127,7 +147,13 @@ export default function FullProjectExperience({
                     asset={selectedAsset}
                     project={project}
                     caption={selectedCaption}
+                    viewerMode={selectedViewerMode}
+                    viewerConfig={selectedViewerConfig}
+                    statusLabel={selectedStatusLabel}
+                    hideCaption={activeAssetKey === "building"}
+                    hideAssetMeta
                   />
+                  <ProjectExperienceDescription project={project} />
                 </div>
               ) : integratedBuildingFlow ? (
                 <>
@@ -142,48 +168,18 @@ export default function FullProjectExperience({
                       project.fullProjectFlow?.overviewCopy ??
                       "Use the integrated building file for a single exterior-plus-interior project review."
                     }
+                    hideAssetMeta
                   />
-                  <p className="detail-copy compact">
-                    This project now uses one authored GLB that carries both the exterior identity and
-                    the interior atmosphere in the same review object. The map remains exterior-first;
-                    the detailed project room is where the integrated building model is explored.
-                  </p>
+                  <ProjectExperienceDescription project={project} />
                 </>
               ) : (
                 <>
-                  <ModelStage asset={asset} project={project} />
-                  <p className="detail-copy compact">
-                    This project currently opens with an exterior-only model review.
-                    Floor-by-floor exploration is reserved for a structured building
-                    GLB with authored floor groups.
-                  </p>
+                  <ModelStage asset={asset} project={project} hideCaption hideAssetMeta />
+                  <ProjectExperienceDescription project={project} />
                 </>
               )}
             </div>
           )}
-
-          <article className="project-detail-card project-memo-card">
-            <div className="section-head">
-              <div>
-                <p className="section-label">Investment Memo</p>
-                <h3>Main project narrative</h3>
-              </div>
-            </div>
-            <div className="memo-grid">
-              <article className="memo-block">
-                <p className="memo-block-label">Investment Case</p>
-                <p className="detail-copy compact">{project.memo}</p>
-              </article>
-              <article className="memo-block">
-                <p className="memo-block-label">Why This Project</p>
-                <p className="detail-copy compact">{project.thesis}</p>
-              </article>
-              <article className="memo-block">
-                <p className="memo-block-label">Pitch Direction</p>
-                <p className="detail-copy compact">{project.narrative}</p>
-              </article>
-            </div>
-          </article>
         </div>
 
         <aside className="project-side-column">
@@ -211,29 +207,6 @@ export default function FullProjectExperience({
                 <span className="stat-label">Access</span>
                 <strong>{project.access}</strong>
               </article>
-            </div>
-          </article>
-
-          <article className="project-detail-card">
-            <div className="section-head">
-              <div>
-                <p className="section-label">Diligence</p>
-                <h3>What the room should answer</h3>
-              </div>
-            </div>
-            <div className="project-info-list">
-              <div>
-                <span className="stat-label">Sponsor</span>
-                <strong>{project.sponsor}</strong>
-              </div>
-              <div>
-                <span className="stat-label">Land / Asset</span>
-                <strong>{project.landSize}</strong>
-              </div>
-              <div>
-                <span className="stat-label">Diligence Pack</span>
-                <strong>{project.diligence}</strong>
-              </div>
             </div>
           </article>
 

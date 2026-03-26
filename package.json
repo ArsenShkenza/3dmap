@@ -9,7 +9,6 @@
     "start": "next start"
   },
   "dependencies": {
-    "@google/model-viewer": "^4.2.0",
     "maplibre-gl": "^4.7.1",
     "next": "^15.2.0",
     "react": "^19.0.0",

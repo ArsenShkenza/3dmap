@@ -896,6 +896,73 @@ button {
   min-width: 0;
 }
 
+.results-list-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.see-all-results-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.see-all-results-button {
+  text-transform: none;
+  letter-spacing: 0.04em;
+  font-size: 0.85rem;
+}
+
+.results-pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.results-pagination-status {
+  font-size: 0.78rem;
+  color: var(--text-soft);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.results-pagination-button {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(241, 211, 161, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    opacity 180ms ease;
+}
+
+.results-pagination-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(241, 211, 161, 0.32);
+  color: var(--gold-bright);
+}
+
+.results-pagination-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .panel-shell {
   position: relative;
   z-index: 2;
@@ -960,7 +1027,7 @@ button {
 
 .panel-nav {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   gap: 10px;
   margin-top: 18px;
 }
@@ -1180,6 +1247,46 @@ h3 {
   border-color: rgba(241, 211, 161, 0.32);
 }
 
+.browse-deck-caption {
+  margin: -4px 0 0;
+  color: var(--text-soft);
+  line-height: 1.55;
+}
+
+.browse-filter-section {
+  gap: 10px;
+}
+
+.browse-filter-section .section-label {
+  margin-bottom: -2px;
+}
+
+.browse-inline-count {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.browse-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 2px;
+}
+
+.browse-meta-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  border: 1px solid rgba(241, 211, 161, 0.2);
+  color: var(--gold-bright);
+  background: rgba(214, 180, 123, 0.1);
+}
+
 .content-grid {
   display: grid;
   grid-template-columns: 1fr;
@@ -1350,6 +1457,7 @@ h3 {
 }
 
 .detail-stats.tight {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-top: 0;
 }
 
@@ -1443,14 +1551,55 @@ h3 {
   margin-top: 16px;
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.08);
+  /* Neutral frame only — a top gold radial read as “glow on the model” behind model-viewer letterboxing */
   background:
-    radial-gradient(circle at top, rgba(214, 180, 123, 0.16), transparent 34%),
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.04),
-      rgba(255, 255, 255, 0.02)
-    ),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.02)),
     #08121d;
+}
+
+.model-stage.is-fullscreen {
+  min-height: 100dvh;
+  border-radius: 0;
+  border: 0;
+}
+
+.viewer-toolbar {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 2;
+  display: flex;
+  gap: 10px;
+}
+
+.viewer-toolbar-button {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid rgba(241, 211, 161, 0.24);
+  background: rgba(8, 14, 21, 0.72);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(12px);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease,
+    color 180ms ease;
+}
+
+.viewer-toolbar-button:hover {
+  transform: translateY(-1px);
+  border-color: rgba(241, 211, 161, 0.34);
+  color: var(--gold-bright);
+}
+
+.viewer-toolbar-button svg {
+  width: 18px;
+  height: 18px;
 }
 
 .floor-model-card {
@@ -1540,10 +1689,46 @@ h3 {
   background: transparent;
 }
 
+/* Three.js orbit viewer (default exteriors): fixed viewport like legacy model-viewer */
+.model-stage:not(.interior-model-stage) > .three-model-shell {
+  display: block;
+  height: 320px;
+}
+
+.model-stage.is-fullscreen:not(.interior-model-stage) > .three-model-shell {
+  position: absolute;
+  inset: 0;
+  height: auto;
+  min-height: 0;
+}
+
+.interior-model-card {
+  display: grid;
+  gap: 16px;
+}
+
+.interior-model-stage {
+  min-height: 420px;
+}
+
 .three-model-shell,
 .three-model-stage {
   width: 100%;
   height: 100%;
+}
+
+.interior-viewer-note {
+  margin: 0;
+  color: var(--gold-bright);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+}
+
+.viewer-controls-note {
+  margin: 0;
+  color: var(--text-faint);
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
 }
 
 .model-overlay {
@@ -1618,6 +1803,13 @@ h3 {
   color: var(--gold-bright);
 }
 
+.ghost-link-button svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+  flex: none;
+}
+
 .cta-note {
   margin: 0;
   color: var(--text-soft);
@@ -1679,6 +1871,13 @@ h3 {
 .project-hero-copy {
   gap: 12px;
   max-width: 54rem;
+  min-width: 0;
+}
+
+.project-hero-copy h1 {
+  white-space: normal;
+  overflow-wrap: break-word;
+  line-height: 1.1;
 }
 
 .project-lead {
@@ -1756,25 +1955,34 @@ h3 {
     rgba(255, 255, 255, 0.02);
 }
 
-.memo-grid {
-  display: grid;
-  gap: 12px;
+.project-experience-description {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.memo-block {
-  padding: 14px 16px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
+.project-preview-card .project-experience-description {
+  margin-top: 18px;
 }
 
-.memo-block-label {
-  margin: 0 0 8px;
+.experience-description-label {
+  margin: 0 0 10px;
   color: var(--gold-bright);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.project-experience-description .detail-copy {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+.experience-description-thesis {
+  margin: 12px 0 0;
+  color: var(--text-faint);
 }
 
 .asset-switch-row {
@@ -2236,6 +2444,10 @@ h3 {
 
   .project-page-hero {
     padding: 20px;
+  }
+
+  .project-hero-copy h1 {
+    font-size: clamp(1.4rem, 4.5vw + 0.35rem, 2.2rem);
   }
 
   .project-stats {

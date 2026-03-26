@@ -4,6 +4,13 @@ import { useEffect, useRef, useState } from "react";
 
 const MODEL_LAYER_ID = "selected-project-model";
 const MAX_EXTERIOR_MAP_ZOOM = 20;
+const MANUAL_MODEL_ZOOM_THRESHOLD = 15.2;
+const DISCOVER_OVERVIEW = {
+  center: [20.15, 41.72],
+  zoom: 7.2,
+  pitch: 38,
+  bearing: -8
+};
 
 function polygonCollection(projects) {
   return {
@@ -81,6 +88,18 @@ function setFilterIfLayerExists(map, layerId, filter) {
   map.setFilter(layerId, filter);
 }
 
+/** MapLibre paint: selected > panel hover > default */
+function paintBySelection(selectedId, hoverId, selectedValue, hoverValue, defaultValue) {
+  return [
+    "case",
+    ["==", ["get", "id"], selectedId],
+    selectedValue,
+    ["==", ["get", "id"], hoverId],
+    hoverValue,
+    defaultValue
+  ];
+}
+
 function getSelectedMassingOpacity(hasModel) {
   return hasModel ? 0.22 : 0.58;
 }
@@ -90,7 +109,7 @@ function getSelectedMassingHeight(project, hasModel) {
     return ["get", "height"];
   }
 
-  return project.mapModelBaseHeight ?? 1.4;
+  return project.mapModelBaseHeight ?? 0.01;
 }
 
 function getFootprintCentroid(project) {
@@ -132,9 +151,44 @@ function getFocusView(project, hasModel) {
   };
 }
 
+function focusOverview(map, maplibregl, projects) {
+  if (!projects.length) {
+    map.easeTo({
+      ...DISCOVER_OVERVIEW,
+      duration: 900,
+      essential: true
+    });
+    return;
+  }
+
+  const bounds = new maplibregl.LngLatBounds();
+
+  projects.forEach((project) => {
+    bounds.extend(project.center);
+    (project.footprint ?? []).forEach((coordinate) => bounds.extend(coordinate));
+  });
+
+  const camera = map.cameraForBounds(bounds, {
+    padding: { top: 132, right: 132, bottom: 120, left: 132 },
+    maxZoom: 8.8
+  });
+
+  map.easeTo({
+    center: camera.center,
+    zoom: camera.zoom,
+    pitch: DISCOVER_OVERVIEW.pitch,
+    bearing: DISCOVER_OVERVIEW.bearing,
+    duration: 900,
+    essential: true
+  });
+}
+
 function getModelTransform(maplibregl, project) {
   const [lng, lat] = getFootprintCentroid(project);
-  const coordinate = maplibregl.MercatorCoordinate.fromLngLat({ lng, lat }, 0);
+  const coordinate = maplibregl.MercatorCoordinate.fromLngLat(
+    { lng, lat },
+    project.mapModelElevation ?? 0
+  );
 
   return {
     translateX: coordinate.x,
@@ -178,11 +232,39 @@ function getFootprintDimensions(project) {
   };
 }
 
+function getClosestProject(projects, center) {
+  if (!projects.length || !center) {
+    return null;
+  }
+
+  return projects.reduce((closestProject, project) => {
+    if (!closestProject) {
+      return project;
+    }
+
+    const [centerLng, centerLat] = center;
+    const [projectLng, projectLat] = project.center;
+    const [closestLng, closestLat] = closestProject.center;
+    const projectDistance =
+      (projectLng - centerLng) ** 2 + (projectLat - centerLat) ** 2;
+    const closestDistance =
+      (closestLng - centerLng) ** 2 + (closestLat - centerLat) ** 2;
+
+    return projectDistance < closestDistance ? project : closestProject;
+  }, null);
+}
+
 export default function MapExperience({
+  assetLibrary,
   projects,
   selectedProject,
   selectedAsset,
-  onSelectProject
+  onSelectProject,
+  searchQuery,
+  viewMode,
+  focusRequest,
+  resultCount,
+  panelHoveredProjectId = null
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -193,6 +275,34 @@ export default function MapExperience({
   const modelTransformRef = useRef(null);
   const threeStateRef = useRef(null);
   const [ready, setReady] = useState(false);
+  const [currentZoom, setCurrentZoom] = useState(DISCOVER_OVERVIEW.zoom);
+  const [currentCenter, setCurrentCenter] = useState(DISCOVER_OVERVIEW.center);
+  const [isSummaryVisible, setIsSummaryVisible] = useState(false);
+  const inferredMapProject =
+    currentZoom >= MANUAL_MODEL_ZOOM_THRESHOLD
+      ? getClosestProject(projects, currentCenter)
+      : null;
+  const activeMapProject = selectedProject
+    ? projects.find((project) => project.id === selectedProject.id) ?? selectedProject
+    : inferredMapProject;
+  const selectedProjectId = activeMapProject?.id ?? "__none__";
+  const hoverMarkerId = panelHoveredProjectId ?? "__none__";
+  const activeMapAsset =
+    selectedProject && selectedAsset
+      ? selectedAsset
+      : activeMapProject
+        ? assetLibrary.find((asset) => asset.id === activeMapProject.primaryAssetId) ??
+          null
+        : null;
+  const isMapLedDeck = viewMode === "discover" || viewMode === "browse";
+  const showSelectedModel =
+    Boolean(activeMapAsset?.src) &&
+    Boolean(activeMapProject) &&
+    (!isMapLedDeck || currentZoom >= MANUAL_MODEL_ZOOM_THRESHOLD);
+  const landResultCount = projects.filter(
+    (project) => project.propertyType === "land"
+  ).length;
+  const buildingResultCount = projects.length - landResultCount;
 
   useEffect(() => {
     let disposed = false;
@@ -234,6 +344,12 @@ export default function MapExperience({
       map.addControl(new maplibregl.NavigationControl({ showCompass: false }));
 
       map.on("load", () => {
+        const syncViewportState = () => {
+          setCurrentZoom(map.getZoom());
+          const mapCenter = map.getCenter();
+          setCurrentCenter([mapCenter.lng, mapCenter.lat]);
+        };
+
         map.addSource("projects", {
           type: "geojson",
           data: polygonCollection(projects)
@@ -251,7 +367,7 @@ export default function MapExperience({
           paint: {
             "fill-color": [
               "case",
-              ["==", ["get", "id"], selectedProject.id],
+              ["==", ["get", "id"], selectedProjectId],
               "#d6b47b",
               "#27455a"
             ],
@@ -263,7 +379,7 @@ export default function MapExperience({
           id: "project-massing-base",
           type: "fill-extrusion",
           source: "projects",
-          filter: ["!=", ["get", "id"], selectedProject.id],
+          filter: ["!=", ["get", "id"], selectedProjectId],
           paint: {
             "fill-extrusion-color": "#4d7a97",
             "fill-extrusion-height": ["get", "height"],
@@ -276,17 +392,15 @@ export default function MapExperience({
           id: "project-massing-selected",
           type: "fill-extrusion",
           source: "projects",
-          filter: ["==", ["get", "id"], selectedProject.id],
+          filter: ["==", ["get", "id"], selectedProjectId],
           paint: {
             "fill-extrusion-color": "#f1d3a1",
             "fill-extrusion-height": getSelectedMassingHeight(
-              selectedProject,
-              Boolean(selectedAsset?.src)
+              activeMapProject ?? projects[0],
+              showSelectedModel
             ),
             "fill-extrusion-base": 0,
-            "fill-extrusion-opacity": getSelectedMassingOpacity(
-              Boolean(selectedAsset?.src)
-            )
+            "fill-extrusion-opacity": getSelectedMassingOpacity(showSelectedModel)
           }
         });
 
@@ -297,13 +411,13 @@ export default function MapExperience({
           paint: {
             "line-color": [
               "case",
-              ["==", ["get", "id"], selectedProject.id],
+              ["==", ["get", "id"], selectedProjectId],
               "#f3d39c",
               "#7ab9db"
             ],
             "line-width": [
               "case",
-              ["==", ["get", "id"], selectedProject.id],
+              ["==", ["get", "id"], selectedProjectId],
               3,
               1.25
             ],
@@ -318,13 +432,13 @@ export default function MapExperience({
           paint: {
             "circle-radius": [
               "case",
-              ["==", ["get", "id"], selectedProject.id],
+              ["==", ["get", "id"], selectedProjectId],
               18,
               12
             ],
             "circle-color": [
               "case",
-              ["==", ["get", "id"], selectedProject.id],
+              ["==", ["get", "id"], selectedProjectId],
               "#f3d39c",
               "#67b2df"
             ],
@@ -417,13 +531,13 @@ export default function MapExperience({
           paint: {
             "circle-radius": [
               "case",
-              ["==", ["get", "id"], selectedProject.id],
+              ["==", ["get", "id"], selectedProjectId],
               8,
               5
             ],
             "circle-color": [
               "case",
-              ["==", ["get", "id"], selectedProject.id],
+              ["==", ["get", "id"], selectedProjectId],
               "#fff1cf",
               "#8dd3ff"
             ],
@@ -473,6 +587,9 @@ export default function MapExperience({
           }
         );
 
+        map.on("moveend", syncViewportState);
+        map.on("zoomend", syncViewportState);
+        syncViewportState();
         setReady(true);
       });
     }
@@ -493,6 +610,32 @@ export default function MapExperience({
   }, [onSelectProject]);
 
   useEffect(() => {
+    if (viewMode === "platform" || viewMode === "models") {
+      setIsSummaryVisible(true);
+      return;
+    }
+
+    if (viewMode === "browse") {
+      setIsSummaryVisible(false);
+      return;
+    }
+
+    if (!searchQuery.trim()) {
+      setIsSummaryVisible(false);
+      return;
+    }
+
+    setIsSummaryVisible(false);
+    const timeoutId = window.setTimeout(() => {
+      setIsSummaryVisible(true);
+    }, 1000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [searchQuery, viewMode]);
+
+  useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) {
       return;
@@ -503,70 +646,107 @@ export default function MapExperience({
 
     setPaintIfLayerExists(map, "project-footprints", "fill-color", [
       "case",
-      ["==", ["get", "id"], selectedProject.id],
+      ["==", ["get", "id"], selectedProjectId],
       "#d6b47b",
       "#27455a"
     ]);
     setPaintIfLayerExists(map, "project-footprints-outline", "line-color", [
       "case",
-      ["==", ["get", "id"], selectedProject.id],
+      ["==", ["get", "id"], selectedProjectId],
       "#f3d39c",
       "#7ab9db"
     ]);
     setPaintIfLayerExists(map, "project-footprints-outline", "line-width", [
       "case",
-      ["==", ["get", "id"], selectedProject.id],
+      ["==", ["get", "id"], selectedProjectId],
       3,
       1.25
     ]);
     setFilterIfLayerExists(map, "project-massing-base", [
       "!=",
       ["get", "id"],
-      selectedProject.id
+      selectedProjectId
     ]);
     setFilterIfLayerExists(map, "project-massing-selected", [
       "==",
       ["get", "id"],
-      selectedProject.id
+      selectedProjectId
     ]);
-    setPaintIfLayerExists(
-      map,
-      "project-massing-selected",
-      "fill-extrusion-height",
-      getSelectedMassingHeight(selectedProject, Boolean(selectedAsset?.src))
-    );
+    if (activeMapProject) {
+      setPaintIfLayerExists(
+        map,
+        "project-massing-selected",
+        "fill-extrusion-height",
+        getSelectedMassingHeight(activeMapProject, showSelectedModel)
+      );
+    }
     setPaintIfLayerExists(
       map,
       "project-massing-selected",
       "fill-extrusion-opacity",
-      getSelectedMassingOpacity(Boolean(selectedAsset?.src))
+      getSelectedMassingOpacity(showSelectedModel)
     );
-    setPaintIfLayerExists(map, "project-marker-glow", "circle-radius", [
-      "case",
-      ["==", ["get", "id"], selectedProject.id],
-      18,
-      12
-    ]);
-    setPaintIfLayerExists(map, "project-marker-glow", "circle-color", [
-      "case",
-      ["==", ["get", "id"], selectedProject.id],
-      "#f3d39c",
-      "#67b2df"
-    ]);
-    setPaintIfLayerExists(map, "project-markers", "circle-radius", [
-      "case",
-      ["==", ["get", "id"], selectedProject.id],
-      8,
-      5
-    ]);
-    setPaintIfLayerExists(map, "project-markers", "circle-color", [
-      "case",
-      ["==", ["get", "id"], selectedProject.id],
-      "#fff1cf",
-      "#8dd3ff"
-    ]);
+    setPaintIfLayerExists(
+      map,
+      "project-marker-glow",
+      "circle-radius",
+      paintBySelection(selectedProjectId, hoverMarkerId, 18, 16, 12)
+    );
+    setPaintIfLayerExists(
+      map,
+      "project-marker-glow",
+      "circle-color",
+      paintBySelection(selectedProjectId, hoverMarkerId, "#f3d39c", "#e8c45c", "#67b2df")
+    );
+    setPaintIfLayerExists(
+      map,
+      "project-markers",
+      "circle-radius",
+      paintBySelection(selectedProjectId, hoverMarkerId, 8, 7, 5)
+    );
+    setPaintIfLayerExists(
+      map,
+      "project-markers",
+      "circle-color",
+      paintBySelection(
+        selectedProjectId,
+        hoverMarkerId,
+        "#fff1cf",
+        "#ffe14a",
+        "#8dd3ff"
+      )
+    );
+  }, [
+    activeMapProject,
+    hoverMarkerId,
+    projects,
+    ready,
+    selectedProjectId,
+    showSelectedModel
+  ]);
 
-    const focusView = getFocusView(selectedProject, Boolean(selectedAsset?.src));
+  useEffect(() => {
+    const map = mapRef.current;
+    const threeState = threeStateRef.current;
+    if (!map || !ready || !threeState) {
+      return;
+    }
+
+    if (viewMode !== "discover" && viewMode !== "browse") {
+      return;
+    }
+
+    focusOverview(map, threeState.maplibregl, projects);
+  }, [projects, ready, viewMode]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !activeMapProject || !focusRequest) {
+      return;
+    }
+
+    const shouldZoomForModel = Boolean(activeMapAsset?.src);
+    const focusView = getFocusView(activeMapProject, shouldZoomForModel);
 
     map.flyTo({
       center: focusView.center,
@@ -577,7 +757,7 @@ export default function MapExperience({
       curve: 1.15,
       essential: true
     });
-  }, [projects, ready, selectedAsset?.src, selectedProject]);
+  }, [activeMapAsset?.src, activeMapProject, focusRequest, ready]);
 
   useEffect(() => {
     let cancelled = false;
@@ -598,17 +778,17 @@ export default function MapExperience({
       }
       modelTransformRef.current = null;
 
-      if (!selectedAsset?.src) {
+      if (!showSelectedModel || !activeMapAsset?.src || !activeMapProject) {
         map.triggerRepaint();
         return;
       }
 
       try {
-        let cachedModel = modelCacheRef.current.get(selectedAsset.src);
+        let cachedModel = modelCacheRef.current.get(activeMapAsset.src);
         if (!cachedModel) {
           const loader = new GLTFLoader();
-          cachedModel = loader.loadAsync(selectedAsset.src).then((gltf) => gltf.scene);
-          modelCacheRef.current.set(selectedAsset.src, cachedModel);
+          cachedModel = loader.loadAsync(activeMapAsset.src).then((gltf) => gltf.scene);
+          modelCacheRef.current.set(activeMapAsset.src, cachedModel);
         }
 
         const baseScene = await cachedModel;
@@ -625,16 +805,28 @@ export default function MapExperience({
           node.castShadow = true;
           node.receiveShadow = true;
 
+          if (Array.isArray(node.material)) {
+            node.material = node.material.map((material) => {
+              const clonedMaterial = material.clone();
+              clonedMaterial.side = THREE.DoubleSide;
+              clonedMaterial.needsUpdate = true;
+              return clonedMaterial;
+            });
+            return;
+          }
+
           if (node.material) {
+            node.material = node.material.clone();
+            node.material.side = THREE.DoubleSide;
             node.material.needsUpdate = true;
           }
         });
 
         const initialBox = new THREE.Box3().setFromObject(modelScene);
         const initialSize = initialBox.getSize(new THREE.Vector3());
-        const targetHeight = Math.max(selectedProject.massingHeight ?? 24, 12);
-        const { width, depth } = getFootprintDimensions(selectedProject);
-        const footprintFill = selectedProject.mapModelFootprintFill ?? 0.78;
+        const targetHeight = Math.max(activeMapProject.massingHeight ?? 24, 12);
+        const { width, depth } = getFootprintDimensions(activeMapProject);
+        const footprintFill = activeMapProject.mapModelFootprintFill ?? 0.78;
         const targetWidth = Math.max(width * footprintFill, 12);
         const targetDepth = Math.max(depth * footprintFill, 12);
         const heightScale = targetHeight / Math.max(initialSize.y, 0.001);
@@ -642,10 +834,10 @@ export default function MapExperience({
         const depthScale = targetDepth / Math.max(initialSize.z, 0.001);
         const footprintScale = Math.min(widthScale, depthScale);
         const maxHeightScale =
-          heightScale * (selectedProject.mapModelMaxHeightFactor ?? 1.8);
+          heightScale * (activeMapProject.mapModelMaxHeightFactor ?? 1.8);
         const scaleFactor =
           Math.min(footprintScale, maxHeightScale) *
-          (selectedProject.mapModelScale ?? 1);
+          (activeMapProject.mapModelScale ?? 1);
 
         modelScene.scale.setScalar(scaleFactor);
 
@@ -666,7 +858,7 @@ export default function MapExperience({
 
         scene.add(modelGroup);
         modelGroupRef.current = modelGroup;
-        modelTransformRef.current = getModelTransform(maplibregl, selectedProject);
+        modelTransformRef.current = getModelTransform(maplibregl, activeMapProject);
         map.triggerRepaint();
       } catch (error) {
         console.error("Failed to place 3D model on map", error);
@@ -678,29 +870,76 @@ export default function MapExperience({
     return () => {
       cancelled = true;
     };
-  }, [ready, selectedAsset?.src, selectedProject]);
+  }, [activeMapAsset?.src, activeMapProject, ready, showSelectedModel]);
 
   return (
     <div className="map-frame">
-      <div className="map-summary-card">
-        <p className="section-label">Market View</p>
-        <h2>{selectedProject.name}</h2>
-        <p>{selectedProject.stageSummary}</p>
-        <div className="map-summary-kpis">
-          <div>
-            <span className="stat-label">Access</span>
-            <strong>{selectedProject.access}</strong>
-          </div>
-          <div>
-            <span className="stat-label">Stage</span>
-            <strong>{selectedProject.stage}</strong>
-          </div>
-          <div>
-            <span className="stat-label">Return</span>
-            <strong>{selectedProject.roi}</strong>
+      {isSummaryVisible ? (
+        <div className="map-summary-card">
+          <p className="section-label">Market View</p>
+          <h2>
+            {viewMode === "discover"
+              ? "Search Results Overview"
+              : viewMode === "models"
+                ? "3D asset library"
+                : activeMapProject?.name ?? "No Property Selected"}
+          </h2>
+          <p>
+            {viewMode === "discover"
+              ? "The map stays zoomed out while you search. Click a property card or a map marker to focus a specific opportunity."
+              : viewMode === "models"
+                ? "The map shows every opportunity. In Models, open any GLB—including library exteriors not tied to a single deal."
+                : activeMapProject?.stageSummary ??
+                  "Select a property from Discover to move the map and open its memo."}
+          </p>
+          <div className="map-summary-kpis">
+            <div>
+              <span className="stat-label">
+                {viewMode === "discover"
+                  ? "Results"
+                  : viewMode === "models"
+                    ? "GLB files"
+                    : "Access"}
+              </span>
+              <strong>
+                {viewMode === "discover"
+                  ? resultCount
+                  : viewMode === "models"
+                    ? resultCount
+                    : activeMapProject?.access ?? "None"}
+              </strong>
+            </div>
+            <div>
+              <span className="stat-label">
+                {viewMode === "discover"
+                  ? "Buildings"
+                  : viewMode === "models"
+                    ? "Map deals"
+                    : "Stage"}
+              </span>
+              <strong>
+                {viewMode === "discover"
+                  ? buildingResultCount
+                  : viewMode === "models"
+                    ? projects.length
+                    : activeMapProject?.program ?? "--"}
+              </strong>
+            </div>
+            <div>
+              <span className="stat-label">
+                {viewMode === "discover" ? "Land" : viewMode === "models" ? "Land" : "Return"}
+              </span>
+              <strong>
+                {viewMode === "discover"
+                  ? landResultCount
+                  : viewMode === "models"
+                    ? landResultCount
+                    : activeMapProject?.roi ?? "--"}
+              </strong>
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       <div ref={containerRef} className="map-canvas" />
     </div>

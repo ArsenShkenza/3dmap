@@ -1,23 +1,21 @@
 import ExperienceShell from "@/components/ExperienceShell";
-import {
-  assetLibrary,
-  exploreCategories,
-  projects,
-  promptExamples
-} from "@/lib/projects";
+import { assetLibrary, projects } from "@/lib/projects";
 
 export default async function Page({ searchParams }) {
-  const resolvedSearchParams = await searchParams;
-  const initialProjectId =
-    resolvedSearchParams?.project ?? resolvedSearchParams?.experience ?? null;
+  const resolved = await searchParams;
+  const q = typeof resolved?.q === "string" ? resolved.q : "";
+  const initialSelectedId =
+    (typeof resolved?.open === "string" && resolved.open) ||
+    (typeof resolved?.project === "string" && resolved.project) ||
+    (typeof resolved?.experience === "string" && resolved.experience) ||
+    null;
 
   return (
     <ExperienceShell
       assetLibrary={assetLibrary}
-      categories={exploreCategories}
       projects={projects}
-      prompts={promptExamples}
-      initialProjectId={initialProjectId}
+      initialQuery={q}
+      initialSelectedId={initialSelectedId}
     />
   );
 }
