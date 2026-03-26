@@ -325,6 +325,17 @@ function getSavedTracePointsPct(projectId, traceIndex) {
   return { pointsPct: openPoints, isClosed: true };
 }
 
+const FLOOR_PANEL_APARTMENTS = [
+  "APARTAMENTI - 3+1",
+  "APARTAMENTI - 3+1",
+  "APARTAMENTI - 2+1",
+  "APARTAMENTI - 2+1",
+  "APARTAMENTI - 2+1",
+  "APARTAMENTI - 2+1",
+  "APARTAMENTI - 3+1",
+  "APARTAMENTI - 2+1"
+];
+
 export default function ProjectExperience({ project }) {
   const floors = useMemo(() => buildFloors(project), [project]);
   const facadeZones = useMemo(() => getFacadeZoneLayout(floors.length), [floors.length]);
@@ -332,6 +343,7 @@ export default function ProjectExperience({ project }) {
   const [traceFloorIndex, setTraceFloorIndex] = useState(0);
   const [hoveredFloorNumber, setHoveredFloorNumber] = useState(null);
   const [focusedFloorNumber, setFocusedFloorNumber] = useState(null);
+  const [floorPanelNumber, setFloorPanelNumber] = useState(null);
   const [tracePointsByFloor, setTracePointsByFloor] = useState({});
   const [traceClosedByFloor, setTraceClosedByFloor] = useState({});
   const [traceCursorPct, setTraceCursorPct] = useState(null);
@@ -360,6 +372,8 @@ export default function ProjectExperience({ project }) {
 
   const maxFloorNumber = floors.length ? Math.max(...floors.map((floor) => floor.number)) : 0;
   const minFloorNumber = floors.length ? Math.min(...floors.map((floor) => floor.number)) : 0;
+  const panelFloorDisplayNumber =
+    floorPanelNumber ?? focusedFloorNumber ?? hoveredFloorNumber ?? 33;
 
   const syncTraceCanvas = () => {
     const image = imageRef.current;
@@ -543,6 +557,16 @@ export default function ProjectExperience({ project }) {
     setTraceStatus(`Loaded saved polygon for trace ${traceFloorIndex}.`);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [traceEnabled, traceFloorIndex, project.id]);
+
+  useEffect(() => {
+    const onKey = (event) => {
+      if (event.key === "Escape") {
+        setFloorPanelNumber(null);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const caption =
     project.objectKind === "land"
@@ -819,7 +843,10 @@ export default function ProjectExperience({ project }) {
                         setFocusedFloorNumber(floor.number);
                       }}
                       onBlur={() => setHoveredFloorNumber(null)}
-                      onClick={() => setFocusedFloorNumber(floor.number)}
+                      onClick={() => {
+                        setFocusedFloorNumber(floor.number);
+                        setFloorPanelNumber(floor.number);
+                      }}
                     >
                       <strong>{floor.number}</strong>
                       <span>{floor.label}</span>
@@ -961,6 +988,88 @@ export default function ProjectExperience({ project }) {
                 Enable trace, click points clockwise on the facade, then copy coords.
               </p>
               {traceStatus ? <p className="floor-trace-help">{traceStatus}</p> : null}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div
+        className={`floor-panel${floorPanelNumber !== null ? " is-open" : ""}`}
+        aria-hidden={floorPanelNumber === null}
+      >
+        <button
+          type="button"
+          className="floor-panel-backdrop"
+          aria-label="Close floor plan"
+          tabIndex={floorPanelNumber !== null ? 0 : -1}
+          onClick={() => setFloorPanelNumber(null)}
+        />
+        <div
+          className="floor-panel-sheet"
+          role="dialog"
+          aria-modal="true"
+          aria-label={
+            floorPanelNumber !== null
+              ? `Floor ${panelFloorDisplayNumber} plan`
+              : "Floor plan"
+          }
+        >
+          <button
+            type="button"
+            className="floor-panel-close"
+            aria-label="Close floor plan"
+            tabIndex={floorPanelNumber !== null ? 0 : -1}
+            onClick={() => setFloorPanelNumber(null)}
+          >
+            &#8249;
+          </button>
+
+          <div className="floor-panel-shell">
+            <aside className="floor-panel-rail" aria-hidden="true">
+              <div className="floor-panel-controls">
+                <div className="floor-panel-controls-title">Numri i katit</div>
+                <div className="floor-panel-controls-value">
+                  {panelFloorDisplayNumber}
+                </div>
+                <div className="floor-panel-controls-dots">
+                  {[1, 2, 3, 4, 5].map((step) => (
+                    <span key={step} className="floor-panel-controls-dot" />
+                  ))}
+                </div>
+              </div>
+            </aside>
+
+            <div className="floor-panel-main">
+              <div className="floor-panel-head">
+                <div className="floor-panel-floor-label">
+                  KATI {panelFloorDisplayNumber}
+                </div>
+                <div className="floor-panel-zone-pill">ZONA E BANIMIT</div>
+              </div>
+
+              <div className="floor-panel-body">
+                <div className="floor-panel-plan-wrap">
+                  <img
+                    key={panelFloorDisplayNumber}
+                    className="floor-panel-plan"
+                    src="/assets/plan-33.jpg"
+                    alt={`Floor ${panelFloorDisplayNumber} plan`}
+                  />
+                </div>
+
+                <aside className="floor-panel-list">
+                  <div className="floor-panel-list-title">
+                    Apartamentet n&euml; kat:
+                  </div>
+                  <div className="floor-panel-list-items">
+                    {FLOOR_PANEL_APARTMENTS.map((apartment, index) => (
+                      <div key={`${apartment}-${index}`} className="floor-panel-list-item">
+                        {apartment}
+                      </div>
+                    ))}
+                  </div>
+                </aside>
+              </div>
             </div>
           </div>
         </div>
