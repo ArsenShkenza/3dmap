@@ -46,7 +46,9 @@ export default function InteriorExplorer3D({
   asset,
   project,
   caption,
-  statusLabel = "Interior Navigation"
+  statusLabel = "Interior Navigation",
+  hideCaption = false,
+  hideAssetMeta = false
 }) {
   const stageContainerRef = useRef(null);
   const stageShellRef = useRef(null);
@@ -108,10 +110,14 @@ export default function InteriorExplorer3D({
       </div>
 
       <p className="interior-viewer-note">Drag to look around. Scroll to move deeper. Right-drag to pan.</p>
-      <p className="model-caption">{caption ?? project.virtualExperience}</p>
-      <p className="model-meta">
-        Current asset: <code>{asset.fileName}</code>
-      </p>
+      {!hideCaption ? (
+        <p className="model-caption">{caption ?? project.virtualExperience}</p>
+      ) : null}
+      {!hideAssetMeta ? (
+        <p className="model-meta">
+          Current asset: <code>{asset.fileName}</code>
+        </p>
+      ) : null}
     </article>
   );
 }

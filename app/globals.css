@@ -1032,33 +1032,34 @@ h3 {
   min-height: auto;
 }
 
-.project-memo-card {
-  gap: 18px;
-  background:
-    radial-gradient(circle at top right, rgba(214, 180, 123, 0.1), transparent 36%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.02)),
-    rgba(255, 255, 255, 0.02);
+.project-experience-description {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.memo-grid {
-  display: grid;
-  gap: 12px;
+.project-preview-card .project-experience-description {
+  margin-top: 18px;
 }
 
-.memo-block {
-  padding: 14px 16px;
-  border-radius: 18px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-}
-
-.memo-block-label {
-  margin: 0 0 8px;
+.experience-description-label {
+  margin: 0 0 10px;
   color: var(--gold-bright);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+
+.project-experience-description .detail-copy {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+.experience-description-thesis {
+  margin: 12px 0 0;
+  color: var(--text-faint);
 }
 
 .asset-switch-row {

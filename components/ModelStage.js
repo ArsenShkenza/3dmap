@@ -132,6 +132,8 @@ export default function ModelStage(props) {
         project={props.project}
         caption={props.caption}
         statusLabel={props.statusLabel}
+        hideCaption={props.hideCaption}
+        hideAssetMeta={props.hideAssetMeta}
       />
     );
   }
