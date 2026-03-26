@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { FLOOR_POLYGONS_ABSOLUTE } from "@/lib/floor-polygons";
+import { APARTMENT_POLYGONS_ABSOLUTE } from "@/lib/apartment-polygons";
 
 function getTracedFloorCount(projectId) {
   const floors = FLOOR_POLYGONS_ABSOLUTE?.[projectId]?.floors;
@@ -325,6 +326,43 @@ function getSavedTracePointsPct(projectId, traceIndex) {
   return { pointsPct: openPoints, isClosed: true };
 }
 
+function pointsPctToPolygonString(pointsPct) {
+  if (!Array.isArray(pointsPct) || pointsPct.length < 3) {
+    return null;
+  }
+
+  return pointsPct.map(([x, y]) => `${x},${y}`).join(" ");
+}
+
+function getPctFromImageEvent(event, image) {
+  if (!image) {
+    return null;
+  }
+
+  const rect = image.getBoundingClientRect();
+  if (!rect.width || !rect.height) {
+    return null;
+  }
+
+  const xPct = clamp(((event.clientX - rect.left) / rect.width) * 100, 0, 100);
+  const yPct = clamp(((event.clientY - rect.top) / rect.height) * 100, 0, 100);
+
+  return [Number(xPct.toFixed(3)), Number(yPct.toFixed(3))];
+}
+
+function shouldClosePolygon(pointPct, pointsPct, rect) {
+  if (!pointPct || pointsPct.length < 3) {
+    return false;
+  }
+
+  const [xPct, yPct] = pointPct;
+  const first = pointsPct[0];
+  const dxPx = ((xPct - first[0]) / 100) * rect.width;
+  const dyPx = ((yPct - first[1]) / 100) * rect.height;
+
+  return Math.hypot(dxPx, dyPx) <= 16;
+}
+
 const FLOOR_PANEL_APARTMENTS = [
   "APARTAMENTI - 3+1",
   "APARTAMENTI - 3+1",
@@ -333,7 +371,9 @@ const FLOOR_PANEL_APARTMENTS = [
   "APARTAMENTI - 2+1",
   "APARTAMENTI - 2+1",
   "APARTAMENTI - 3+1",
-  "APARTAMENTI - 2+1"
+  "APARTAMENTI - 2+1",
+  "APARTAMENTI - 2+1",
+  "APARTAMENTI - 3+1"
 ];
 
 export default function ProjectExperience({ project }) {
@@ -344,6 +384,13 @@ export default function ProjectExperience({ project }) {
   const [hoveredFloorNumber, setHoveredFloorNumber] = useState(null);
   const [focusedFloorNumber, setFocusedFloorNumber] = useState(null);
   const [floorPanelNumber, setFloorPanelNumber] = useState(null);
+  const [hoveredPlanApartment, setHoveredPlanApartment] = useState(null);
+  const [planTraceEnabled, setPlanTraceEnabled] = useState(false);
+  const [planTraceApartmentIndex, setPlanTraceApartmentIndex] = useState(0);
+  const [planTracePointsByFloor, setPlanTracePointsByFloor] = useState({});
+  const [planTraceClosedByFloor, setPlanTraceClosedByFloor] = useState({});
+  const [planTraceCursorPct, setPlanTraceCursorPct] = useState(null);
+  const [planTraceStatus, setPlanTraceStatus] = useState("");
   const [tracePointsByFloor, setTracePointsByFloor] = useState({});
   const [traceClosedByFloor, setTraceClosedByFloor] = useState({});
   const [traceCursorPct, setTraceCursorPct] = useState(null);
@@ -352,6 +399,8 @@ export default function ProjectExperience({ project }) {
   const towerRef = useRef(null);
   const imageRef = useRef(null);
   const previewCanvasRef = useRef(null);
+  const planImageRef = useRef(null);
+  const planPreviewCanvasRef = useRef(null);
   const controlsOuterRef = useRef(null);
   const controlsWrapperRef = useRef(null);
 
@@ -374,6 +423,27 @@ export default function ProjectExperience({ project }) {
   const minFloorNumber = floors.length ? Math.min(...floors.map((floor) => floor.number)) : 0;
   const panelFloorDisplayNumber =
     floorPanelNumber ?? focusedFloorNumber ?? hoveredFloorNumber ?? 33;
+  const currentPlanTracePointsByApartment =
+    planTracePointsByFloor[panelFloorDisplayNumber] || {};
+  const currentPlanTraceClosedByApartment =
+    planTraceClosedByFloor[panelFloorDisplayNumber] || {};
+  const planTracePointsPct = currentPlanTracePointsByApartment[planTraceApartmentIndex] || [];
+  const planTraceIsClosed = Boolean(
+    currentPlanTraceClosedByApartment[planTraceApartmentIndex]
+  );
+  const isPlanTracing = planTraceEnabled && !planTraceIsClosed;
+  const apartmentPolygonsForFloor =
+    APARTMENT_POLYGONS_ABSOLUTE?.floors?.[panelFloorDisplayNumber]?.apartments || {};
+  const planApartmentZones = FLOOR_PANEL_APARTMENTS.map(
+    (_apartment, apartmentIndex) =>
+      pointsPctToPolygonString(currentPlanTracePointsByApartment[apartmentIndex]) ||
+      pointsPctToPolygonString(apartmentPolygonsForFloor[apartmentIndex]?.coordsPct) ||
+      null
+  );
+  const planApartmentColors = FLOOR_PANEL_APARTMENTS.map(
+    (_apartment, apartmentIndex) =>
+      apartmentPolygonsForFloor[apartmentIndex]?.highlightColor || null
+  );
 
   const syncTraceCanvas = () => {
     const image = imageRef.current;
@@ -482,6 +552,109 @@ export default function ProjectExperience({ project }) {
     context.stroke();
   };
 
+  const syncPlanTraceCanvas = () => {
+    const image = planImageRef.current;
+    const canvas = planPreviewCanvasRef.current;
+    if (!image || !canvas) {
+      return;
+    }
+
+    const imageRect = image.getBoundingClientRect();
+    if (!imageRect.width || !imageRect.height) {
+      return;
+    }
+
+    const dpr = window.devicePixelRatio || 1;
+    const canvasWidth = Math.max(Math.round(imageRect.width), 1);
+    const canvasHeight = Math.max(Math.round(imageRect.height), 1);
+
+    canvas.width = Math.max(Math.round(canvasWidth * dpr), 1);
+    canvas.height = Math.max(Math.round(canvasHeight * dpr), 1);
+    canvas.style.width = `${canvasWidth}px`;
+    canvas.style.height = `${canvasHeight}px`;
+
+    const context = canvas.getContext("2d");
+    if (!context) {
+      return;
+    }
+
+    context.setTransform(1, 0, 0, 1, 0, 0);
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    context.scale(dpr, dpr);
+
+    if (!planTraceEnabled) {
+      return;
+    }
+
+    const pointsPx = planTracePointsPct.map(([x, y]) => [
+      (x / 100) * canvasWidth,
+      (y / 100) * canvasHeight
+    ]);
+
+    if (pointsPx.length >= 2) {
+      context.beginPath();
+      context.moveTo(pointsPx[0][0], pointsPx[0][1]);
+      for (let index = 1; index < pointsPx.length; index += 1) {
+        context.lineTo(pointsPx[index][0], pointsPx[index][1]);
+      }
+      context.strokeStyle = "#ffd89c";
+      context.lineWidth = 1;
+      context.setLineDash([]);
+      context.stroke();
+    }
+
+    if (planTraceIsClosed && pointsPx.length >= 3) {
+      context.beginPath();
+      context.moveTo(pointsPx[0][0], pointsPx[0][1]);
+      for (let index = 1; index < pointsPx.length; index += 1) {
+        context.lineTo(pointsPx[index][0], pointsPx[index][1]);
+      }
+      context.closePath();
+      context.fillStyle = "rgba(144, 32, 32, 0.32)";
+      context.fill();
+      context.strokeStyle = "rgba(255, 220, 220, 0.98)";
+      context.lineWidth = 1;
+      context.stroke();
+    }
+
+    pointsPx.forEach(([x, y], index) => {
+      context.beginPath();
+      context.arc(x, y, index === 0 ? 3 : 2.1, 0, Math.PI * 2);
+      context.fillStyle = index === 0 ? "#8ee7ff" : "#ffe0ab";
+      context.fill();
+      context.lineWidth = 0.8;
+      context.strokeStyle = "rgba(22, 12, 2, 0.9)";
+      context.stroke();
+    });
+
+    if (!planTraceCursorPct) {
+      return;
+    }
+
+    const cursorX = (planTraceCursorPct[0] / 100) * canvasWidth;
+    const cursorY = (planTraceCursorPct[1] / 100) * canvasHeight;
+
+    if (!planTraceIsClosed && pointsPx.length >= 1) {
+      const last = pointsPx[pointsPx.length - 1];
+      context.beginPath();
+      context.moveTo(last[0], last[1]);
+      context.lineTo(cursorX, cursorY);
+      context.strokeStyle = "#8ee7ff";
+      context.lineWidth = 1.1;
+      context.setLineDash([5, 3]);
+      context.stroke();
+      context.setLineDash([]);
+    }
+
+    context.beginPath();
+    context.arc(cursorX, cursorY, 2.2, 0, Math.PI * 2);
+    context.fillStyle = "#8ee7ff";
+    context.fill();
+    context.lineWidth = 0.8;
+    context.strokeStyle = "rgba(4, 20, 28, 0.95)";
+    context.stroke();
+  };
+
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
@@ -501,6 +674,34 @@ export default function ProjectExperience({ project }) {
     syncTraceCanvas();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [traceEnabled, traceFloorIndex, traceCursorPct, traceIsClosed, tracePointsPct.length]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const handleResize = () => syncPlanTraceCanvas();
+    window.addEventListener("resize", handleResize);
+    syncPlanTraceCanvas();
+
+    return () => window.removeEventListener("resize", handleResize);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    syncPlanTraceCanvas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    planTraceEnabled,
+    panelFloorDisplayNumber,
+    planTraceApartmentIndex,
+    planTraceCursorPct,
+    planTraceIsClosed,
+    planTracePointsPct.length
+  ]);
 
   useEffect(() => {
     const outer = controlsOuterRef.current;
@@ -573,31 +774,6 @@ export default function ProjectExperience({ project }) {
       ? "Scroll for full image · indicative elevation"
       : "Scroll for full elevation · hover floors to explore";
 
-  const getPctFromEvent = (event) => {
-    const image = imageRef.current;
-    if (!image) {
-      return null;
-    }
-    const rect = image.getBoundingClientRect();
-    if (!rect.width || !rect.height) {
-      return null;
-    }
-    const xPct = clamp(((event.clientX - rect.left) / rect.width) * 100, 0, 100);
-    const yPct = clamp(((event.clientY - rect.top) / rect.height) * 100, 0, 100);
-    return [Number(xPct.toFixed(3)), Number(yPct.toFixed(3))];
-  };
-
-  const shouldCloseTraceCycle = (pointPct, rect) => {
-    if (!pointPct || tracePointsPct.length < 3) {
-      return false;
-    }
-    const [xPct, yPct] = pointPct;
-    const first = tracePointsPct[0];
-    const dxPx = ((xPct - first[0]) / 100) * rect.width;
-    const dyPx = ((yPct - first[1]) / 100) * rect.height;
-    return Math.hypot(dxPx, dyPx) <= 16;
-  };
-
   return (
     <section className="experience-page">
       <div className="experience-backdrop" />
@@ -618,22 +794,26 @@ export default function ProjectExperience({ project }) {
             </p>
             <p className="selection-meta">{project.summary}</p>
 
-            <div className="detail-grid experience-stats">
-              <article className="detail-card">
-                <p className="status-label">Access</p>
-                <strong>{project.access}</strong>
-              </article>
-              <article className="detail-card">
-                <p className="status-label">Category</p>
-                <strong>{project.categoryLabel}</strong>
-              </article>
-              <article className="detail-card">
-                <p className="status-label">ROI</p>
-                <strong>{project.roi}</strong>
-              </article>
-              <article className="detail-card">
-                <p className="status-label">Stage</p>
-                <strong>{project.stage}</strong>
+            <div className="experience-stats">
+              <article className="detail-card experience-stats-card">
+                <div className="experience-stats-grid">
+                  <div className="experience-stat">
+                    <p className="status-label">Access</p>
+                    <strong>{project.access}</strong>
+                  </div>
+                  <div className="experience-stat">
+                    <p className="status-label">Category</p>
+                    <strong>{project.categoryLabel}</strong>
+                  </div>
+                  <div className="experience-stat">
+                    <p className="status-label">ROI</p>
+                    <strong>{project.roi}</strong>
+                  </div>
+                  <div className="experience-stat">
+                    <p className="status-label">Stage</p>
+                    <strong>{project.stage}</strong>
+                  </div>
+                </div>
               </article>
             </div>
           </div>
@@ -705,7 +885,7 @@ export default function ProjectExperience({ project }) {
                 if (!isTracing) {
                   return;
                 }
-                const next = getPctFromEvent(event);
+                const next = getPctFromImageEvent(event, imageRef.current);
                 if (!next) {
                   return;
                 }
@@ -727,12 +907,12 @@ export default function ProjectExperience({ project }) {
                   return;
                 }
 
-                const next = getPctFromEvent(event);
+                const next = getPctFromImageEvent(event, imageRef.current);
                 if (!next) {
                   return;
                 }
 
-                if (shouldCloseTraceCycle(next, rect)) {
+                if (shouldClosePolygon(next, tracePointsPct, rect)) {
                   setTraceClosedByFloor((prev) => ({ ...prev, [traceFloorIndex]: true }));
                   setTraceCursorPct(tracePointsPct[0]);
                   setTraceStatus(
@@ -1048,13 +1228,271 @@ export default function ProjectExperience({ project }) {
               </div>
 
               <div className="floor-panel-body">
-                <div className="floor-panel-plan-wrap">
-                  <img
-                    key={panelFloorDisplayNumber}
-                    className="floor-panel-plan"
-                    src="/assets/plan-33.jpg"
-                    alt={`Floor ${panelFloorDisplayNumber} plan`}
-                  />
+                <div className="floor-panel-plan-column">
+                  <div className="floor-panel-plan-wrap">
+                    <div
+                      className={`floor-panel-plan-stage${planTraceEnabled ? " is-tracing" : ""}`}
+                      onPointerMove={(event) => {
+                        if (!isPlanTracing) {
+                          return;
+                        }
+                        const next = getPctFromImageEvent(event, planImageRef.current);
+                        if (!next) {
+                          return;
+                        }
+                        setPlanTraceCursorPct(next);
+                      }}
+                      onPointerLeave={() => setPlanTraceCursorPct(null)}
+                      onPointerDown={(event) => {
+                        if (!planTraceEnabled) {
+                          return;
+                        }
+
+                        event.preventDefault();
+
+                        const image = planImageRef.current;
+                        if (!image) {
+                          return;
+                        }
+
+                        const rect = image.getBoundingClientRect();
+                        if (!rect.width || !rect.height) {
+                          return;
+                        }
+
+                        const next = getPctFromImageEvent(event, image);
+                        if (!next) {
+                          return;
+                        }
+
+                        if (shouldClosePolygon(next, planTracePointsPct, rect)) {
+                          setPlanTraceClosedByFloor((prev) => ({
+                            ...prev,
+                            [panelFloorDisplayNumber]: {
+                              ...(prev[panelFloorDisplayNumber] || {}),
+                              [planTraceApartmentIndex]: true
+                            }
+                          }));
+                          setPlanTraceCursorPct(planTracePointsPct[0]);
+                          setPlanTraceStatus(
+                            `Apartment ${planTraceApartmentIndex}: polygon closed with ${planTracePointsPct.length} points.`
+                          );
+                          return;
+                        }
+
+                        if (planTraceIsClosed) {
+                          return;
+                        }
+
+                        setPlanTracePointsByFloor((prev) => ({
+                          ...prev,
+                          [panelFloorDisplayNumber]: {
+                            ...(prev[panelFloorDisplayNumber] || {}),
+                            [planTraceApartmentIndex]: [
+                              ...((prev[panelFloorDisplayNumber] || {})[
+                                planTraceApartmentIndex
+                              ] || []),
+                              next
+                            ]
+                          }
+                        }));
+                        setPlanTraceCursorPct(next);
+                        setPlanTraceStatus(
+                          `Apartment ${planTraceApartmentIndex}: ${planTracePointsPct.length + 1} point${planTracePointsPct.length ? "s" : ""}. Click the first point to close.`
+                        );
+                      }}
+                    >
+                      <img
+                        key={panelFloorDisplayNumber}
+                        className="floor-panel-plan"
+                        src="/assets/plan-33.jpg"
+                        alt={`Floor ${panelFloorDisplayNumber} plan`}
+                        ref={planImageRef}
+                        draggable={false}
+                        onLoad={() => {
+                          syncPlanTraceCanvas();
+                        }}
+                      />
+                      <canvas
+                        ref={planPreviewCanvasRef}
+                        className="floor-plan-trace-preview"
+                      />
+                      {planApartmentZones.some(Boolean) && (
+                        <svg
+                          className="floor-plan-hotspots"
+                          viewBox="0 0 100 100"
+                          preserveAspectRatio="none"
+                          aria-hidden="true"
+                          style={{ pointerEvents: planTraceEnabled ? "none" : "auto" }}
+                        >
+                          {planApartmentZones.map((pts, idx) =>
+                            pts ? (
+                            <polygon
+                              key={idx}
+                              points={pts}
+                              className={`plan-apt-zone${hoveredPlanApartment === idx ? " is-hovered" : ""}`}
+                              style={planApartmentColors[idx] ? { "--apt-highlight": planApartmentColors[idx] } : undefined}
+                              onMouseEnter={() => setHoveredPlanApartment(idx)}
+                              onMouseLeave={() => setHoveredPlanApartment(null)}
+                            />
+                            ) : null
+                          )}
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="floor-plan-trace-tool">
+                    <div className="floor-plan-trace-toolbar">
+                      <button
+                        type="button"
+                        className="ghost-button"
+                        onClick={() => {
+                          setPlanTraceEnabled((prev) => !prev);
+                          setPlanTraceCursorPct(null);
+                          setPlanTraceStatus("");
+                          setHoveredPlanApartment(null);
+                        }}
+                      >
+                        {planTraceEnabled ? "Tracing On" : "Trace Apartments"}
+                      </button>
+                      <button
+                        type="button"
+                        className="ghost-button"
+                        onClick={() => {
+                          const next = clamp(
+                            planTraceApartmentIndex - 1,
+                            0,
+                            Math.max(FLOOR_PANEL_APARTMENTS.length - 1, 0)
+                          );
+                          setPlanTraceApartmentIndex(next);
+                          setPlanTraceCursorPct(null);
+                          setPlanTraceStatus("");
+                        }}
+                      >
+                        Prev
+                      </button>
+                      <strong className="floor-plan-trace-apartment">
+                        Apt {planTraceApartmentIndex}
+                        {FLOOR_PANEL_APARTMENTS[planTraceApartmentIndex]
+                          ? ` · ${FLOOR_PANEL_APARTMENTS[planTraceApartmentIndex]}`
+                          : ""}
+                      </strong>
+                      <button
+                        type="button"
+                        className="ghost-button"
+                        onClick={() => {
+                          const next = clamp(
+                            planTraceApartmentIndex + 1,
+                            0,
+                            Math.max(FLOOR_PANEL_APARTMENTS.length - 1, 0)
+                          );
+                          setPlanTraceApartmentIndex(next);
+                          setPlanTraceCursorPct(null);
+                          setPlanTraceStatus("");
+                        }}
+                      >
+                        Next
+                      </button>
+                      <button
+                        type="button"
+                        className="ghost-button"
+                        onClick={() => {
+                          setPlanTracePointsByFloor((prev) => {
+                            const floorPoints = {
+                              ...(prev[panelFloorDisplayNumber] || {})
+                            };
+                            const points = [...(floorPoints[planTraceApartmentIndex] || [])];
+                            points.pop();
+                            floorPoints[planTraceApartmentIndex] = points;
+                            return { ...prev, [panelFloorDisplayNumber]: floorPoints };
+                          });
+                          setPlanTraceClosedByFloor((prev) => ({
+                            ...prev,
+                            [panelFloorDisplayNumber]: {
+                              ...(prev[panelFloorDisplayNumber] || {}),
+                              [planTraceApartmentIndex]: false
+                            }
+                          }));
+                          setPlanTraceStatus("");
+                        }}
+                      >
+                        Undo
+                      </button>
+                      <button
+                        type="button"
+                        className="ghost-button"
+                        onClick={() => {
+                          setPlanTracePointsByFloor((prev) => ({
+                            ...prev,
+                            [panelFloorDisplayNumber]: {
+                              ...(prev[panelFloorDisplayNumber] || {}),
+                              [planTraceApartmentIndex]: []
+                            }
+                          }));
+                          setPlanTraceClosedByFloor((prev) => ({
+                            ...prev,
+                            [panelFloorDisplayNumber]: {
+                              ...(prev[panelFloorDisplayNumber] || {}),
+                              [planTraceApartmentIndex]: false
+                            }
+                          }));
+                          setPlanTraceCursorPct(null);
+                          setPlanTraceStatus("");
+                        }}
+                      >
+                        Clear
+                      </button>
+                      <button
+                        type="button"
+                        className="floor-trace-copy"
+                        onClick={async () => {
+                          const image = planImageRef.current;
+                          if (!image) {
+                            return;
+                          }
+
+                          const payload = {
+                            floorNumber: panelFloorDisplayNumber,
+                            apartmentIndex: planTraceApartmentIndex,
+                            apartmentLabel:
+                              FLOOR_PANEL_APARTMENTS[planTraceApartmentIndex] || null,
+                            sourceWidth: image.naturalWidth || 0,
+                            sourceHeight: image.naturalHeight || 0,
+                            coordsPct: planTracePointsPct,
+                            polygon: pointsPctToPolygonString(planTracePointsPct),
+                            coords: toAbsoluteFloorCoords(
+                              image,
+                              planTracePointsPct,
+                              planTraceIsClosed
+                            )
+                          };
+
+                          const text = JSON.stringify(payload, null, 2);
+                          try {
+                            await navigator.clipboard.writeText(text);
+                            setPlanTraceStatus(
+                              `Copied apartment ${planTraceApartmentIndex} coords to clipboard.`
+                            );
+                          } catch (_error) {
+                            console.log(text);
+                            setPlanTraceStatus(
+                              "Clipboard blocked. Coordinates logged in console."
+                            );
+                          }
+                        }}
+                      >
+                        Copy Apartment Coords
+                      </button>
+                    </div>
+                    <p className="floor-trace-help">
+                      Enable trace, click apartment points clockwise on the plan,
+                      then click the first point to close and copy coords.
+                    </p>
+                    {planTraceStatus ? (
+                      <p className="floor-trace-help">{planTraceStatus}</p>
+                    ) : null}
+                  </div>
                 </div>
 
                 <aside className="floor-panel-list">
@@ -1063,8 +1501,21 @@ export default function ProjectExperience({ project }) {
                   </div>
                   <div className="floor-panel-list-items">
                     {FLOOR_PANEL_APARTMENTS.map((apartment, index) => (
-                      <div key={`${apartment}-${index}`} className="floor-panel-list-item">
-                        {apartment}
+                      <div
+                        key={`${apartment}-${index}`}
+                        className={`floor-panel-list-item${planApartmentColors[index] ? " is-for-sale" : ""}${hoveredPlanApartment === index ? " is-hovered" : ""}${planTraceEnabled && planTraceApartmentIndex === index ? " is-target" : ""}`}
+                        onMouseEnter={() => setHoveredPlanApartment(index)}
+                        onMouseLeave={() => setHoveredPlanApartment(null)}
+                      >
+                        {hoveredPlanApartment === index ? (
+                          <span
+                            className={`floor-panel-list-status${planApartmentColors[index] ? " is-for-sale" : " is-sold"}`}
+                          >
+                            {planApartmentColors[index] ? "Ne Shitje" : "Shitur"}
+                          </span>
+                        ) : (
+                          apartment
+                        )}
                       </div>
                     ))}
                   </div>
