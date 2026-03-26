@@ -975,6 +975,13 @@ h3 {
 .project-hero-copy {
   gap: 12px;
   max-width: 54rem;
+  min-width: 0;
+}
+
+.project-hero-copy h1 {
+  white-space: normal;
+  overflow-wrap: break-word;
+  line-height: 1.1;
 }
 
 .project-lead {
@@ -1509,6 +1516,10 @@ h3 {
 
   .project-page-hero {
     padding: 20px;
+  }
+
+  .project-hero-copy h1 {
+    font-size: clamp(1.4rem, 4.5vw + 0.35rem, 2.2rem);
   }
 
   .project-stats {
