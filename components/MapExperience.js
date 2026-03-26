@@ -88,6 +88,18 @@ function setFilterIfLayerExists(map, layerId, filter) {
   map.setFilter(layerId, filter);
 }
 
+/** MapLibre paint: selected > panel hover > default */
+function paintBySelection(selectedId, hoverId, selectedValue, hoverValue, defaultValue) {
+  return [
+    "case",
+    ["==", ["get", "id"], selectedId],
+    selectedValue,
+    ["==", ["get", "id"], hoverId],
+    hoverValue,
+    defaultValue
+  ];
+}
+
 function getSelectedMassingOpacity(hasModel) {
   return hasModel ? 0.22 : 0.58;
 }
@@ -251,7 +263,8 @@ export default function MapExperience({
   searchQuery,
   viewMode,
   focusRequest,
-  resultCount
+  resultCount,
+  panelHoveredProjectId = null
 }) {
   const containerRef = useRef(null);
   const mapRef = useRef(null);
@@ -273,6 +286,7 @@ export default function MapExperience({
     ? projects.find((project) => project.id === selectedProject.id) ?? selectedProject
     : inferredMapProject;
   const selectedProjectId = activeMapProject?.id ?? "__none__";
+  const hoverMarkerId = panelHoveredProjectId ?? "__none__";
   const activeMapAsset =
     selectedProject && selectedAsset
       ? selectedAsset
@@ -280,10 +294,11 @@ export default function MapExperience({
         ? assetLibrary.find((asset) => asset.id === activeMapProject.primaryAssetId) ??
           null
         : null;
+  const isMapLedDeck = viewMode === "discover" || viewMode === "browse";
   const showSelectedModel =
     Boolean(activeMapAsset?.src) &&
     Boolean(activeMapProject) &&
-    (viewMode !== "discover" || currentZoom >= MANUAL_MODEL_ZOOM_THRESHOLD);
+    (!isMapLedDeck || currentZoom >= MANUAL_MODEL_ZOOM_THRESHOLD);
   const landResultCount = projects.filter(
     (project) => project.propertyType === "land"
   ).length;
@@ -595,8 +610,13 @@ export default function MapExperience({
   }, [onSelectProject]);
 
   useEffect(() => {
-    if (viewMode !== "discover") {
+    if (viewMode === "platform") {
       setIsSummaryVisible(true);
+      return;
+    }
+
+    if (viewMode === "browse") {
+      setIsSummaryVisible(false);
       return;
     }
 
@@ -666,36 +686,53 @@ export default function MapExperience({
       "fill-extrusion-opacity",
       getSelectedMassingOpacity(showSelectedModel)
     );
-    setPaintIfLayerExists(map, "project-marker-glow", "circle-radius", [
-      "case",
-      ["==", ["get", "id"], selectedProjectId],
-      18,
-      12
-    ]);
-    setPaintIfLayerExists(map, "project-marker-glow", "circle-color", [
-      "case",
-      ["==", ["get", "id"], selectedProjectId],
-      "#f3d39c",
-      "#67b2df"
-    ]);
-    setPaintIfLayerExists(map, "project-markers", "circle-radius", [
-      "case",
-      ["==", ["get", "id"], selectedProjectId],
-      8,
-      5
-    ]);
-    setPaintIfLayerExists(map, "project-markers", "circle-color", [
-      "case",
-      ["==", ["get", "id"], selectedProjectId],
-      "#fff1cf",
-      "#8dd3ff"
-    ]);
-  }, [activeMapProject, projects, ready, selectedProjectId, showSelectedModel]);
+    setPaintIfLayerExists(
+      map,
+      "project-marker-glow",
+      "circle-radius",
+      paintBySelection(selectedProjectId, hoverMarkerId, 18, 16, 12)
+    );
+    setPaintIfLayerExists(
+      map,
+      "project-marker-glow",
+      "circle-color",
+      paintBySelection(selectedProjectId, hoverMarkerId, "#f3d39c", "#e8c45c", "#67b2df")
+    );
+    setPaintIfLayerExists(
+      map,
+      "project-markers",
+      "circle-radius",
+      paintBySelection(selectedProjectId, hoverMarkerId, 8, 7, 5)
+    );
+    setPaintIfLayerExists(
+      map,
+      "project-markers",
+      "circle-color",
+      paintBySelection(
+        selectedProjectId,
+        hoverMarkerId,
+        "#fff1cf",
+        "#ffe14a",
+        "#8dd3ff"
+      )
+    );
+  }, [
+    activeMapProject,
+    hoverMarkerId,
+    projects,
+    ready,
+    selectedProjectId,
+    showSelectedModel
+  ]);
 
   useEffect(() => {
     const map = mapRef.current;
     const threeState = threeStateRef.current;
-    if (!map || !ready || !threeState || viewMode !== "discover") {
+    if (!map || !ready || !threeState) {
+      return;
+    }
+
+    if (viewMode !== "discover" && viewMode !== "browse") {
       return;
     }
 

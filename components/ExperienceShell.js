@@ -1,104 +1,117 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useDeferredValue, useMemo, useState } from "react";
+import {
+  useCallback,
+  useDeferredValue,
+  useEffect,
+  useMemo,
+  useState
+} from "react";
 import MapExperience from "@/components/MapExperience";
 import ModelStage from "@/components/ModelStage";
+import { exploreCategories } from "@/lib/projects";
+import { filterProjectsBySearchQuery } from "@/lib/searchFilter";
 
-const BUILDING_KEYWORDS = [
-  "building",
-  "ndertese",
-  "ndertesa",
-  "ndertesat",
-  "ndertesaat"
-];
-const LAND_KEYWORDS = ["land", "toke", "toka"];
+const RESULTS_PREVIEW = 4;
+const RESULTS_PAGE_SIZE = 5;
 
-function tokenizeQuery(query) {
-  return query
-    .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
-    .split(/\s+/)
-    .filter(Boolean);
-}
-
-function getSearchIntent(query) {
-  const tokens = tokenizeQuery(query);
-  const reservedTokens = new Set([...BUILDING_KEYWORDS, ...LAND_KEYWORDS]);
-  const hasBuildingKeyword = tokens.some((token) =>
-    BUILDING_KEYWORDS.includes(token)
-  );
-  const hasLandKeyword = tokens.some((token) => LAND_KEYWORDS.includes(token));
-
-  return {
-    type:
-      hasBuildingKeyword === hasLandKeyword
-        ? "all"
-        : hasBuildingKeyword
-          ? "building"
-          : "land",
-    textQuery: tokens
-      .filter((token) => !reservedTokens.has(token))
-      .join(" ")
-  };
-}
-
-function matchesIntent(project, searchIntent) {
-  if (searchIntent.type === "all") {
-    return true;
+function normalizeInitialSelectedId(id, projectList) {
+  if (!id || typeof id !== "string") {
+    return null;
   }
-
-  return searchIntent.type === "land"
-    ? project.propertyType === "land"
-    : project.propertyType === "building";
-}
-
-function matchesQuery(project, query) {
-  if (!query) {
-    return true;
-  }
-
-  const haystack = [
-    project.name,
-    project.city,
-    project.district,
-    project.categoryLabel,
-    project.access,
-    project.stage,
-    project.memo,
-    project.thesis,
-    ...project.searchTerms
-  ]
-    .join(" ")
-    .toLowerCase();
-
-  return haystack.includes(query.toLowerCase());
+  return projectList.some((project) => project.id === id) ? id : null;
 }
 
 export default function ExperienceShell({
   assetLibrary,
-  projects
+  projects,
+  initialQuery = "",
+  initialSelectedId = null
 }) {
   const panelViews = [
     { id: "discover", label: "Discover" },
+    { id: "browse", label: "Browse" },
     { id: "platform", label: "Platform" }
   ];
   const [activeView, setActiveView] = useState("discover");
-  const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState(null);
+  const [query, setQuery] = useState(initialQuery);
+  const [selectedId, setSelectedId] = useState(() =>
+    normalizeInitialSelectedId(initialSelectedId, projects)
+  );
   const [mapFocusRequest, setMapFocusRequest] = useState(0);
+  const [resultsExpanded, setResultsExpanded] = useState(false);
+  const [resultsPage, setResultsPage] = useState(1);
+  const [hoveredListProjectId, setHoveredListProjectId] = useState(null);
+  const [browseCategoryId, setBrowseCategoryId] = useState("all");
   const deferredQuery = useDeferredValue(query);
-  const searchIntent = useMemo(
-    () => getSearchIntent(deferredQuery),
-    [deferredQuery]
+  const filteredProjects = useMemo(
+    () => filterProjectsBySearchQuery(projects, deferredQuery),
+    [projects, deferredQuery]
   );
 
-  const filteredProjects = projects.filter((project) => {
-    return (
-      matchesIntent(project, searchIntent) &&
-      matchesQuery(project, searchIntent.textQuery)
-    );
-  });
+  const browseFilteredProjects = useMemo(() => {
+    return projects.filter((project) => {
+      if (browseCategoryId !== "all" && project.categoryId !== browseCategoryId) {
+        return false;
+      }
+      return true;
+    });
+  }, [projects, browseCategoryId]);
+
+  const mapProjectList = useMemo(() => {
+    if (activeView === "browse") {
+      return browseFilteredProjects;
+    }
+    if (activeView === "discover") {
+      return filteredProjects.length ? filteredProjects : projects;
+    }
+    return projects;
+  }, [activeView, browseFilteredProjects, filteredProjects, projects]);
+
+  useEffect(() => {
+    if (activeView !== "browse" || !selectedId) {
+      return;
+    }
+    if (!browseFilteredProjects.some((project) => project.id === selectedId)) {
+      setSelectedId(null);
+    }
+  }, [activeView, browseFilteredProjects, selectedId]);
+
+  useEffect(() => {
+    setResultsExpanded(false);
+    setResultsPage(1);
+  }, [deferredQuery]);
+
+  const totalResultPages = useMemo(() => {
+    const count = filteredProjects.length;
+    if (count === 0) {
+      return 1;
+    }
+    return Math.max(1, Math.ceil(count / RESULTS_PAGE_SIZE));
+  }, [filteredProjects.length]);
+
+  useEffect(() => {
+    if (resultsPage > totalResultPages) {
+      setResultsPage(totalResultPages);
+    }
+  }, [resultsPage, totalResultPages]);
+
+  const visibleProjects = useMemo(() => {
+    if (!filteredProjects.length) {
+      return [];
+    }
+    if (!resultsExpanded) {
+      if (filteredProjects.length <= RESULTS_PREVIEW) {
+        return filteredProjects;
+      }
+      return filteredProjects.slice(0, RESULTS_PREVIEW);
+    }
+    const start = (resultsPage - 1) * RESULTS_PAGE_SIZE;
+    return filteredProjects.slice(start, start + RESULTS_PAGE_SIZE);
+  }, [filteredProjects, resultsExpanded, resultsPage]);
+
+  const hasMoreThanPreview = filteredProjects.length > RESULTS_PREVIEW;
 
   const selectedProject =
     projects.find((project) => project.id === selectedId) ?? null;
@@ -112,6 +125,7 @@ export default function ExperienceShell({
   const handleSearchChange = (value) => {
     setQuery(value);
     setSelectedId(null);
+    setHoveredListProjectId(null);
     if (activeView !== "discover") {
       setActiveView("discover");
     }
@@ -120,6 +134,7 @@ export default function ExperienceShell({
   const handleSelectProject = useCallback(
     (projectId, nextView = activeView) => {
       setSelectedId(projectId);
+      setHoveredListProjectId(null);
       setActiveView(nextView);
       setMapFocusRequest((currentValue) => currentValue + 1);
     },
@@ -128,6 +143,7 @@ export default function ExperienceShell({
 
   const handleBackToResults = useCallback(() => {
     setSelectedId(null);
+    setHoveredListProjectId(null);
   }, []);
 
   const discoverContent = (
@@ -166,7 +182,7 @@ export default function ExperienceShell({
 
             <div className="switcher-list">
               {filteredProjects.length ? (
-                filteredProjects.map((project) => (
+                visibleProjects.map((project) => (
                   <button
                     key={project.id}
                     type="button"
@@ -174,6 +190,8 @@ export default function ExperienceShell({
                       project.id === selectedId ? " active" : ""
                     }`}
                     onClick={() => handleSelectProject(project.id)}
+                    onMouseEnter={() => setHoveredListProjectId(project.id)}
+                    onMouseLeave={() => setHoveredListProjectId(null)}
                   >
                     <div className="switcher-card-head">
                       <div>
@@ -196,6 +214,71 @@ export default function ExperienceShell({
                 </div>
               )}
             </div>
+
+            {filteredProjects.length > 0 &&
+            (hasMoreThanPreview || resultsExpanded) ? (
+              <div className="results-list-footer">
+                {!resultsExpanded && hasMoreThanPreview ? (
+                  <div className="see-all-results-row">
+                    <button
+                      type="button"
+                      className="ghost-link-button see-all-results-button"
+                      onClick={() => {
+                        setResultsExpanded(true);
+                        setResultsPage(1);
+                      }}
+                    >
+                      Show all results ({filteredProjects.length})
+                    </button>
+                  </div>
+                ) : null}
+
+                {resultsExpanded && totalResultPages > 1 ? (
+                  <div className="results-pagination-bar">
+                    <button
+                      type="button"
+                      className="results-pagination-button"
+                      disabled={resultsPage <= 1}
+                      onClick={() =>
+                        setResultsPage((page) => Math.max(1, page - 1))
+                      }
+                    >
+                      Previous
+                    </button>
+                    <span className="results-pagination-status">
+                      Page {resultsPage} of {totalResultPages}
+                    </span>
+                    <button
+                      type="button"
+                      className="results-pagination-button"
+                      disabled={resultsPage >= totalResultPages}
+                      onClick={() =>
+                        setResultsPage((page) =>
+                          Math.min(totalResultPages, page + 1)
+                        )
+                      }
+                    >
+                      Next
+                    </button>
+                  </div>
+                ) : null}
+
+                {resultsExpanded && hasMoreThanPreview ? (
+                  <div className="see-all-results-row">
+                    <button
+                      type="button"
+                      className="ghost-link-button see-all-results-button"
+                      onClick={() => {
+                        setResultsExpanded(false);
+                        setResultsPage(1);
+                      }}
+                    >
+                      Show less
+                    </button>
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>
@@ -271,6 +354,90 @@ export default function ExperienceShell({
       </div>
     </section>
   ) : null;
+
+  const browseContent = (
+    <section className="detail-card">
+      <div className="detail-hero">
+        <div>
+          <p className="section-label">Browse</p>
+          <h2>Explore the deck by mandate.</h2>
+        </div>
+      </div>
+
+      <div className="view-stack">
+        <p className="detail-copy compact browse-deck-caption">
+          Filter the curated stack by investment mandate—land and development,
+          partnership asks, or turn-key income.
+        </p>
+
+        <div className="view-section browse-filter-section">
+          <p className="section-label">Category</p>
+          <div
+            className="category-row"
+            role="group"
+            aria-label="Investment category"
+          >
+            {exploreCategories.map((category) => (
+              <button
+                key={category.id}
+                type="button"
+                className={`category-chip${
+                  browseCategoryId === category.id ? " active" : ""
+                }`}
+                onClick={() => setBrowseCategoryId(category.id)}
+              >
+                {category.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="browse-inline-count">
+            <span className="count-pill">
+              {browseFilteredProjects.length} result
+              {browseFilteredProjects.length === 1 ? "" : "s"}
+            </span>
+          </div>
+
+          <div className="switcher-list">
+            {browseFilteredProjects.length ? (
+              browseFilteredProjects.map((project) => (
+                <button
+                  key={project.id}
+                  type="button"
+                  className={`switcher-card${
+                    project.id === selectedId ? " active" : ""
+                  }`}
+                  onClick={() => handleSelectProject(project.id)}
+                  onMouseEnter={() => setHoveredListProjectId(project.id)}
+                  onMouseLeave={() => setHoveredListProjectId(null)}
+                >
+                  <div className="switcher-card-head">
+                    <div>
+                      <p className="deal-city">
+                        {project.city} / {project.district}
+                      </p>
+                      <strong>{project.name}</strong>
+                    </div>
+                  </div>
+                  <div className="browse-card-meta">
+                    <span className="browse-meta-pill">{project.categoryLabel}</span>
+                  </div>
+                  <p className="deal-copy">{project.stageSummary}</p>
+                </button>
+              ))
+            ) : (
+              <div className="empty-state">
+                <p className="section-label">No matches</p>
+                <p>
+                  Widen the category filter to bring opportunities back into view.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 
   const platformContent = (
     <section className="detail-card">
@@ -350,7 +517,10 @@ export default function ExperienceShell({
                   className={`panel-nav-button${
                     activeView === view.id ? " active" : ""
                   }`}
-                  onClick={() => setActiveView(view.id)}
+                  onClick={() => {
+                    setActiveView(view.id);
+                    setHoveredListProjectId(null);
+                  }}
                 >
                   {view.label}
                 </button>
@@ -364,23 +534,39 @@ export default function ExperienceShell({
             ? selectedProject
               ? opportunityContent
               : discoverContent
-            : activeView === "platform"
-              ? platformContent
-              : null}
+            : activeView === "browse"
+              ? selectedProject
+                ? opportunityContent
+                : browseContent
+              : activeView === "platform"
+                ? platformContent
+                : null}
         </div>
       </section>
 
       <section className="map-shell">
         <MapExperience
           assetLibrary={assetLibrary}
-          projects={filteredProjects.length ? filteredProjects : projects}
+          projects={mapProjectList}
           selectedProject={selectedProject}
           selectedAsset={selectedAsset}
           onSelectProject={handleSelectProject}
           searchQuery={query}
           viewMode={activeView}
           focusRequest={mapFocusRequest}
-          resultCount={filteredProjects.length}
+          resultCount={
+            activeView === "browse"
+              ? browseFilteredProjects.length
+              : activeView === "discover"
+                ? filteredProjects.length
+                : projects.length
+          }
+          panelHoveredProjectId={
+            (activeView === "discover" || activeView === "browse") &&
+            !selectedProject
+              ? hoveredListProjectId
+              : null
+          }
         />
       </section>
     </main>

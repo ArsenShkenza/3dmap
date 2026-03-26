@@ -74,6 +74,73 @@ button {
   min-width: 0;
 }
 
+.results-list-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.see-all-results-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.see-all-results-button {
+  text-transform: none;
+  letter-spacing: 0.04em;
+  font-size: 0.85rem;
+}
+
+.results-pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.results-pagination-status {
+  font-size: 0.78rem;
+  color: var(--text-soft);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.results-pagination-button {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(241, 211, 161, 0.2);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-soft);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    opacity 180ms ease;
+}
+
+.results-pagination-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(241, 211, 161, 0.32);
+  color: var(--gold-bright);
+}
+
+.results-pagination-button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
 .panel-shell {
   position: relative;
   z-index: 2;
@@ -336,6 +403,46 @@ h3 {
   background: rgba(214, 180, 123, 0.14);
   color: var(--gold-bright);
   border-color: rgba(241, 211, 161, 0.32);
+}
+
+.browse-deck-caption {
+  margin: -4px 0 0;
+  color: var(--text-soft);
+  line-height: 1.55;
+}
+
+.browse-filter-section {
+  gap: 10px;
+}
+
+.browse-filter-section .section-label {
+  margin-bottom: -2px;
+}
+
+.browse-inline-count {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+.browse-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 2px;
+}
+
+.browse-meta-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 999px;
+  border: 1px solid rgba(241, 211, 161, 0.2);
+  color: var(--gold-bright);
+  background: rgba(214, 180, 123, 0.1);
 }
 
 .content-grid {
