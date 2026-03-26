@@ -248,6 +248,7 @@ export default function MapExperience({
   selectedProject,
   selectedAsset,
   onSelectProject,
+  searchQuery,
   viewMode,
   focusRequest,
   resultCount
@@ -263,6 +264,7 @@ export default function MapExperience({
   const [ready, setReady] = useState(false);
   const [currentZoom, setCurrentZoom] = useState(DISCOVER_OVERVIEW.zoom);
   const [currentCenter, setCurrentCenter] = useState(DISCOVER_OVERVIEW.center);
+  const [isSummaryVisible, setIsSummaryVisible] = useState(false);
   const inferredMapProject =
     currentZoom >= MANUAL_MODEL_ZOOM_THRESHOLD
       ? getClosestProject(projects, currentCenter)
@@ -593,6 +595,27 @@ export default function MapExperience({
   }, [onSelectProject]);
 
   useEffect(() => {
+    if (viewMode !== "discover") {
+      setIsSummaryVisible(true);
+      return;
+    }
+
+    if (!searchQuery.trim()) {
+      setIsSummaryVisible(false);
+      return;
+    }
+
+    setIsSummaryVisible(false);
+    const timeoutId = window.setTimeout(() => {
+      setIsSummaryVisible(true);
+    }, 1000);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [searchQuery, viewMode]);
+
+  useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) {
       return;
@@ -814,52 +837,54 @@ export default function MapExperience({
 
   return (
     <div className="map-frame">
-      <div className="map-summary-card">
-        <p className="section-label">Market View</p>
-        <h2>
-          {viewMode === "discover"
-            ? "Search Results Overview"
-            : activeMapProject?.name ?? "No Property Selected"}
-        </h2>
-        <p>
-          {viewMode === "discover"
-            ? "The map stays zoomed out while you search. Click a property card or a map marker to focus a specific opportunity."
-            : activeMapProject?.stageSummary ??
-              "Select a property from Discover to move the map and open its memo."}
-        </p>
-        <div className="map-summary-kpis">
-          <div>
-            <span className="stat-label">
-              {viewMode === "discover" ? "Results" : "Access"}
-            </span>
-            <strong>
-              {viewMode === "discover"
-                ? resultCount
-                : activeMapProject?.access ?? "None"}
-            </strong>
-          </div>
-          <div>
-            <span className="stat-label">
-              {viewMode === "discover" ? "Buildings" : "Stage"}
-            </span>
-            <strong>
-              {viewMode === "discover"
-                ? buildingResultCount
-                : activeMapProject?.stage ?? "Waiting"}
-            </strong>
-          </div>
-          <div>
-            <span className="stat-label">
-              {viewMode === "discover" ? "Land" : "Return"}
-            </span>
-            <strong>
-              {viewMode === "discover"
-                ? landResultCount
-                : activeMapProject?.roi ?? "--"}
-            </strong>
+      {isSummaryVisible ? (
+        <div className="map-summary-card">
+          <p className="section-label">Market View</p>
+          <h2>
+            {viewMode === "discover"
+              ? "Search Results Overview"
+              : activeMapProject?.name ?? "No Property Selected"}
+          </h2>
+          <p>
+            {viewMode === "discover"
+              ? "The map stays zoomed out while you search. Click a property card or a map marker to focus a specific opportunity."
+              : activeMapProject?.stageSummary ??
+                "Select a property from Discover to move the map and open its memo."}
+          </p>
+          <div className="map-summary-kpis">
+            <div>
+              <span className="stat-label">
+                {viewMode === "discover" ? "Results" : "Access"}
+              </span>
+              <strong>
+                {viewMode === "discover"
+                  ? resultCount
+                  : activeMapProject?.access ?? "None"}
+              </strong>
+            </div>
+            <div>
+              <span className="stat-label">
+                {viewMode === "discover" ? "Buildings" : "Stage"}
+              </span>
+              <strong>
+                {viewMode === "discover"
+                  ? buildingResultCount
+                  : activeMapProject?.program ?? "--"}
+              </strong>
+            </div>
+            <div>
+              <span className="stat-label">
+                {viewMode === "discover" ? "Land" : "Return"}
+              </span>
+              <strong>
+                {viewMode === "discover"
+                  ? landResultCount
+                  : activeMapProject?.roi ?? "--"}
+              </strong>
+            </div>
           </div>
         </div>
-      </div>
+      ) : null}
 
       <div ref={containerRef} className="map-canvas" />
     </div>

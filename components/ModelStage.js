@@ -80,7 +80,9 @@ function StandardModelStage({
   caption,
   viewerMode = "default",
   viewerConfig,
-  statusLabel = "AR Ready"
+  statusLabel = null,
+  hideCaption = false,
+  hideAssetMeta = false
 }) {
   const viewerRef = useRef(null);
   const stageRef = useRef(null);
@@ -195,7 +197,7 @@ function StandardModelStage({
           <p className="section-label">Virtual Experience</p>
           <h3>{asset.label}</h3>
         </div>
-        <span className="status-pill subtle">{statusLabel}</span>
+        {statusLabel ? <span className="status-pill subtle">{statusLabel}</span> : null}
       </div>
 
       <div ref={stageRef} className={`model-stage${isFullscreen ? " is-fullscreen" : ""}`}>
@@ -246,10 +248,14 @@ function StandardModelStage({
       </div>
 
       <p className="viewer-controls-note">Drag to rotate. Scroll to zoom. Use Expand View for closer review.</p>
-      <p className="model-caption">{caption ?? project.virtualExperience}</p>
-      <p className="model-meta">
-        Current asset: <code>{asset.fileName}</code>
-      </p>
+      {!hideCaption ? (
+        <p className="model-caption">{caption ?? project.virtualExperience}</p>
+      ) : null}
+      {!hideAssetMeta ? (
+        <p className="model-meta">
+          Current asset: <code>{asset.fileName}</code>
+        </p>
+      ) : null}
     </article>
   );
 }
