@@ -330,6 +330,8 @@ export default function ProjectExperience({ project }) {
   const facadeZones = useMemo(() => getFacadeZoneLayout(floors.length), [floors.length]);
   const [traceEnabled, setTraceEnabled] = useState(false);
   const [traceFloorIndex, setTraceFloorIndex] = useState(0);
+  const [hoveredFloorNumber, setHoveredFloorNumber] = useState(null);
+  const [focusedFloorNumber, setFocusedFloorNumber] = useState(null);
   const [tracePointsByFloor, setTracePointsByFloor] = useState({});
   const [traceClosedByFloor, setTraceClosedByFloor] = useState({});
   const [traceCursorPct, setTraceCursorPct] = useState(null);
@@ -338,11 +340,14 @@ export default function ProjectExperience({ project }) {
   const towerRef = useRef(null);
   const imageRef = useRef(null);
   const previewCanvasRef = useRef(null);
+  const controlsOuterRef = useRef(null);
+  const controlsWrapperRef = useRef(null);
 
   const tracePointsPct = tracePointsByFloor[traceFloorIndex] || [];
   const traceIsClosed = Boolean(traceClosedByFloor[traceFloorIndex]);
 
   const isTracing = traceEnabled && !traceIsClosed;
+  const activeFloorNumber = hoveredFloorNumber ?? focusedFloorNumber;
   const traceFloorNumber = traceFloorIndex + 1;
   const traceFloor = floors.find((floor) => floor.number === traceFloorNumber) ?? floors[floors.length - 1];
   const hasAbsolutePolygons = Boolean(FLOOR_POLYGONS_ABSOLUTE?.[project.id]);
@@ -352,6 +357,9 @@ export default function ProjectExperience({ project }) {
       .filter(Number.isFinite),
     [project.id]
   );
+
+  const maxFloorNumber = floors.length ? Math.max(...floors.map((floor) => floor.number)) : 0;
+  const minFloorNumber = floors.length ? Math.min(...floors.map((floor) => floor.number)) : 0;
 
   const syncTraceCanvas = () => {
     const image = imageRef.current;
@@ -481,6 +489,41 @@ export default function ProjectExperience({ project }) {
   }, [traceEnabled, traceFloorIndex, traceCursorPct, traceIsClosed, tracePointsPct.length]);
 
   useEffect(() => {
+    const outer = controlsOuterRef.current;
+    const wrapper = controlsWrapperRef.current;
+    if (!outer || !wrapper) {
+      return;
+    }
+
+    const page = outer.closest(".experience-page");
+    if (!page) {
+      return;
+    }
+
+    const reposition = () => {
+      const outerRect = outer.getBoundingClientRect();
+      const wrapperH = wrapper.offsetHeight;
+      const pageH = page.clientHeight;
+      const targetTop = pageH / 2 - outerRect.top - wrapperH / 2;
+      const maxTop = outerRect.height - wrapperH;
+      wrapper.style.top = `${Math.min(Math.max(targetTop, 0), Math.max(maxTop, 0))}px`;
+    };
+
+    const ro = new ResizeObserver(reposition);
+    ro.observe(outer);
+
+    page.addEventListener("scroll", reposition, { passive: true });
+    window.addEventListener("resize", reposition, { passive: true });
+    reposition();
+
+    return () => {
+      ro.disconnect();
+      page.removeEventListener("scroll", reposition);
+      window.removeEventListener("resize", reposition);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!traceEnabled) {
       return;
     }
@@ -578,6 +621,59 @@ export default function ProjectExperience({ project }) {
           <p className="status-label">Front Elevation</p>
           <div className="floor-elevation">
             <p className="elevation-caption">{caption}</p>
+            <div className="controls-outer" ref={controlsOuterRef} aria-live="polite">
+              <div className="controls-wrapper" ref={controlsWrapperRef}>
+                <div className="controls-title">Numri i katit</div>
+                <div className="controls-dots">
+                  <button
+                    type="button"
+                    className="controls-dot"
+                    aria-label="Up one floor"
+                    disabled={!maxFloorNumber}
+                    onClick={() => {
+                      if (!maxFloorNumber) {
+                        return;
+                      }
+                      const next = clamp(
+                        (focusedFloorNumber ?? maxFloorNumber) + 1,
+                        minFloorNumber,
+                        maxFloorNumber
+                      );
+                      setFocusedFloorNumber(next);
+                    }}
+                  />
+                </div>
+                <br />
+                <div className="current-holder">
+                  <div className="current-floor-number" data-floor={activeFloorNumber ?? ""}>
+                    {activeFloorNumber ?? "—"}
+                  </div>
+                  <div className="current-invisible" data-show={activeFloorNumber ?? ""} />
+                </div>
+                <div className="controls-dots">
+                  {[1, 2, 3, 4, 5].map((step) => (
+                    <button
+                      key={step}
+                      type="button"
+                      className="controls-dot"
+                      aria-label={`Down ${step} floor${step === 1 ? "" : "s"}`}
+                      disabled={!maxFloorNumber}
+                      onClick={() => {
+                        if (!maxFloorNumber) {
+                          return;
+                        }
+                        const next = clamp(
+                          (focusedFloorNumber ?? maxFloorNumber) - step,
+                          minFloorNumber,
+                          maxFloorNumber
+                        );
+                        setFocusedFloorNumber(next);
+                      }}
+                    />
+                  ))}
+                </div>
+              </div>
+            </div>
             <div
               ref={towerRef}
               className={`elevation-tower${traceEnabled ? " is-tracing" : ""}`}
@@ -696,7 +792,7 @@ export default function ProjectExperience({ project }) {
                     <button
                       key={floor.id}
                       type="button"
-                      className="elevation-floor"
+                      className={`elevation-floor${floor.number === activeFloorNumber ? " is-active" : ""}`}
                       style={{
                         top: absoluteGeometry
                           ? `${absoluteGeometry.topPct.toFixed(3)}%`
@@ -713,6 +809,17 @@ export default function ProjectExperience({ project }) {
                         ["--floor-clip-path"]: toPolygonClipPath(clipPoints)
                       }}
                       aria-label={`Floor ${floor.number}`}
+                      onMouseEnter={() => {
+                        setHoveredFloorNumber(floor.number);
+                        setFocusedFloorNumber(floor.number);
+                      }}
+                      onMouseLeave={() => setHoveredFloorNumber(null)}
+                      onFocus={() => {
+                        setHoveredFloorNumber(floor.number);
+                        setFocusedFloorNumber(floor.number);
+                      }}
+                      onBlur={() => setHoveredFloorNumber(null)}
+                      onClick={() => setFocusedFloorNumber(floor.number)}
                     >
                       <strong>{floor.number}</strong>
                       <span>{floor.label}</span>
