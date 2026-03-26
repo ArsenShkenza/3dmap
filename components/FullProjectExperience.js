@@ -95,7 +95,6 @@ export default function FullProjectExperience({
           <Link href="/" className="ghost-link-button">
             Back To Market View
           </Link>
-          <span className="status-pill">{project.stage}</span>
         </div>
       </section>
 
