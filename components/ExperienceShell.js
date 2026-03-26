@@ -8,9 +8,13 @@ import {
   useMemo,
   useState
 } from "react";
+import AssetVault from "@/components/AssetVault";
 import MapExperience from "@/components/MapExperience";
 import ModelStage from "@/components/ModelStage";
-import { exploreCategories } from "@/lib/projects";
+import {
+  assetVaultPreviewProject,
+  exploreCategories
+} from "@/lib/projects";
 import { filterProjectsBySearchQuery } from "@/lib/searchFilter";
 
 const RESULTS_PREVIEW = 4;
@@ -32,6 +36,7 @@ export default function ExperienceShell({
   const panelViews = [
     { id: "discover", label: "Discover" },
     { id: "browse", label: "Browse" },
+    { id: "models", label: "Models" },
     { id: "platform", label: "Platform" }
   ];
   const [activeView, setActiveView] = useState("discover");
@@ -44,6 +49,7 @@ export default function ExperienceShell({
   const [resultsPage, setResultsPage] = useState(1);
   const [hoveredListProjectId, setHoveredListProjectId] = useState(null);
   const [browseCategoryId, setBrowseCategoryId] = useState("all");
+  const [vaultPreviewAssetId, setVaultPreviewAssetId] = useState(null);
   const deferredQuery = useDeferredValue(query);
   const filteredProjects = useMemo(
     () => filterProjectsBySearchQuery(projects, deferredQuery),
@@ -77,6 +83,14 @@ export default function ExperienceShell({
       setSelectedId(null);
     }
   }, [activeView, browseFilteredProjects, selectedId]);
+
+  useEffect(() => {
+    if (activeView !== "models") {
+      setVaultPreviewAssetId(null);
+      return;
+    }
+    setVaultPreviewAssetId((currentId) => currentId ?? assetLibrary[0]?.id ?? null);
+  }, [activeView, assetLibrary]);
 
   useEffect(() => {
     setResultsExpanded(false);
@@ -120,6 +134,11 @@ export default function ExperienceShell({
       ? assetLibrary.find((asset) => asset.id === selectedProject.primaryAssetId) ??
         null
       : null;
+  const vaultPreviewAsset = useMemo(
+    () =>
+      assetLibrary.find((asset) => asset.id === vaultPreviewAssetId) ?? null,
+    [assetLibrary, vaultPreviewAssetId]
+  );
   const hasSearchQuery = query.trim().length > 0;
 
   const handleSearchChange = (value) => {
@@ -439,6 +458,39 @@ export default function ExperienceShell({
     </section>
   );
 
+  const modelsContent = (
+    <>
+      <section className="detail-card">
+        <div className="detail-hero">
+          <div>
+            <p className="section-label">Models</p>
+            <h2>Explore the full 3D library.</h2>
+          </div>
+        </div>
+        <p className="detail-copy compact browse-deck-caption">
+          Mapped heroes, integrated towers, interiors, and every exterior in the
+          vault—the same files you can open from Discover and Browse on the map.
+        </p>
+      </section>
+
+      <AssetVault
+        assets={assetLibrary}
+        selectedAssetId={vaultPreviewAssetId}
+        onSelectAsset={(asset) => setVaultPreviewAssetId(asset.id)}
+      />
+
+      {vaultPreviewAsset ? (
+        <section className="detail-card">
+          <ModelStage
+            asset={vaultPreviewAsset}
+            project={assetVaultPreviewProject}
+            caption="Rotate and zoom to review this file on its own."
+          />
+        </section>
+      ) : null}
+    </>
+  );
+
   const platformContent = (
     <section className="detail-card">
       <div className="detail-hero">
@@ -538,9 +590,11 @@ export default function ExperienceShell({
               ? selectedProject
                 ? opportunityContent
                 : browseContent
-              : activeView === "platform"
-                ? platformContent
-                : null}
+              : activeView === "models"
+                ? modelsContent
+                : activeView === "platform"
+                  ? platformContent
+                  : null}
         </div>
       </section>
 
@@ -559,7 +613,9 @@ export default function ExperienceShell({
               ? browseFilteredProjects.length
               : activeView === "discover"
                 ? filteredProjects.length
-                : projects.length
+                : activeView === "models"
+                  ? assetLibrary.length
+                  : projects.length
           }
           panelHoveredProjectId={
             (activeView === "discover" || activeView === "browse") &&

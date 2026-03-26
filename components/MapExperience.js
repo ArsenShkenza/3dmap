@@ -610,7 +610,7 @@ export default function MapExperience({
   }, [onSelectProject]);
 
   useEffect(() => {
-    if (viewMode === "platform") {
+    if (viewMode === "platform" || viewMode === "models") {
       setIsSummaryVisible(true);
       return;
     }
@@ -880,43 +880,61 @@ export default function MapExperience({
           <h2>
             {viewMode === "discover"
               ? "Search Results Overview"
-              : activeMapProject?.name ?? "No Property Selected"}
+              : viewMode === "models"
+                ? "3D asset library"
+                : activeMapProject?.name ?? "No Property Selected"}
           </h2>
           <p>
             {viewMode === "discover"
               ? "The map stays zoomed out while you search. Click a property card or a map marker to focus a specific opportunity."
-              : activeMapProject?.stageSummary ??
-                "Select a property from Discover to move the map and open its memo."}
+              : viewMode === "models"
+                ? "The map shows every opportunity. In Models, open any GLB—including library exteriors not tied to a single deal."
+                : activeMapProject?.stageSummary ??
+                  "Select a property from Discover to move the map and open its memo."}
           </p>
           <div className="map-summary-kpis">
             <div>
               <span className="stat-label">
-                {viewMode === "discover" ? "Results" : "Access"}
+                {viewMode === "discover"
+                  ? "Results"
+                  : viewMode === "models"
+                    ? "GLB files"
+                    : "Access"}
               </span>
               <strong>
                 {viewMode === "discover"
                   ? resultCount
-                  : activeMapProject?.access ?? "None"}
+                  : viewMode === "models"
+                    ? resultCount
+                    : activeMapProject?.access ?? "None"}
               </strong>
             </div>
             <div>
               <span className="stat-label">
-                {viewMode === "discover" ? "Buildings" : "Stage"}
+                {viewMode === "discover"
+                  ? "Buildings"
+                  : viewMode === "models"
+                    ? "Map deals"
+                    : "Stage"}
               </span>
               <strong>
                 {viewMode === "discover"
                   ? buildingResultCount
-                  : activeMapProject?.program ?? "--"}
+                  : viewMode === "models"
+                    ? projects.length
+                    : activeMapProject?.program ?? "--"}
               </strong>
             </div>
             <div>
               <span className="stat-label">
-                {viewMode === "discover" ? "Land" : "Return"}
+                {viewMode === "discover" ? "Land" : viewMode === "models" ? "Land" : "Return"}
               </span>
               <strong>
                 {viewMode === "discover"
                   ? landResultCount
-                  : activeMapProject?.roi ?? "--"}
+                  : viewMode === "models"
+                    ? landResultCount
+                    : activeMapProject?.roi ?? "--"}
               </strong>
             </div>
           </div>

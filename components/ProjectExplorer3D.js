@@ -94,19 +94,26 @@ function normalizeModel(root, THREE) {
 }
 
 function focusCamera(viewerState, selectedFloor, project) {
-  const { camera, controls, bounds } = viewerState;
+  const { THREE, camera, controls, bounds } = viewerState;
   const size = bounds.getSize(viewerState.size);
   const maxDimension = Math.max(size.x, size.y, size.z, 0.001);
-  const focusHeight = bounds.min.y + size.y * 0.56;
+  const center = new THREE.Vector3();
+  bounds.getCenter(center);
 
-  controls.target.set(0, focusHeight, 0);
+  controls.target.copy(center);
+  controls.zoomToCursor = false;
   controls.autoRotate = selectedFloor === FLOOR_OVERVIEW_VALUE;
   controls.autoRotateSpeed = 0.75;
   controls.minDistance = maxDimension * 0.95;
   controls.maxDistance = maxDimension * 4.8;
   controls.update();
 
-  camera.position.set(maxDimension * 1.75, focusHeight + size.y * 0.38, maxDimension * 1.85);
+  camera.position.set(
+    center.x + maxDimension * 1.75,
+    center.y + size.y * 0.38,
+    center.z + maxDimension * 1.85
+  );
+  camera.lookAt(center);
   camera.near = 0.01;
   camera.far = 40;
   camera.updateProjectionMatrix();
@@ -184,6 +191,7 @@ export default function ProjectExplorer3D({ asset, project }) {
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.06;
+        controls.zoomToCursor = false;
         controls.enablePan = false;
         controls.minPolarAngle = Math.PI * 0.14;
         controls.maxPolarAngle = Math.PI * 0.48;
