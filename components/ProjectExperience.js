@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { FLOOR_POLYGONS_ABSOLUTE } from "@/lib/floor-polygons";
-import { APARTMENT_POLYGONS_ABSOLUTE } from "@/lib/apartment-polygons";
+import { getApartmentPolygonsForProjectFloor } from "@/lib/apartment-polygons";
 
 function getTracedFloorCount(projectId) {
   const floors = FLOOR_POLYGONS_ABSOLUTE?.[projectId]?.floors;
@@ -366,7 +366,25 @@ function shouldClosePolygon(pointPct, pointsPct, rect) {
   return Math.hypot(dxPx, dyPx) <= 16;
 }
 
-const FLOOR_PANEL_APARTMENTS = [
+const TIRANA_UPPER_FLOORS_PLAN_SRC = `/assets/${encodeURIComponent(
+  "Screenshot 2026-03-27 150122.png"
+)}`;
+
+/** Dev-only: copy-coords tooling on /experience. Hidden for investor UI. */
+const SHOW_ELEVATION_TRACE_TOOL = false;
+const SHOW_FLOOR_PLAN_TRACE_TOOL = false;
+
+function getFloorPanelPlanSrc(projectId, floorNumber) {
+  if (projectId === "tirana-signature-residences") {
+    if (floorNumber === 1) {
+      return "/assets/interior/Planimetri.png";
+    }
+    return TIRANA_UPPER_FLOORS_PLAN_SRC;
+  }
+  return "/assets/plan-33.jpg";
+}
+
+const DEFAULT_FLOOR_PANEL_APARTMENTS = [
   "APARTAMENTI - 3+1",
   "APARTAMENTI - 3+1",
   "APARTAMENTI - 2+1",
@@ -378,6 +396,18 @@ const FLOOR_PANEL_APARTMENTS = [
   "APARTAMENTI - 2+1",
   "APARTAMENTI - 3+1"
 ];
+
+function getFloorPanelApartmentLabels(projectId, floorNumber) {
+  if (projectId === "tirana-signature-residences") {
+    if (floorNumber === 1) {
+      return ["Space 1", "Space 2", "Space 3"];
+    }
+    if (floorNumber === 2 || floorNumber === 3) {
+      return ["Apartment 2+1", "Apartment 2+1", "Apartment 2+1"];
+    }
+  }
+  return DEFAULT_FLOOR_PANEL_APARTMENTS;
+}
 
 export default function ProjectExperience({ project }) {
   const floors = useMemo(() => buildFloors(project), [project]);
@@ -435,6 +465,16 @@ export default function ProjectExperience({ project }) {
   }, [maxFloorNumber, minFloorNumber]);
   const panelFloorDisplayNumber =
     floorPanelNumber ?? focusedFloorNumber ?? hoveredFloorNumber ?? 33;
+  const floorPanelZonePillLabel =
+    panelFloorDisplayNumber === 1 ? "ZONA KOMERCIALE" : "ZONA E BANIMIT";
+  const floorPanelPlanSrc = useMemo(
+    () => getFloorPanelPlanSrc(project.id, panelFloorDisplayNumber),
+    [project.id, panelFloorDisplayNumber]
+  );
+  const panelApartmentLabels = useMemo(
+    () => getFloorPanelApartmentLabels(project.id, panelFloorDisplayNumber),
+    [project.id, panelFloorDisplayNumber]
+  );
   const currentPlanTracePointsByApartment =
     planTracePointsByFloor[panelFloorDisplayNumber] || {};
   const currentPlanTraceClosedByApartment =
@@ -444,17 +484,17 @@ export default function ProjectExperience({ project }) {
     currentPlanTraceClosedByApartment[planTraceApartmentIndex]
   );
   const isPlanTracing = planTraceEnabled && !planTraceIsClosed;
-  const apartmentPolygonsForFloor =
-    APARTMENT_POLYGONS_ABSOLUTE?.floors?.[panelFloorDisplayNumber]?.apartments || {};
-  const planApartmentZones = FLOOR_PANEL_APARTMENTS.map(
-    (_apartment, apartmentIndex) =>
-      pointsPctToPolygonString(currentPlanTracePointsByApartment[apartmentIndex]) ||
+  const apartmentPolygonsForFloor = useMemo(
+    () => getApartmentPolygonsForProjectFloor(project.id, panelFloorDisplayNumber),
+    [project.id, panelFloorDisplayNumber]
+  );
+  const planApartmentZones = panelApartmentLabels.map((_label, apartmentIndex) =>
+    pointsPctToPolygonString(currentPlanTracePointsByApartment[apartmentIndex]) ||
       pointsPctToPolygonString(apartmentPolygonsForFloor[apartmentIndex]?.coordsPct) ||
       null
   );
-  const planApartmentColors = FLOOR_PANEL_APARTMENTS.map(
-    (_apartment, apartmentIndex) =>
-      apartmentPolygonsForFloor[apartmentIndex]?.highlightColor || null
+  const planApartmentColors = panelApartmentLabels.map((_label, apartmentIndex) =>
+    apartmentPolygonsForFloor[apartmentIndex]?.highlightColor || null
   );
 
   const syncTraceCanvas = () => {
@@ -666,6 +706,11 @@ export default function ProjectExperience({ project }) {
     context.strokeStyle = "rgba(4, 20, 28, 0.95)";
     context.stroke();
   };
+
+  useEffect(() => {
+    const maxIndex = Math.max(panelApartmentLabels.length - 1, 0);
+    setPlanTraceApartmentIndex((current) => Math.min(current, maxIndex));
+  }, [panelFloorDisplayNumber, panelApartmentLabels.length]);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -1060,139 +1105,141 @@ export default function ProjectExperience({ project }) {
               </div>
             </div>
 
-            <div className="floor-trace-tool">
-              <div className="floor-trace-toolbar">
-                <button
-                  type="button"
-                  className="ghost-button floor-trace-toggle"
-                  onClick={() => {
-                    setTraceEnabled((prev) => !prev);
-                    setTraceCursorPct(null);
-                    setTraceStatus("");
-                  }}
-                >
-                  {traceEnabled ? "Tracing On" : "Trace Floors"}
-                </button>
+            {SHOW_ELEVATION_TRACE_TOOL ? (
+              <div className="floor-trace-tool">
+                <div className="floor-trace-toolbar">
+                  <button
+                    type="button"
+                    className="ghost-button floor-trace-toggle"
+                    onClick={() => {
+                      setTraceEnabled((prev) => !prev);
+                      setTraceCursorPct(null);
+                      setTraceStatus("");
+                    }}
+                  >
+                    {traceEnabled ? "Tracing On" : "Trace Floors"}
+                  </button>
 
-                <button
-                  type="button"
-                  className="ghost-button"
-                  onClick={() => {
-                    const saved = getSavedTracePointsPct(project.id, traceFloorIndex);
-                    if (!saved) {
-                      setTraceStatus(`No saved polygon found for trace ${traceFloorIndex}.`);
-                      return;
-                    }
-                    setTracePointsByFloor((prev) => ({ ...prev, [traceFloorIndex]: saved.pointsPct }));
-                    setTraceClosedByFloor((prev) => ({ ...prev, [traceFloorIndex]: saved.isClosed }));
-                    setTraceCursorPct(saved.pointsPct[0] ?? null);
-                    setTraceStatus(`Loaded saved polygon for trace ${traceFloorIndex}.`);
-                  }}
-                >
-                  Load Saved
-                </button>
+                  <button
+                    type="button"
+                    className="ghost-button"
+                    onClick={() => {
+                      const saved = getSavedTracePointsPct(project.id, traceFloorIndex);
+                      if (!saved) {
+                        setTraceStatus(`No saved polygon found for trace ${traceFloorIndex}.`);
+                        return;
+                      }
+                      setTracePointsByFloor((prev) => ({ ...prev, [traceFloorIndex]: saved.pointsPct }));
+                      setTraceClosedByFloor((prev) => ({ ...prev, [traceFloorIndex]: saved.isClosed }));
+                      setTraceCursorPct(saved.pointsPct[0] ?? null);
+                      setTraceStatus(`Loaded saved polygon for trace ${traceFloorIndex}.`);
+                    }}
+                  >
+                    Load Saved
+                  </button>
 
-                <button
-                  type="button"
-                  className="ghost-button floor-trace-prev"
-                  onClick={() => {
-                    const next = clamp(traceFloorIndex - 1, 0, Math.max(floors.length - 1, 0));
-                    setTraceFloorIndex(next);
-                    setTraceCursorPct(null);
-                    setTraceStatus("");
-                  }}
-                >
-                  Prev
-                </button>
+                  <button
+                    type="button"
+                    className="ghost-button floor-trace-prev"
+                    onClick={() => {
+                      const next = clamp(traceFloorIndex - 1, 0, Math.max(floors.length - 1, 0));
+                      setTraceFloorIndex(next);
+                      setTraceCursorPct(null);
+                      setTraceStatus("");
+                    }}
+                  >
+                    Prev
+                  </button>
 
-                <strong className="floor-trace-floor">
-                  Trace {traceFloorIndex}
-                  {traceFloor ? ` · Floor ${traceFloor.number}` : ""}
-                </strong>
+                  <strong className="floor-trace-floor">
+                    Trace {traceFloorIndex}
+                    {traceFloor ? ` · Floor ${traceFloor.number}` : ""}
+                  </strong>
 
-                <button
-                  type="button"
-                  className="ghost-button floor-trace-next"
-                  onClick={() => {
-                    const next = clamp(traceFloorIndex + 1, 0, Math.max(floors.length - 1, 0));
-                    setTraceFloorIndex(next);
-                    setTraceCursorPct(null);
-                    setTraceStatus("");
-                  }}
-                >
-                  Next
-                </button>
+                  <button
+                    type="button"
+                    className="ghost-button floor-trace-next"
+                    onClick={() => {
+                      const next = clamp(traceFloorIndex + 1, 0, Math.max(floors.length - 1, 0));
+                      setTraceFloorIndex(next);
+                      setTraceCursorPct(null);
+                      setTraceStatus("");
+                    }}
+                  >
+                    Next
+                  </button>
 
-                <button
-                  type="button"
-                  className="ghost-button floor-trace-undo"
-                  onClick={() => {
-                    setTracePointsByFloor((prev) => {
-                      const points = [...(prev[traceFloorIndex] || [])];
-                      points.pop();
-                      return { ...prev, [traceFloorIndex]: points };
-                    });
-                    setTraceClosedByFloor((prev) => ({ ...prev, [traceFloorIndex]: false }));
-                    setTraceStatus("");
-                  }}
-                >
-                  Undo
-                </button>
+                  <button
+                    type="button"
+                    className="ghost-button floor-trace-undo"
+                    onClick={() => {
+                      setTracePointsByFloor((prev) => {
+                        const points = [...(prev[traceFloorIndex] || [])];
+                        points.pop();
+                        return { ...prev, [traceFloorIndex]: points };
+                      });
+                      setTraceClosedByFloor((prev) => ({ ...prev, [traceFloorIndex]: false }));
+                      setTraceStatus("");
+                    }}
+                  >
+                    Undo
+                  </button>
 
-                <button
-                  type="button"
-                  className="ghost-button floor-trace-clear"
-                  onClick={() => {
-                    setTracePointsByFloor((prev) => ({ ...prev, [traceFloorIndex]: [] }));
-                    setTraceClosedByFloor((prev) => ({ ...prev, [traceFloorIndex]: false }));
-                    setTraceCursorPct(null);
-                    setTraceStatus("");
-                  }}
-                >
-                  Clear
-                </button>
+                  <button
+                    type="button"
+                    className="ghost-button floor-trace-clear"
+                    onClick={() => {
+                      setTracePointsByFloor((prev) => ({ ...prev, [traceFloorIndex]: [] }));
+                      setTraceClosedByFloor((prev) => ({ ...prev, [traceFloorIndex]: false }));
+                      setTraceCursorPct(null);
+                      setTraceStatus("");
+                    }}
+                  >
+                    Clear
+                  </button>
 
-                <button
-                  type="button"
-                  className="floor-trace-copy"
-                  onClick={async () => {
-                    const image = imageRef.current;
-                    if (!image) {
-                      return;
-                    }
+                  <button
+                    type="button"
+                    className="floor-trace-copy"
+                    onClick={async () => {
+                      const image = imageRef.current;
+                      if (!image) {
+                        return;
+                      }
 
-                    const payload = {
-                      projectId: project.id,
-                      floor: traceFloorIndex,
-                      floorNumber: traceFloor?.number ?? null,
-                      sourceWidth: image.naturalWidth || 0,
-                      sourceHeight: image.naturalHeight || 0,
-                      coords: toAbsoluteFloorCoords(
-                        image,
-                        tracePointsByFloor[traceFloorIndex] || [],
-                        Boolean(traceClosedByFloor[traceFloorIndex])
-                      )
-                    };
+                      const payload = {
+                        projectId: project.id,
+                        floor: traceFloorIndex,
+                        floorNumber: traceFloor?.number ?? null,
+                        sourceWidth: image.naturalWidth || 0,
+                        sourceHeight: image.naturalHeight || 0,
+                        coords: toAbsoluteFloorCoords(
+                          image,
+                          tracePointsByFloor[traceFloorIndex] || [],
+                          Boolean(traceClosedByFloor[traceFloorIndex])
+                        )
+                      };
 
-                    const text = JSON.stringify(payload, null, 2);
-                    try {
-                      await navigator.clipboard.writeText(text);
-                      setTraceStatus(`Copied trace ${traceFloorIndex} coords to clipboard.`);
-                    } catch (_error) {
-                      console.log(text);
-                      setTraceStatus("Clipboard blocked. Coordinates logged in console.");
-                    }
-                  }}
-                >
-                  Copy Floor Coords
-                </button>
+                      const text = JSON.stringify(payload, null, 2);
+                      try {
+                        await navigator.clipboard.writeText(text);
+                        setTraceStatus(`Copied trace ${traceFloorIndex} coords to clipboard.`);
+                      } catch (_error) {
+                        console.log(text);
+                        setTraceStatus("Clipboard blocked. Coordinates logged in console.");
+                      }
+                    }}
+                  >
+                    Copy Floor Coords
+                  </button>
+                </div>
+
+                <p className="floor-trace-help">
+                  Enable trace, click points clockwise on the facade, then copy coords.
+                </p>
+                {traceStatus ? <p className="floor-trace-help">{traceStatus}</p> : null}
               </div>
-
-              <p className="floor-trace-help">
-                Enable trace, click points clockwise on the facade, then copy coords.
-              </p>
-              {traceStatus ? <p className="floor-trace-help">{traceStatus}</p> : null}
-            </div>
+            ) : null}
           </div>
         </div>
       </div>
@@ -1248,7 +1295,7 @@ export default function ProjectExperience({ project }) {
                 <div className="floor-panel-floor-label">
                   KATI {panelFloorDisplayNumber}
                 </div>
-                <div className="floor-panel-zone-pill">ZONA E BANIMIT</div>
+                <div className="floor-panel-zone-pill">{floorPanelZonePillLabel}</div>
               </div>
 
               <div className="floor-panel-body">
@@ -1327,9 +1374,9 @@ export default function ProjectExperience({ project }) {
                       }}
                     >
                       <img
-                        key={panelFloorDisplayNumber}
+                        key={`${panelFloorDisplayNumber}-${floorPanelPlanSrc}`}
                         className="floor-panel-plan"
-                        src="/assets/plan-33.jpg"
+                        src={floorPanelPlanSrc}
                         alt={`Floor ${panelFloorDisplayNumber} plan`}
                         ref={planImageRef}
                         draggable={false}
@@ -1366,157 +1413,159 @@ export default function ProjectExperience({ project }) {
                     </div>
                   </div>
 
-                  <div className="floor-plan-trace-tool">
-                    <div className="floor-plan-trace-toolbar">
-                      <button
-                        type="button"
-                        className="ghost-button"
-                        onClick={() => {
-                          setPlanTraceEnabled((prev) => !prev);
-                          setPlanTraceCursorPct(null);
-                          setPlanTraceStatus("");
-                          setHoveredPlanApartment(null);
-                        }}
-                      >
-                        {planTraceEnabled ? "Tracing On" : "Trace Apartments"}
-                      </button>
-                      <button
-                        type="button"
-                        className="ghost-button"
-                        onClick={() => {
-                          const next = clamp(
-                            planTraceApartmentIndex - 1,
-                            0,
-                            Math.max(FLOOR_PANEL_APARTMENTS.length - 1, 0)
-                          );
-                          setPlanTraceApartmentIndex(next);
-                          setPlanTraceCursorPct(null);
-                          setPlanTraceStatus("");
-                        }}
-                      >
-                        Prev
-                      </button>
-                      <strong className="floor-plan-trace-apartment">
-                        Apt {planTraceApartmentIndex}
-                        {FLOOR_PANEL_APARTMENTS[planTraceApartmentIndex]
-                          ? ` · ${FLOOR_PANEL_APARTMENTS[planTraceApartmentIndex]}`
-                          : ""}
-                      </strong>
-                      <button
-                        type="button"
-                        className="ghost-button"
-                        onClick={() => {
-                          const next = clamp(
-                            planTraceApartmentIndex + 1,
-                            0,
-                            Math.max(FLOOR_PANEL_APARTMENTS.length - 1, 0)
-                          );
-                          setPlanTraceApartmentIndex(next);
-                          setPlanTraceCursorPct(null);
-                          setPlanTraceStatus("");
-                        }}
-                      >
-                        Next
-                      </button>
-                      <button
-                        type="button"
-                        className="ghost-button"
-                        onClick={() => {
-                          setPlanTracePointsByFloor((prev) => {
-                            const floorPoints = {
-                              ...(prev[panelFloorDisplayNumber] || {})
+                  {SHOW_FLOOR_PLAN_TRACE_TOOL ? (
+                    <div className="floor-plan-trace-tool">
+                      <div className="floor-plan-trace-toolbar">
+                        <button
+                          type="button"
+                          className="ghost-button"
+                          onClick={() => {
+                            setPlanTraceEnabled((prev) => !prev);
+                            setPlanTraceCursorPct(null);
+                            setPlanTraceStatus("");
+                            setHoveredPlanApartment(null);
+                          }}
+                        >
+                          {planTraceEnabled ? "Tracing On" : "Trace Apartments"}
+                        </button>
+                        <button
+                          type="button"
+                          className="ghost-button"
+                          onClick={() => {
+                            const next = clamp(
+                              planTraceApartmentIndex - 1,
+                              0,
+                              Math.max(panelApartmentLabels.length - 1, 0)
+                            );
+                            setPlanTraceApartmentIndex(next);
+                            setPlanTraceCursorPct(null);
+                            setPlanTraceStatus("");
+                          }}
+                        >
+                          Prev
+                        </button>
+                        <strong className="floor-plan-trace-apartment">
+                          Apt {planTraceApartmentIndex}
+                          {panelApartmentLabels[planTraceApartmentIndex]
+                            ? ` · ${panelApartmentLabels[planTraceApartmentIndex]}`
+                            : ""}
+                        </strong>
+                        <button
+                          type="button"
+                          className="ghost-button"
+                          onClick={() => {
+                            const next = clamp(
+                              planTraceApartmentIndex + 1,
+                              0,
+                              Math.max(panelApartmentLabels.length - 1, 0)
+                            );
+                            setPlanTraceApartmentIndex(next);
+                            setPlanTraceCursorPct(null);
+                            setPlanTraceStatus("");
+                          }}
+                        >
+                          Next
+                        </button>
+                        <button
+                          type="button"
+                          className="ghost-button"
+                          onClick={() => {
+                            setPlanTracePointsByFloor((prev) => {
+                              const floorPoints = {
+                                ...(prev[panelFloorDisplayNumber] || {})
+                              };
+                              const points = [...(floorPoints[planTraceApartmentIndex] || [])];
+                              points.pop();
+                              floorPoints[planTraceApartmentIndex] = points;
+                              return { ...prev, [panelFloorDisplayNumber]: floorPoints };
+                            });
+                            setPlanTraceClosedByFloor((prev) => ({
+                              ...prev,
+                              [panelFloorDisplayNumber]: {
+                                ...(prev[panelFloorDisplayNumber] || {}),
+                                [planTraceApartmentIndex]: false
+                              }
+                            }));
+                            setPlanTraceStatus("");
+                          }}
+                        >
+                          Undo
+                        </button>
+                        <button
+                          type="button"
+                          className="ghost-button"
+                          onClick={() => {
+                            setPlanTracePointsByFloor((prev) => ({
+                              ...prev,
+                              [panelFloorDisplayNumber]: {
+                                ...(prev[panelFloorDisplayNumber] || {}),
+                                [planTraceApartmentIndex]: []
+                              }
+                            }));
+                            setPlanTraceClosedByFloor((prev) => ({
+                              ...prev,
+                              [panelFloorDisplayNumber]: {
+                                ...(prev[panelFloorDisplayNumber] || {}),
+                                [planTraceApartmentIndex]: false
+                              }
+                            }));
+                            setPlanTraceCursorPct(null);
+                            setPlanTraceStatus("");
+                          }}
+                        >
+                          Clear
+                        </button>
+                        <button
+                          type="button"
+                          className="floor-trace-copy"
+                          onClick={async () => {
+                            const image = planImageRef.current;
+                            if (!image) {
+                              return;
+                            }
+
+                            const payload = {
+                              floorNumber: panelFloorDisplayNumber,
+                              apartmentIndex: planTraceApartmentIndex,
+                              apartmentLabel:
+                                panelApartmentLabels[planTraceApartmentIndex] || null,
+                              sourceWidth: image.naturalWidth || 0,
+                              sourceHeight: image.naturalHeight || 0,
+                              coordsPct: planTracePointsPct,
+                              polygon: pointsPctToPolygonString(planTracePointsPct),
+                              coords: toAbsoluteFloorCoords(
+                                image,
+                                planTracePointsPct,
+                                planTraceIsClosed
+                              )
                             };
-                            const points = [...(floorPoints[planTraceApartmentIndex] || [])];
-                            points.pop();
-                            floorPoints[planTraceApartmentIndex] = points;
-                            return { ...prev, [panelFloorDisplayNumber]: floorPoints };
-                          });
-                          setPlanTraceClosedByFloor((prev) => ({
-                            ...prev,
-                            [panelFloorDisplayNumber]: {
-                              ...(prev[panelFloorDisplayNumber] || {}),
-                              [planTraceApartmentIndex]: false
-                            }
-                          }));
-                          setPlanTraceStatus("");
-                        }}
-                      >
-                        Undo
-                      </button>
-                      <button
-                        type="button"
-                        className="ghost-button"
-                        onClick={() => {
-                          setPlanTracePointsByFloor((prev) => ({
-                            ...prev,
-                            [panelFloorDisplayNumber]: {
-                              ...(prev[panelFloorDisplayNumber] || {}),
-                              [planTraceApartmentIndex]: []
-                            }
-                          }));
-                          setPlanTraceClosedByFloor((prev) => ({
-                            ...prev,
-                            [panelFloorDisplayNumber]: {
-                              ...(prev[panelFloorDisplayNumber] || {}),
-                              [planTraceApartmentIndex]: false
-                            }
-                          }));
-                          setPlanTraceCursorPct(null);
-                          setPlanTraceStatus("");
-                        }}
-                      >
-                        Clear
-                      </button>
-                      <button
-                        type="button"
-                        className="floor-trace-copy"
-                        onClick={async () => {
-                          const image = planImageRef.current;
-                          if (!image) {
-                            return;
-                          }
 
-                          const payload = {
-                            floorNumber: panelFloorDisplayNumber,
-                            apartmentIndex: planTraceApartmentIndex,
-                            apartmentLabel:
-                              FLOOR_PANEL_APARTMENTS[planTraceApartmentIndex] || null,
-                            sourceWidth: image.naturalWidth || 0,
-                            sourceHeight: image.naturalHeight || 0,
-                            coordsPct: planTracePointsPct,
-                            polygon: pointsPctToPolygonString(planTracePointsPct),
-                            coords: toAbsoluteFloorCoords(
-                              image,
-                              planTracePointsPct,
-                              planTraceIsClosed
-                            )
-                          };
-
-                          const text = JSON.stringify(payload, null, 2);
-                          try {
-                            await navigator.clipboard.writeText(text);
-                            setPlanTraceStatus(
-                              `Copied apartment ${planTraceApartmentIndex} coords to clipboard.`
-                            );
-                          } catch (_error) {
-                            console.log(text);
-                            setPlanTraceStatus(
-                              "Clipboard blocked. Coordinates logged in console."
-                            );
-                          }
-                        }}
-                      >
-                        Copy Apartment Coords
-                      </button>
+                            const text = JSON.stringify(payload, null, 2);
+                            try {
+                              await navigator.clipboard.writeText(text);
+                              setPlanTraceStatus(
+                                `Copied apartment ${planTraceApartmentIndex} coords to clipboard.`
+                              );
+                            } catch (_error) {
+                              console.log(text);
+                              setPlanTraceStatus(
+                                "Clipboard blocked. Coordinates logged in console."
+                              );
+                            }
+                          }}
+                        >
+                          Copy Apartment Coords
+                        </button>
+                      </div>
+                      <p className="floor-trace-help">
+                        Enable trace, click apartment points clockwise on the plan,
+                        then click the first point to close and copy coords.
+                      </p>
+                      {planTraceStatus ? (
+                        <p className="floor-trace-help">{planTraceStatus}</p>
+                      ) : null}
                     </div>
-                    <p className="floor-trace-help">
-                      Enable trace, click apartment points clockwise on the plan,
-                      then click the first point to close and copy coords.
-                    </p>
-                    {planTraceStatus ? (
-                      <p className="floor-trace-help">{planTraceStatus}</p>
-                    ) : null}
-                  </div>
+                  ) : null}
                 </div>
 
                 <aside className="floor-panel-list">
@@ -1524,9 +1573,9 @@ export default function ProjectExperience({ project }) {
                     Apartamentet n&euml; kat:
                   </div>
                   <div className="floor-panel-list-items">
-                    {FLOOR_PANEL_APARTMENTS.map((apartment, index) => (
+                    {panelApartmentLabels.map((label, index) => (
                       <div
-                        key={`${apartment}-${index}`}
+                        key={`${panelFloorDisplayNumber}-${index}-${label}`}
                         className={`floor-panel-list-item${planApartmentColors[index] ? " is-for-sale" : ""}${hoveredPlanApartment === index ? " is-hovered" : ""}${planTraceEnabled && planTraceApartmentIndex === index ? " is-target" : ""}`}
                         onMouseEnter={() => setHoveredPlanApartment(index)}
                         onMouseLeave={() => setHoveredPlanApartment(null)}
@@ -1538,7 +1587,7 @@ export default function ProjectExperience({ project }) {
                             {planApartmentColors[index] ? "Ne Shitje" : "Shitur"}
                           </span>
                         ) : (
-                          apartment
+                          label
                         )}
                       </div>
                     ))}

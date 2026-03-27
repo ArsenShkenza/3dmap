@@ -724,7 +724,7 @@ button {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 230px;
   gap: 26px;
-  align-items: start;
+  align-items: center;
   padding: 18px 44px 40px 22px;
   overflow: auto;
   min-height: 0;
@@ -732,12 +732,14 @@ button {
 
 .floor-panel-plan-column {
   min-width: 0;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
 .floor-panel-plan-wrap {
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -746,8 +748,9 @@ button {
 .floor-panel-plan-stage {
   position: relative;
   display: block;
-  width: min(100%, 1150px);
-  max-width: 100%;
+  width: fit-content;
+  max-width: min(100%, 1150px);
+  margin-inline: auto;
 }
 
 .floor-panel-plan-stage.is-tracing {
@@ -758,7 +761,8 @@ button {
   display: block;
   position: relative;
   z-index: 1;
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   height: auto;
   object-fit: contain;
 }
@@ -797,6 +801,7 @@ button {
 .floor-plan-trace-tool {
   width: min(100%, 1150px);
   margin-top: 14px;
+  margin-inline: auto;
   display: grid;
   gap: 8px;
 }
