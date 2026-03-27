@@ -139,6 +139,8 @@ export default function ExperienceShell({
     [assetLibrary, vaultPreviewAssetId]
   );
   const hasSearchQuery = query.trim().length > 0;
+  const shouldShowPanel =
+    activeView !== "discover" || hasSearchQuery || Boolean(selectedProject);
 
   const handleSearchChange = (value) => {
     setQuery(value);
@@ -159,10 +161,30 @@ export default function ExperienceShell({
     [activeView]
   );
 
+  const handleActivateView = useCallback((viewId) => {
+    setActiveView(viewId);
+    setSelectedId(null);
+    setHoveredListProjectId(null);
+    if (viewId !== "discover") {
+      setQuery("");
+    }
+  }, []);
+
   const handleBackToResults = useCallback(() => {
     setSelectedId(null);
     setHoveredListProjectId(null);
   }, []);
+
+  const searchHelperText =
+    activeView === "discover"
+      ? selectedProject && !hasSearchQuery
+        ? "The opportunity rail stays open while a project is selected."
+        : hasSearchQuery
+          ? `${filteredProjects.length} matching opportunit${
+              filteredProjects.length === 1 ? "y" : "ies"
+            } in focus.`
+          : "Type to reveal the investment rail and review matching opportunities."
+      : "Search at any time to jump back into Discover.";
 
   const discoverContent = (
     <section className="detail-card">
@@ -175,14 +197,10 @@ export default function ExperienceShell({
 
       <div className="view-stack">
         <div className="view-section">
-          <label className="search-input">
-            <span className="sr-only">Search deals</span>
-            <input
-              value={query}
-              onChange={(event) => handleSearchChange(event.target.value)}
-              placeholder="Search by city, land, building, toke, or ndertese"
-            />
-          </label>
+          <p className="detail-copy compact discover-panel-copy">
+            Search stays on the map so the market context remains visible while
+            this rail turns into your short list.
+          </p>
         </div>
 
         {hasSearchQuery ? (
@@ -540,83 +558,106 @@ export default function ExperienceShell({
     </section>
   );
 
+  const panelContent =
+    activeView === "discover"
+      ? selectedProject
+        ? opportunityContent
+        : discoverContent
+      : activeView === "browse"
+        ? selectedProject
+          ? opportunityContent
+          : browseContent
+        : activeView === "models"
+          ? modelsContent
+          : activeView === "platform"
+            ? platformContent
+            : null;
+
   return (
     <main className="page-shell">
-      <section className="panel-shell">
-        <div className="panel-top">
-          <div className="brand-block">
-            <div className="brand-row">
-              <div>
-                <h1>PRO X</h1>
-              </div>
-            </div>
+      <header className="page-topbar">
+        <div className="topbar-brand">
+          <div className="topbar-brand-mark">PX</div>
+          <div className="topbar-brand-copy">
+            <strong>PRO X</strong>
             <p className="eyebrow">Invitation-Only Investment Intelligence</p>
-            <div className="panel-nav" role="tablist" aria-label="PRO X sections">
-              {panelViews.map((view) => (
-                <button
-                  key={view.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeView === view.id}
-                  className={`panel-nav-button${
-                    activeView === view.id ? " active" : ""
-                  }`}
-                  onClick={() => {
-                    setActiveView(view.id);
-                    setHoveredListProjectId(null);
-                  }}
-                >
-                  {view.label}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 
-        <div className="content-grid">
-          {activeView === "discover"
-            ? selectedProject
-              ? opportunityContent
-              : discoverContent
-            : activeView === "browse"
-              ? selectedProject
-                ? opportunityContent
-                : browseContent
-              : activeView === "models"
-                ? modelsContent
-                : activeView === "platform"
-                  ? platformContent
-                  : null}
+        <div className="topbar-nav" role="tablist" aria-label="PRO X sections">
+          {panelViews.map((view) => (
+            <button
+              key={view.id}
+              type="button"
+              role="tab"
+              aria-selected={activeView === view.id}
+              className={`panel-nav-button${
+                activeView === view.id ? " active" : ""
+              }`}
+              onClick={() => handleActivateView(view.id)}
+            >
+              {view.label}
+            </button>
+          ))}
         </div>
-      </section>
 
-      <section className="map-shell">
-        <MapExperience
-          assetLibrary={assetLibrary}
-          projects={mapProjectList}
-          selectedProject={selectedProject}
-          selectedAsset={selectedAsset}
-          onSelectProject={handleSelectProject}
-          searchQuery={query}
-          viewMode={activeView}
-          focusRequest={mapFocusRequest}
-          resultCount={
-            activeView === "browse"
-              ? browseFilteredProjects.length
-              : activeView === "discover"
-                ? filteredProjects.length
-                : activeView === "models"
-                  ? assetLibrary.length
-                  : projects.length
-          }
-          panelHoveredProjectId={
-            (activeView === "discover" || activeView === "browse") &&
-            !selectedProject
-              ? hoveredListProjectId
-              : null
-          }
-        />
-      </section>
+        <div className="profile-placeholder" aria-label="Investor profile placeholder">
+          <span className="profile-avatar">PX</span>
+          <div className="profile-copy">
+            <strong>Investor Profile</strong>
+            <span>VIP / Standard placeholder</span>
+          </div>
+        </div>
+      </header>
+
+      <div className={`experience-stage${shouldShowPanel ? " rail-open" : " rail-closed"}`}>
+        {shouldShowPanel ? (
+          <section className="panel-shell">
+            <div className="content-grid">{panelContent}</div>
+          </section>
+        ) : null}
+
+        <section className="map-shell">
+          <div className="map-search-overlay">
+            <label className="search-input map-search-input">
+              <span className="sr-only">Search deals</span>
+              <input
+                value={query}
+                onChange={(event) => handleSearchChange(event.target.value)}
+                placeholder="Search by city, land, building, toke, or ndertese"
+              />
+            </label>
+            <p className="map-search-helper">{searchHelperText}</p>
+          </div>
+
+          <MapExperience
+            assetLibrary={assetLibrary}
+            projects={mapProjectList}
+            selectedProject={selectedProject}
+            selectedAsset={selectedAsset}
+            onSelectProject={handleSelectProject}
+            searchQuery={query}
+            viewMode={activeView}
+            focusRequest={mapFocusRequest}
+            panelVisible={shouldShowPanel}
+            resultCount={
+              activeView === "browse"
+                ? browseFilteredProjects.length
+                : activeView === "discover"
+                  ? filteredProjects.length
+                  : activeView === "models"
+                    ? assetLibrary.length
+                    : projects.length
+            }
+            panelHoveredProjectId={
+              (activeView === "discover" || activeView === "browse") &&
+              !selectedProject
+                ? hoveredListProjectId
+                : null
+            }
+          />
+        </section>
+      </div>
     </main>
   );
 }

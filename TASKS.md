@@ -75,7 +75,7 @@ Goal: sell the vision fast with a premium experience, not build production scope
 
 
 1. entry screen
-
+2. 
 menuja qe eshte ne te majt ose duhet te mbyllet ne disa raste ose te kalohet lart sepse ne ekrane te vogla harta eshte shume e. vogel
 
 duhet shtuar nje profil useri, qe te kontrollohen gjerat dhe per userat VIP dhe per userat standart.

@@ -263,6 +263,7 @@ export default function MapExperience({
   searchQuery,
   viewMode,
   focusRequest,
+  panelVisible = true,
   resultCount,
   panelHoveredProjectId = null
 }) {
@@ -610,8 +611,13 @@ export default function MapExperience({
   }, [onSelectProject]);
 
   useEffect(() => {
-    if (viewMode === "platform" || viewMode === "models") {
+    if (viewMode === "models") {
       setIsSummaryVisible(true);
+      return;
+    }
+
+    if (viewMode === "platform") {
+      setIsSummaryVisible(false);
       return;
     }
 
@@ -738,6 +744,21 @@ export default function MapExperience({
 
     focusOverview(map, threeState.maplibregl, projects);
   }, [projects, ready, viewMode]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      map.resize();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [panelVisible, ready, viewMode]);
 
   useEffect(() => {
     const map = mapRef.current;
