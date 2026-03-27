@@ -63,6 +63,9 @@ export default function FullProjectExperience({
   const selectedStatusLabel =
     selectedAsset?.viewerLabel ??
     (activeAssetKey === "building" ? "AR Ready" : "Interior Navigation");
+  const show2DViewButton = ["tirana-signature-residences", "prishtina-prime-offices"].includes(
+    project.id
+  );
   const handleAssetSelection = (nextAssetKey) => {
     setActiveAssetKey(nextAssetKey);
 
@@ -95,16 +98,6 @@ export default function FullProjectExperience({
           <Link href="/" className="ghost-link-button">
             Back To Market View
           </Link>
-          {project.id === "tirana-signature-residences" ? (
-            <a
-              href={`/experience/${project.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="primary-link-button"
-            >
-              2D View
-            </a>
-          ) : null}
         </div>
       </section>
 
@@ -122,6 +115,16 @@ export default function FullProjectExperience({
                   <p className="section-label">Project Preview</p>
                   <h3>Exterior review</h3>
                 </div>
+                {show2DViewButton ? (
+                  <a
+                    href={`/experience/${project.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="primary-link-button project-preview-2d-button"
+                  >
+                    2D View
+                  </a>
+                ) : null}
               </div>
               {separateFilesFlow ? (
                 <div className="asset-switch-stack">

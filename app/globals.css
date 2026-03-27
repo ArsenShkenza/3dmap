@@ -1829,6 +1829,12 @@ h3 {
   color: var(--gold-bright);
 }
 
+.project-preview-2d-button {
+  padding: 8px 12px;
+  font-size: 0.76rem;
+  min-height: 34px;
+}
+
 .ghost-link-button svg {
   width: 18px;
   height: 18px;
