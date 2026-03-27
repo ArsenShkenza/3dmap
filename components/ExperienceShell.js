@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   useCallback,
   useDeferredValue,
@@ -305,30 +304,31 @@ export default function ExperienceShell({
   );
 
   const opportunityContent = selectedProject ? (
-    <section className="detail-card">
-      <div className="detail-hero">
-        <div>
-          <p className="section-label">Opportunity</p>
-          <h2>{selectedProject.name}</h2>
-        </div>
+    <section className="detail-card detail-card-opportunity">
+      <div className="opportunity-top-bar">
         <button
           type="button"
-          className="ghost-link-button"
+          className="opportunity-dismiss"
           onClick={handleBackToResults}
-          aria-label="Back"
+          aria-label="Close opportunity"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path
-              d="M15 18l-6-6 6-6"
+              d="M18 6L6 18M6 6l12 12"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
-              strokeLinejoin="round"
             />
           </svg>
-          <span className="sr-only">Back</span>
         </button>
+      </div>
+
+      <div className="detail-hero">
+        <div className="opportunity-heading">
+          <p className="section-label">Opportunity</p>
+          <h2>{selectedProject.name}</h2>
+        </div>
       </div>
 
       <div className="view-stack">
@@ -360,16 +360,8 @@ export default function ExperienceShell({
           project={selectedProject}
           hideCaption
           hideAssetMeta
+          fullProjectHref={`/project/${selectedProject.id}`}
         />
-
-        <div className="cta-row">
-          <Link
-            href={`/project/${selectedProject.id}`}
-            className="primary-link-button"
-          >
-            View Full Project
-          </Link>
-        </div>
       </div>
     </section>
   ) : null;
@@ -553,12 +545,12 @@ export default function ExperienceShell({
       <section className="panel-shell">
         <div className="panel-top">
           <div className="brand-block">
-            <p className="eyebrow">Invitation-Only Investment Intelligence</p>
             <div className="brand-row">
               <div>
                 <h1>PRO X</h1>
               </div>
             </div>
+            <p className="eyebrow">Invitation-Only Investment Intelligence</p>
             <div className="panel-nav" role="tablist" aria-label="PRO X sections">
               {panelViews.map((view) => (
                 <button

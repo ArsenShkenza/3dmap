@@ -87,14 +87,11 @@ export default function FullProjectExperience({
     <main className="project-page-shell">
       <section className="project-page-hero">
         <div className="project-hero-copy">
-          <p className="eyebrow">Full Project Room</p>
+          <Link href="/" className="eyebrow project-back-eyebrow-link">
+            {`< Back to market view`}
+          </Link>
           <h1>{project.name}</h1>
           <p className="lead project-lead">{project.stageSummary}</p>
-        </div>
-        <div className="project-hero-actions">
-          <Link href="/" className="ghost-link-button">
-            Back To Market View
-          </Link>
         </div>
       </section>
 

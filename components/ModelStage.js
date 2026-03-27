@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import InteriorExplorer3D from "@/components/InteriorExplorer3D";
 import { useGltfOrbitViewer } from "@/components/useGltfOrbitViewer";
@@ -49,7 +50,8 @@ function StandardModelStage({
   caption,
   statusLabel = null,
   hideCaption = false,
-  hideAssetMeta = false
+  hideAssetMeta = false,
+  fullProjectHref = null
 }) {
   const stageRef = useRef(null);
   const stageShellRef = useRef(null);
@@ -76,7 +78,21 @@ function StandardModelStage({
           <p className="section-label">Virtual Experience</p>
           <h3>{asset.label}</h3>
         </div>
-        {statusLabel ? <span className="status-pill subtle">{statusLabel}</span> : null}
+        {statusLabel || fullProjectHref ? (
+          <div className="model-card-head-end">
+            {fullProjectHref ? (
+              <Link
+                href={fullProjectHref}
+                className="primary-link-button model-card-full-project-link"
+              >
+                View Full Project
+              </Link>
+            ) : null}
+            {statusLabel ? (
+              <span className="status-pill subtle">{statusLabel}</span>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <div ref={stageRef} className={`model-stage${isFullscreen ? " is-fullscreen" : ""}`}>
@@ -134,6 +150,7 @@ export default function ModelStage(props) {
         statusLabel={props.statusLabel}
         hideCaption={props.hideCaption}
         hideAssetMeta={props.hideAssetMeta}
+        fullProjectHref={props.fullProjectHref}
       />
     );
   }
