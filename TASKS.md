@@ -72,6 +72,3 @@ Goal: sell the vision fast with a premium experience, not build production scope
 - [ ] Add true AI search backed by project metadata and embeddings.
 - [ ] Split `main.js` into focused modules if prototype grows further.
 - [ ] Add test coverage once the concept direction stabilizes.
-
-
-1. entry screen

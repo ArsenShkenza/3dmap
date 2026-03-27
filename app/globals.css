@@ -2623,7 +2623,7 @@ h3 {
 .map-search-overlay {
   position: absolute;
   z-index: 3;
-  top: 92px;
+  top: 56px;
   left: 50%;
   transform: translateX(-50%);
   width: min(var(--search-track-width), calc(100% - 48px));
@@ -2904,7 +2904,7 @@ h3 {
   }
 
   .map-search-overlay {
-    top: 72px;
+    top: 44px;
     width: calc(100% - 24px);
   }
 
