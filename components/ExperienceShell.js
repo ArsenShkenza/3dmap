@@ -49,6 +49,7 @@ export default function ExperienceShell({
   const [hoveredListProjectId, setHoveredListProjectId] = useState(null);
   const [browseCategoryId, setBrowseCategoryId] = useState("all");
   const [vaultPreviewAssetId, setVaultPreviewAssetId] = useState(null);
+  const [isAccessOverlayVisible, setIsAccessOverlayVisible] = useState(true);
   const deferredQuery = useDeferredValue(query);
   const filteredProjects = useMemo(
     () => filterProjectsBySearchQuery(projects, deferredQuery),
@@ -658,6 +659,71 @@ export default function ExperienceShell({
           />
         </section>
       </div>
+
+      {isAccessOverlayVisible ? (
+        <div
+          className="premium-access-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="premium-access-title"
+        >
+          <div
+            className="premium-access-card"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="premium-access-lock">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12v10H6z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+
+            <p className="eyebrow">Investor Access Required</p>
+            <h2 id="premium-access-title">Login to enter the PRO X capital room.</h2>
+            <p className="premium-access-copy">
+              This page is framed as an invitation-only investor surface for VIP
+              and standard accounts. Use the gate as a premium front door for the
+              demo.
+            </p>
+
+            <form
+              className="premium-access-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+              }}
+            >
+              <label className="premium-access-field">
+                <span>Investor Email</span>
+                <input type="email" placeholder="investor@pro-x.com" />
+              </label>
+
+              <label className="premium-access-field">
+                <span>Access Code</span>
+                <input type="password" placeholder="Invite or VIP code" />
+              </label>
+
+              <div className="premium-access-actions">
+                <button type="submit" className="primary-link-button premium-access-button">
+                  Login To Continue
+                </button>
+                <button
+                  type="button"
+                  className="ghost-link-button premium-access-button"
+                  onClick={() => setIsAccessOverlayVisible(false)}
+                >
+                  Enter Demo Preview
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

@@ -214,6 +214,114 @@ button {
   min-height: 0;
 }
 
+.premium-access-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background:
+    radial-gradient(circle at top left, rgba(214, 180, 123, 0.16), transparent 28%),
+    radial-gradient(circle at 80% 20%, rgba(77, 135, 173, 0.14), transparent 30%),
+    rgba(3, 7, 13, 0.46);
+  backdrop-filter: blur(24px);
+}
+
+.premium-access-card {
+  width: min(560px, 100%);
+  display: grid;
+  gap: 18px;
+  padding: 30px;
+  border-radius: 30px;
+  border: 1px solid rgba(241, 211, 161, 0.16);
+  background:
+    radial-gradient(circle at top right, rgba(214, 180, 123, 0.16), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)),
+    rgba(8, 14, 21, 0.9);
+  box-shadow:
+    0 36px 90px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.premium-access-card h2 {
+  margin: 0;
+  max-width: 12ch;
+}
+
+.premium-access-lock {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 20px;
+  border: 1px solid rgba(241, 211, 161, 0.2);
+  background:
+    linear-gradient(180deg, rgba(214, 180, 123, 0.16), rgba(214, 180, 123, 0.05)),
+    rgba(255, 255, 255, 0.03);
+  color: var(--gold-bright);
+}
+
+.premium-access-lock svg {
+  width: 24px;
+  height: 24px;
+}
+
+.premium-access-copy,
+.premium-access-note {
+  margin: 0;
+  color: var(--text-soft);
+  line-height: 1.6;
+}
+
+.premium-access-form {
+  display: grid;
+  gap: 14px;
+}
+
+.premium-access-field {
+  display: grid;
+  gap: 8px;
+}
+
+.premium-access-field span {
+  color: var(--gold-bright);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.premium-access-field input {
+  width: 100%;
+  padding: 15px 18px;
+  border-radius: 18px;
+  border: 1px solid rgba(241, 211, 161, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text);
+  outline: none;
+}
+
+.premium-access-field input::placeholder {
+  color: var(--text-faint);
+}
+
+.premium-access-field input:focus {
+  border-color: rgba(241, 211, 161, 0.36);
+  box-shadow: 0 0 0 4px rgba(214, 180, 123, 0.08);
+}
+
+.premium-access-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 6px;
+}
+
+.premium-access-button {
+  min-width: 180px;
+}
+
 .results-list-footer {
   display: flex;
   flex-direction: column;
@@ -1755,6 +1863,23 @@ h3 {
   .page-shell {
     padding: 12px;
     gap: 12px;
+  }
+
+  .premium-access-overlay {
+    padding: 16px;
+  }
+
+  .premium-access-card {
+    padding: 22px 18px;
+  }
+
+  .premium-access-actions {
+    flex-direction: column;
+  }
+
+  .premium-access-button {
+    width: 100%;
+    min-width: 0;
   }
 
   .page-topbar {
