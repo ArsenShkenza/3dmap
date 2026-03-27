@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   useCallback,
   useDeferredValue,
@@ -50,6 +49,7 @@ export default function ExperienceShell({
   const [hoveredListProjectId, setHoveredListProjectId] = useState(null);
   const [browseCategoryId, setBrowseCategoryId] = useState("all");
   const [vaultPreviewAssetId, setVaultPreviewAssetId] = useState(null);
+  const [isAccessOverlayVisible, setIsAccessOverlayVisible] = useState(true);
   const deferredQuery = useDeferredValue(query);
   const filteredProjects = useMemo(
     () => filterProjectsBySearchQuery(projects, deferredQuery),
@@ -140,6 +140,8 @@ export default function ExperienceShell({
     [assetLibrary, vaultPreviewAssetId]
   );
   const hasSearchQuery = query.trim().length > 0;
+  const shouldShowPanel =
+    activeView !== "discover" || hasSearchQuery || Boolean(selectedProject);
 
   const handleSearchChange = (value) => {
     setQuery(value);
@@ -160,26 +162,30 @@ export default function ExperienceShell({
     [activeView]
   );
 
-  const handleOpenProject = useCallback(() => {
-    if (!selectedProject?.id) {
-      return;
+  const handleActivateView = useCallback((viewId) => {
+    setActiveView(viewId);
+    setSelectedId(null);
+    setHoveredListProjectId(null);
+    if (viewId !== "discover") {
+      setQuery("");
     }
-
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const url = new URL(window.location.href);
-    url.pathname = `/experience/${selectedProject.id}`;
-    url.search = "";
-    url.hash = "";
-    window.open(url.toString(), "_blank", "noopener,noreferrer");
-  }, [selectedProject?.id]);
+  }, []);
 
   const handleBackToResults = useCallback(() => {
     setSelectedId(null);
     setHoveredListProjectId(null);
   }, []);
+
+  const searchHelperText =
+    activeView === "discover"
+      ? selectedProject && !hasSearchQuery
+        ? "The opportunity rail stays open while a project is selected."
+        : hasSearchQuery
+          ? `${filteredProjects.length} matching opportunit${
+              filteredProjects.length === 1 ? "y" : "ies"
+            } in focus.`
+          : "Type to reveal the investment rail and review matching opportunities."
+      : "Search at any time to jump back into Discover.";
 
   const discoverContent = (
     <section className="detail-card">
@@ -192,14 +198,10 @@ export default function ExperienceShell({
 
       <div className="view-stack">
         <div className="view-section">
-          <label className="search-input">
-            <span className="sr-only">Search deals</span>
-            <input
-              value={query}
-              onChange={(event) => handleSearchChange(event.target.value)}
-              placeholder="Search by city, land, building, toke, or ndertese"
-            />
-          </label>
+          <p className="detail-copy compact discover-panel-copy">
+            Search stays on the map so the market context remains visible while
+            this rail turns into your short list.
+          </p>
         </div>
 
         {hasSearchQuery ? (
@@ -321,30 +323,31 @@ export default function ExperienceShell({
   );
 
   const opportunityContent = selectedProject ? (
-    <section className="detail-card">
-      <div className="detail-hero">
-        <div>
-          <p className="section-label">Opportunity</p>
-          <h2>{selectedProject.name}</h2>
-        </div>
+    <section className="detail-card detail-card-opportunity">
+      <div className="opportunity-top-bar">
         <button
           type="button"
-          className="ghost-link-button"
+          className="opportunity-dismiss"
           onClick={handleBackToResults}
-          aria-label="Back"
+          aria-label="Close opportunity"
         >
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path
-              d="M15 18l-6-6 6-6"
+              d="M18 6L6 18M6 6l12 12"
               fill="none"
               stroke="currentColor"
               strokeWidth="2"
               strokeLinecap="round"
-              strokeLinejoin="round"
             />
           </svg>
-          <span className="sr-only">Back</span>
         </button>
+      </div>
+
+      <div className="detail-hero">
+        <div className="opportunity-heading">
+          <p className="section-label">Opportunity</p>
+          <h2>{selectedProject.name}</h2>
+        </div>
       </div>
 
       <div className="view-stack">
@@ -376,16 +379,8 @@ export default function ExperienceShell({
           project={selectedProject}
           hideCaption
           hideAssetMeta
+          fullProjectHref={`/project/${selectedProject.id}`}
         />
-
-        <div className="cta-row">
-          <Link
-            href={`/project/${selectedProject.id}`}
-            className="primary-link-button"
-          >
-            View Full Project
-          </Link>
-        </div>
       </div>
     </section>
   ) : null;
@@ -564,83 +559,171 @@ export default function ExperienceShell({
     </section>
   );
 
+  const panelContent =
+    activeView === "discover"
+      ? selectedProject
+        ? opportunityContent
+        : discoverContent
+      : activeView === "browse"
+        ? selectedProject
+          ? opportunityContent
+          : browseContent
+        : activeView === "models"
+          ? modelsContent
+          : activeView === "platform"
+            ? platformContent
+            : null;
+
   return (
     <main className="page-shell">
-      <section className="panel-shell">
-        <div className="panel-top">
-          <div className="brand-block">
+      <header className="page-topbar">
+        <div className="topbar-brand">
+          <div className="topbar-brand-mark">PX</div>
+          <div className="topbar-brand-copy">
+            <strong>PRO X</strong>
             <p className="eyebrow">Invitation-Only Investment Intelligence</p>
-            <div className="brand-row">
-              <div>
-                <h1>PRO X</h1>
-              </div>
-            </div>
-            <div className="panel-nav" role="tablist" aria-label="PRO X sections">
-              {panelViews.map((view) => (
-                <button
-                  key={view.id}
-                  type="button"
-                  role="tab"
-                  aria-selected={activeView === view.id}
-                  className={`panel-nav-button${
-                    activeView === view.id ? " active" : ""
-                  }`}
-                  onClick={() => {
-                    setActiveView(view.id);
-                    setHoveredListProjectId(null);
-                  }}
-                >
-                  {view.label}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
 
-        <div className="content-grid">
-          {activeView === "discover"
-            ? selectedProject
-              ? opportunityContent
-              : discoverContent
-            : activeView === "browse"
-              ? selectedProject
-                ? opportunityContent
-                : browseContent
-              : activeView === "models"
-                ? modelsContent
-                : activeView === "platform"
-                  ? platformContent
-                  : null}
+        <div className="topbar-nav" role="tablist" aria-label="PRO X sections">
+          {panelViews.map((view) => (
+            <button
+              key={view.id}
+              type="button"
+              role="tab"
+              aria-selected={activeView === view.id}
+              className={`panel-nav-button${
+                activeView === view.id ? " active" : ""
+              }`}
+              onClick={() => handleActivateView(view.id)}
+            >
+              {view.label}
+            </button>
+          ))}
         </div>
-      </section>
 
-      <section className="map-shell">
-        <MapExperience
-          assetLibrary={assetLibrary}
-          projects={mapProjectList}
-          selectedProject={selectedProject}
-          selectedAsset={selectedAsset}
-          onSelectProject={handleSelectProject}
-          searchQuery={query}
-          viewMode={activeView}
-          focusRequest={mapFocusRequest}
-          resultCount={
-            activeView === "browse"
-              ? browseFilteredProjects.length
-              : activeView === "discover"
-                ? filteredProjects.length
-                : activeView === "models"
-                  ? assetLibrary.length
-                  : projects.length
-          }
-          panelHoveredProjectId={
-            (activeView === "discover" || activeView === "browse") &&
-            !selectedProject
-              ? hoveredListProjectId
-              : null
-          }
-        />
-      </section>
+        <div className="profile-placeholder" aria-label="Investor profile placeholder">
+          <span className="profile-avatar">PX</span>
+          <div className="profile-copy">
+            <strong>Investor Profile</strong>
+            <span>VIP / Standard placeholder</span>
+          </div>
+        </div>
+      </header>
+
+      <div className={`experience-stage${shouldShowPanel ? " rail-open" : " rail-closed"}`}>
+        {shouldShowPanel ? (
+          <section className="panel-shell">
+            <div className="content-grid">{panelContent}</div>
+          </section>
+        ) : null}
+
+        <section className="map-shell">
+          <div className="map-search-overlay">
+            <label className="search-input map-search-input">
+              <span className="sr-only">Search deals</span>
+              <input
+                value={query}
+                onChange={(event) => handleSearchChange(event.target.value)}
+                placeholder="Search by city, land, building, toke, or ndertese"
+              />
+            </label>
+            <p className="map-search-helper">{searchHelperText}</p>
+          </div>
+
+          <MapExperience
+            assetLibrary={assetLibrary}
+            projects={mapProjectList}
+            selectedProject={selectedProject}
+            selectedAsset={selectedAsset}
+            onSelectProject={handleSelectProject}
+            searchQuery={query}
+            viewMode={activeView}
+            focusRequest={mapFocusRequest}
+            panelVisible={shouldShowPanel}
+            resultCount={
+              activeView === "browse"
+                ? browseFilteredProjects.length
+                : activeView === "discover"
+                  ? filteredProjects.length
+                  : activeView === "models"
+                    ? assetLibrary.length
+                    : projects.length
+            }
+            panelHoveredProjectId={
+              (activeView === "discover" || activeView === "browse") &&
+              !selectedProject
+                ? hoveredListProjectId
+                : null
+            }
+          />
+        </section>
+      </div>
+
+      {isAccessOverlayVisible ? (
+        <div
+          className="premium-access-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="premium-access-title"
+        >
+          <div
+            className="premium-access-card"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="premium-access-lock">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12v10H6z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </div>
+
+            <p className="eyebrow">Investor Access Required</p>
+            <h2 id="premium-access-title">Login to enter the PRO X capital room.</h2>
+            <p className="premium-access-copy">
+              This page is framed as an invitation-only investor surface for VIP
+              and standard accounts. Use the gate as a premium front door for the
+              demo.
+            </p>
+
+            <form
+              className="premium-access-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+              }}
+            >
+              <label className="premium-access-field">
+                <span>Investor Email</span>
+                <input type="email" placeholder="investor@pro-x.com" />
+              </label>
+
+              <label className="premium-access-field">
+                <span>Access Code</span>
+                <input type="password" placeholder="Invite or VIP code" />
+              </label>
+
+              <div className="premium-access-actions">
+                <button type="submit" className="primary-link-button premium-access-button">
+                  Login To Continue
+                </button>
+                <button
+                  type="button"
+                  className="ghost-link-button premium-access-button"
+                  onClick={() => setIsAccessOverlayVisible(false)}
+                >
+                  Enter Demo Preview
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      ) : null}
     </main>
   );
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useGltfOrbitViewer } from "@/components/useGltfOrbitViewer";
 
@@ -48,7 +49,8 @@ export default function InteriorExplorer3D({
   caption,
   statusLabel = "Interior Navigation",
   hideCaption = false,
-  hideAssetMeta = false
+  hideAssetMeta = false,
+  fullProjectHref = null
 }) {
   const stageContainerRef = useRef(null);
   const stageShellRef = useRef(null);
@@ -75,7 +77,17 @@ export default function InteriorExplorer3D({
           <p className="section-label">Virtual Experience</p>
           <h3>{asset.label}</h3>
         </div>
-        <span className="status-pill subtle">{statusLabel}</span>
+        <div className="model-card-head-end">
+          {fullProjectHref ? (
+            <Link
+              href={fullProjectHref}
+              className="primary-link-button model-card-full-project-link"
+            >
+              View Full Project
+            </Link>
+          ) : null}
+          <span className="status-pill subtle">{statusLabel}</span>
+        </div>
       </div>
 
       <div

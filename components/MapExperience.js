@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import maplibregl from "maplibre-gl";
 
 const MODEL_LAYER_ID = "selected-project-model";
 const MAX_EXTERIOR_MAP_ZOOM = 20;
@@ -263,6 +264,7 @@ export default function MapExperience({
   searchQuery,
   viewMode,
   focusRequest,
+  panelVisible = true,
   resultCount,
   panelHoveredProjectId = null
 }) {
@@ -308,7 +310,6 @@ export default function MapExperience({
     let disposed = false;
 
     async function setup() {
-      const maplibregl = (await import("maplibre-gl")).default;
       const THREE = await import("three");
       const { GLTFLoader } = await import(
         "three/examples/jsm/loaders/GLTFLoader.js"
@@ -610,8 +611,13 @@ export default function MapExperience({
   }, [onSelectProject]);
 
   useEffect(() => {
-    if (viewMode === "platform" || viewMode === "models") {
+    if (viewMode === "models") {
       setIsSummaryVisible(true);
+      return;
+    }
+
+    if (viewMode === "platform") {
+      setIsSummaryVisible(false);
       return;
     }
 
@@ -738,6 +744,21 @@ export default function MapExperience({
 
     focusOverview(map, threeState.maplibregl, projects);
   }, [projects, ready, viewMode]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      map.resize();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+    };
+  }, [panelVisible, ready, viewMode]);
 
   useEffect(() => {
     const map = mapRef.current;
