@@ -18,10 +18,13 @@ function getTracedFloorCount(projectId) {
 
 function buildFloors(project) {
   const tracedFloorCount = getTracedFloorCount(project.id);
+  const declaredFloorCount = Number(project.floorCount) || 0;
+  const minimumFloorCount =
+    project.objectKind === "land" ? 6 : declaredFloorCount ? 0 : 4;
   const floorCount = Math.max(
-    Number(project.floorCount) || 0,
+    declaredFloorCount,
     tracedFloorCount,
-    project.objectKind === "land" ? 6 : 4
+    minimumFloorCount
   );
   return Array.from({ length: floorCount }, (_, index) => {
     const floorNumber = floorCount - index;
@@ -410,6 +413,7 @@ export default function ProjectExperience({ project }) {
   const isTracing = traceEnabled && !traceIsClosed;
   const activeFloorNumber = hoveredFloorNumber ?? focusedFloorNumber;
   const traceFloorNumber = traceFloorIndex + 1;
+  const isTiranaSignature = project.id === "tirana-signature-residences";
   const traceFloor = floors.find((floor) => floor.number === traceFloorNumber) ?? floors[floors.length - 1];
   const hasAbsolutePolygons = Boolean(FLOOR_POLYGONS_ABSOLUTE?.[project.id]);
   const savedTraceIndexes = useMemo(() =>
@@ -421,6 +425,14 @@ export default function ProjectExperience({ project }) {
 
   const maxFloorNumber = floors.length ? Math.max(...floors.map((floor) => floor.number)) : 0;
   const minFloorNumber = floors.length ? Math.min(...floors.map((floor) => floor.number)) : 0;
+  const downStepOptions = useMemo(() => {
+    if (!maxFloorNumber) {
+      return [1];
+    }
+    const maxUsefulSteps = Math.max(maxFloorNumber - minFloorNumber, 1);
+    const stepCount = Math.min(5, maxUsefulSteps);
+    return Array.from({ length: stepCount }, (_, index) => index + 1);
+  }, [maxFloorNumber, minFloorNumber]);
   const panelFloorDisplayNumber =
     floorPanelNumber ?? focusedFloorNumber ?? hoveredFloorNumber ?? 33;
   const currentPlanTracePointsByApartment =
@@ -823,10 +835,13 @@ export default function ProjectExperience({ project }) {
       <div className="experience-elevation-below">
         <div className="visual-frame experience-elevation-frame">
           <p className="status-label">Front Elevation</p>
-          <div className="floor-elevation">
+          <div className={`floor-elevation${isTiranaSignature ? " is-tirana" : ""}`}>
             <p className="elevation-caption">{caption}</p>
             <div className="controls-outer" ref={controlsOuterRef} aria-live="polite">
-              <div className="controls-wrapper" ref={controlsWrapperRef}>
+              <div
+                className={`controls-wrapper${isTiranaSignature ? " controls-wrapper-centered" : ""}`}
+                ref={controlsWrapperRef}
+              >
                 <div className="controls-title">Numri i katit</div>
                 <div className="controls-dots">
                   <button
@@ -855,7 +870,7 @@ export default function ProjectExperience({ project }) {
                   <div className="current-invisible" data-show={activeFloorNumber ?? ""} />
                 </div>
                 <div className="controls-dots">
-                  {[1, 2, 3, 4, 5].map((step) => (
+                  {downStepOptions.map((step) => (
                     <button
                       key={step}
                       type="button"
@@ -937,10 +952,19 @@ export default function ProjectExperience({ project }) {
             >
               <img
                 className="elevation-image"
-                src="/assets/building5.jpg"
+                src={
+                  project.elevationImageSrc || "/assets/building5.jpg"
+                }
                 alt={`${project.name} facade elevation`}
                 ref={imageRef}
                 draggable={false}
+                onError={(event) => {
+                  const fallback = "/assets/building5.jpg";
+                  if (event.currentTarget.src.includes("building5.jpg")) {
+                    return;
+                  }
+                  event.currentTarget.src = fallback;
+                }}
                 onLoad={() => {
                   syncTraceCanvas();
                 }}

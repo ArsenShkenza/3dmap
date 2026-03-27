@@ -95,6 +95,16 @@ export default function FullProjectExperience({
           <Link href="/" className="ghost-link-button">
             Back To Market View
           </Link>
+          {project.id === "tirana-signature-residences" ? (
+            <a
+              href={`/experience/${project.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="primary-link-button"
+            >
+              2D View
+            </a>
+          ) : null}
         </div>
       </section>
 
