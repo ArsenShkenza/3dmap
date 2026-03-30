@@ -1,4 +1,5 @@
 import ExperienceShell from "@/components/ExperienceShell";
+import SplashGate from "@/components/SplashGate";
 import { assetLibrary, projects } from "@/lib/projects";
 
 export default async function Page({ searchParams }) {
@@ -11,11 +12,13 @@ export default async function Page({ searchParams }) {
     null;
 
   return (
-    <ExperienceShell
-      assetLibrary={assetLibrary}
-      projects={projects}
-      initialQuery={q}
-      initialSelectedId={initialSelectedId}
-    />
+    <SplashGate>
+      <ExperienceShell
+        assetLibrary={assetLibrary}
+        projects={projects}
+        initialQuery={q}
+        initialSelectedId={initialSelectedId}
+      />
+    </SplashGate>
   );
 }
