@@ -1129,12 +1129,12 @@ button {
   min-height: 0;
 }
 
-.experience-stage .panel-shell,
+.experience-stage .detail-card-scroll,
 .experience-stage .map-search-overlay {
   transition: opacity 0.22s ease;
 }
 
-.experience-stage.view-switch-pending .panel-shell,
+.experience-stage.view-switch-pending .detail-card-scroll,
 .experience-stage.view-switch-pending .map-search-overlay {
   opacity: 0.9;
 }
@@ -1273,6 +1273,7 @@ button {
   gap: 12px;
   margin-top: 14px;
   padding-top: 14px;
+  padding-bottom: clamp(12px, 2.2vw, 22px);
   border-top: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -1331,46 +1332,6 @@ button {
 .results-pagination-button:disabled {
   opacity: 0.35;
   cursor: not-allowed;
-}
-
-.panel-shell {
-  position: relative;
-  z-index: 2;
-  pointer-events: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  height: 100%;
-  min-height: 0;
-  padding: 28px 24px;
-  background:
-    radial-gradient(
-      circle at top right,
-      rgba(214, 180, 123, 0.12),
-      transparent 28%
-    ),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent),
-    rgba(6, 11, 18, 0.88);
-  backdrop-filter: blur(22px);
-  border: 1px solid var(--line);
-  border-radius: 34px;
-  box-shadow: var(--shadow);
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(241, 211, 161, 0.24) transparent;
-  /* Clip native scrollbar + content to rounded rect (scroll stays on this element) */
-  clip-path: inset(0 round 34px);
-}
-
-.panel-shell::-webkit-scrollbar {
-  width: 8px;
-}
-
-.panel-shell::-webkit-scrollbar-thumb {
-  border-radius: 999px;
-  background: rgba(241, 211, 161, 0.18);
 }
 
 .panel-top {
@@ -1672,10 +1633,51 @@ h3 {
 }
 
 .content-grid {
-  display: grid;
-  grid-template-columns: 1fr;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
   margin-top: 0;
+  height: 100%;
+  min-height: 0;
+  pointer-events: auto;
+}
+
+/* Left rail scrolls inside the detail card (not an outer panel shell) */
+.detail-card-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(241, 211, 161, 0.24) transparent;
+  clip-path: inset(0 round var(--radius-lg));
+}
+
+/* Avoid stretching grid rows to fill the rail — keep blocks pinned to the top */
+.detail-card.detail-card-scroll {
+  align-content: start;
+}
+
+.detail-card-scroll > .view-stack {
+  align-content: start;
+  min-height: 0;
+}
+
+.detail-card-scroll .view-section {
+  align-content: start;
+  align-items: start;
+}
+
+.detail-card-scroll::-webkit-scrollbar {
+  width: 8px;
+}
+
+.detail-card-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(241, 211, 161, 0.18);
 }
 
 .discover-panel-copy {
@@ -1690,11 +1692,6 @@ h3 {
 .view-section {
   display: grid;
   gap: 16px;
-}
-
-.view-section-divided {
-  padding-top: 18px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .section-head,
@@ -2180,6 +2177,7 @@ h3 {
   color: var(--text-faint);
   font-size: 0.82rem;
   letter-spacing: 0.04em;
+  padding-bottom: clamp(12px, 2.2vw, 22px);
 }
 
 .model-overlay {
@@ -2942,15 +2940,17 @@ h3 {
     min-height: auto;
   }
 
-  .panel-shell,
+  .content-grid,
   .map-shell {
     height: auto;
     min-height: auto;
   }
 
-  .panel-shell {
+  .detail-card-scroll {
     overflow: visible;
     clip-path: none;
+    flex: none;
+    min-height: 0;
   }
 
   .map-search-overlay {
@@ -3017,10 +3017,6 @@ h3 {
     min-width: 0;
     justify-content: flex-start;
     justify-self: stretch;
-  }
-
-  .panel-shell {
-    padding: 20px 16px;
   }
 
   .detail-columns,

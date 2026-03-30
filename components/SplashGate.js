@@ -4,7 +4,18 @@ import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { Montserrat } from "next/font/google";
 
-const STORAGE_KEY = "pro-x-splash-dismissed";
+export const SPLASH_DISMISSED_SESSION_KEY = "pro-x-splash-dismissed";
+
+/** Call before navigating to `/` so SplashGate shows the experience, not the splash. */
+export function markSplashDismissedForSession() {
+  try {
+    sessionStorage.setItem(SPLASH_DISMISSED_SESSION_KEY, "1");
+  } catch {
+    /* private mode */
+  }
+}
+
+const STORAGE_KEY = SPLASH_DISMISSED_SESSION_KEY;
 
 const splashSans = Montserrat({
   subsets: ["latin"],

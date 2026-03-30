@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { markSplashDismissedForSession } from "@/components/SplashGate";
 import { FLOOR_POLYGONS_ABSOLUTE } from "@/lib/floor-polygons";
 import { getApartmentPolygonsForProjectFloor } from "@/lib/apartment-polygons";
 
@@ -837,7 +838,11 @@ export default function ProjectExperience({ project }) {
 
       <div className="experience-shell">
         <header className="experience-header">
-          <Link className="ghost-button experience-back-link" href={`/?project=${project.id}`}>
+          <Link
+            className="ghost-button experience-back-link"
+            href={`/?project=${project.id}`}
+            onClick={markSplashDismissedForSession}
+          >
             Back To Map
           </Link>
           <p className="status-label">Project Experience</p>

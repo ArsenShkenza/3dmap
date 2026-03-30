@@ -194,24 +194,24 @@ export default function ExperienceShell({
       : "Search at any time to jump back into Discover.";
 
   const discoverContent = (
-    <section className="detail-card">
-      <div className="detail-hero">
+    <section className="detail-card detail-card-scroll">
+      {/* <div className="detail-hero">
         <div>
           <p className="section-label">Discover</p>
           <h2>Navigate the curated capital stack.</h2>
         </div>
-      </div>
+      </div> */}
 
       <div className="view-stack">
-        <div className="view-section">
+        {/* <div className="view-section">
           <p className="detail-copy compact discover-panel-copy">
             Search stays on the map so the market context remains visible while
             this rail turns into your short list.
           </p>
-        </div>
+        </div> */}
 
         {hasSearchQuery ? (
-          <div className="view-section view-section-divided">
+          <div className="view-section">
             <div className="section-head">
               <div>
                 <p className="section-label">Results</p>
@@ -329,7 +329,7 @@ export default function ExperienceShell({
   );
 
   const opportunityContent = selectedProject ? (
-    <section className="detail-card detail-card-opportunity">
+    <section className="detail-card detail-card-opportunity detail-card-scroll">
       <div className="opportunity-top-bar">
         <button
           type="button"
@@ -392,7 +392,7 @@ export default function ExperienceShell({
   ) : null;
 
   const browseContent = (
-    <section className="detail-card">
+    <section className="detail-card detail-card-scroll">
       <div className="detail-hero">
         <div>
           <p className="section-label">Browse</p>
@@ -479,40 +479,42 @@ export default function ExperienceShell({
   );
 
   const modelsContent = (
-    <>
-      <section className="detail-card">
-        <div className="detail-hero">
-          <div>
-            <p className="section-label">Models</p>
-            <h2>Explore the full 3D library.</h2>
-          </div>
-        </div>
-        <p className="detail-copy compact browse-deck-caption">
-          Mapped heroes, integrated towers, interiors, and every exterior in the
-          vault—the same files you can open from Discover and Browse on the map.
-        </p>
-      </section>
-
-      <AssetVault
-        assets={assetLibrary}
-        selectedAssetId={vaultPreviewAssetId}
-        onSelectAsset={(asset) => setVaultPreviewAssetId(asset.id)}
-      />
-
-      {vaultPreviewAsset ? (
+    <section className="detail-card detail-card-scroll">
+      <div className="view-stack">
         <section className="detail-card">
-          <ModelStage
-            asset={vaultPreviewAsset}
-            project={assetVaultPreviewProject}
-            caption="Rotate and zoom to review this file on its own."
-          />
+          <div className="detail-hero">
+            <div>
+              <p className="section-label">Models</p>
+              <h2>Explore the full 3D library.</h2>
+            </div>
+          </div>
+          <p className="detail-copy compact browse-deck-caption">
+            Mapped heroes, integrated towers, interiors, and every exterior in the
+            vault—the same files you can open from Discover and Browse on the map.
+          </p>
         </section>
-      ) : null}
-    </>
+
+        <AssetVault
+          assets={assetLibrary}
+          selectedAssetId={vaultPreviewAssetId}
+          onSelectAsset={(asset) => setVaultPreviewAssetId(asset.id)}
+        />
+
+        {vaultPreviewAsset ? (
+          <section className="detail-card">
+            <ModelStage
+              asset={vaultPreviewAsset}
+              project={assetVaultPreviewProject}
+              caption="Rotate and zoom to review this file on its own."
+            />
+          </section>
+        ) : null}
+      </div>
+    </section>
   );
 
   const platformContent = (
-    <section className="detail-card">
+    <section className="detail-card detail-card-scroll">
       <div className="detail-hero">
         <div>
           <p className="section-label">Platform</p>
@@ -654,9 +656,7 @@ export default function ExperienceShell({
         className={`experience-stage${shouldShowPanel ? " rail-open" : " rail-closed"}${isViewPending ? " view-switch-pending" : ""}`}
       >
         {shouldShowPanel ? (
-          <section className="panel-shell">
-            <div className="content-grid">{panelContent}</div>
-          </section>
+          <div className="content-grid">{panelContent}</div>
         ) : null}
 
         <section className="map-shell">
@@ -674,7 +674,7 @@ export default function ExperienceShell({
         </section>
       </div>
 
-      {isAccessOverlayVisible ? (
+      {/* {isAccessOverlayVisible ? (
         <div
           className="premium-access-overlay"
           role="dialog"
@@ -742,7 +742,7 @@ export default function ExperienceShell({
             </form>
           </div>
         </div>
-      ) : null}
+      ) : null} */}
     </main>
   );
 }
