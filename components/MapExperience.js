@@ -311,13 +311,11 @@ export default function MapExperience({
     let disposed = false;
 
     async function setup() {
-      const THREE = await import("three");
-      const { GLTFLoader } = await import(
-        "three/examples/jsm/loaders/GLTFLoader.js"
-      );
       if (!containerRef.current || disposed || mapRef.current) {
         return;
       }
+
+      const threeModulesPromise = import("@/lib/threeMapGltfImports.js");
 
       const map = new maplibregl.Map({
         container: containerRef.current,
@@ -337,15 +335,37 @@ export default function MapExperience({
         offset: 18
       });
       threeStateRef.current = {
-        GLTFLoader,
-        THREE,
+        GLTFLoader: null,
+        THREE: null,
         map,
         maplibregl
       };
 
-      map.addControl(new maplibregl.NavigationControl({ showCompass: false }));
+      map.addControl(
+        new maplibregl.NavigationControl({ showCompass: false }),
+        "bottom-right"
+      );
 
-      map.on("load", () => {
+      map.on("load", async () => {
+        let THREE;
+        let GLTFLoader;
+        try {
+          ({ THREE, GLTFLoader } = await threeModulesPromise);
+        } catch (error) {
+          console.error("Failed to load Three.js for map", error);
+          return;
+        }
+        if (disposed || !mapRef.current) {
+          return;
+        }
+
+        threeStateRef.current = {
+          GLTFLoader,
+          THREE,
+          map,
+          maplibregl
+        };
+
         map.addSource("markers", {
           type: "geojson",
           data: pointCollection(projects)
@@ -714,26 +734,33 @@ export default function MapExperience({
   }, [assetLibrary, projects, ready]);
 
   return (
-    <div className="map-frame">
+    <div className="map-underlay-stack">
+      <div className="map-backdrop">
+        <div className="map-frame">
+          <div ref={containerRef} className="map-canvas" />
+        </div>
+      </div>
       {isSummaryVisible ? (
-        <div className="map-summary-card">
-          <p className="section-label">Market View</p>
-          <h2>
+        <div
+          className={`map-summary-card${panelVisible ? " map-summary-card--panel-open" : ""}`}
+        >
+          {/* <p className="section-label">Market View</p> */}
+          {/* <h2>
             {viewMode === "discover"
               ? "Search Results Overview"
               : viewMode === "models"
                 ? "3D asset library"
                 : activeMapProject?.name ?? "No Property Selected"}
-          </h2>
-          <p>
+          </h2> */}
+          {/* <p>
             {viewMode === "discover"
               ? "The map stays zoomed out while you search. Click a property card or a map marker to focus a specific opportunity."
               : viewMode === "models"
                 ? "The map shows every opportunity. In Models, open any GLB—including library exteriors not tied to a single deal."
                 : activeMapProject?.stageSummary ??
                   "Select a property from Discover to move the map and open its memo."}
-          </p>
-          <div className="map-summary-kpis">
+          </p> */}
+          {/* <div className="map-summary-kpis">
             <div>
               <span className="stat-label">
                 {viewMode === "discover"
@@ -778,11 +805,9 @@ export default function MapExperience({
                     : activeMapProject?.roi ?? "--"}
               </strong>
             </div>
-          </div>
+          </div> */}
         </div>
       ) : null}
-
-      <div ref={containerRef} className="map-canvas" />
     </div>
   );
 }

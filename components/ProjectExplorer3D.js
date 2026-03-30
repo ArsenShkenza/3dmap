@@ -6,7 +6,7 @@ import {
   FLOOR_OVERVIEW_VALUE,
   getFloorFocusCopy,
   getFloorLabel,
-  getFloorOptions
+  getFloorOptions,
 } from "@/lib/floor-explorer";
 
 const floorSceneCache = new Map();
@@ -27,7 +27,7 @@ function collectNamedFloorNodes(root, floorConfig = {}) {
   const prefix = getNamedNodePrefix(floorConfig.namedNodePattern);
   const floorPattern = new RegExp(`${escapeRegExp(prefix)}(\\d+)`);
   const shellPatterns = (floorConfig.shellNodePatterns ?? []).map((value) =>
-    value.toLowerCase()
+    value.toLowerCase(),
   );
 
   root.traverse((node) => {
@@ -72,16 +72,23 @@ function applyNamedFloorVisibility(root, namedFloorNodes, selectedFloor) {
 
   root.children.forEach((child) => setVisibilityRecursive(child, false));
 
-  namedFloorNodes.shellNodes.forEach((node) => setVisibilityRecursive(node, true));
+  namedFloorNodes.shellNodes.forEach((node) =>
+    setVisibilityRecursive(node, true),
+  );
   (namedFloorNodes.floorNodes.get(selectedFloor) ?? []).forEach((node) =>
-    setVisibilityRecursive(node, true)
+    setVisibilityRecursive(node, true),
   );
 }
 
 function normalizeModel(root, THREE) {
   const initialBox = new THREE.Box3().setFromObject(root);
   const initialSize = initialBox.getSize(new THREE.Vector3());
-  const longestSide = Math.max(initialSize.x, initialSize.y, initialSize.z, 0.001);
+  const longestSide = Math.max(
+    initialSize.x,
+    initialSize.y,
+    initialSize.z,
+    0.001,
+  );
   const scaleFactor = 2.95 / longestSide;
 
   root.scale.setScalar(scaleFactor);
@@ -111,7 +118,7 @@ function focusCamera(viewerState, selectedFloor, project) {
   camera.position.set(
     center.x + maxDimension * 1.75,
     center.y + size.y * 0.38,
-    center.z + maxDimension * 1.85
+    center.z + maxDimension * 1.85,
   );
   camera.lookAt(center);
   camera.near = 0.01;
@@ -136,7 +143,11 @@ function syncFloorPresentation(viewerState, asset, project, selectedFloor) {
   }
 
   if (hasNamedNodes) {
-    applyNamedFloorVisibility(viewerState.root, viewerState.namedFloorNodes, selectedFloor);
+    applyNamedFloorVisibility(
+      viewerState.root,
+      viewerState.namedFloorNodes,
+      selectedFloor,
+    );
     focusCamera(viewerState, selectedFloor, project);
     return;
   }
@@ -153,8 +164,11 @@ export default function ProjectExplorer3D({ asset, project }) {
   const viewerStateRef = useRef(null);
   const floorOptions = useMemo(() => getFloorOptions(project), [project]);
   const allFloors = useMemo(
-    () => floorOptions.filter((option) => option.value !== FLOOR_OVERVIEW_VALUE).reverse(),
-    [floorOptions]
+    () =>
+      floorOptions
+        .filter((option) => option.value !== FLOOR_OVERVIEW_VALUE)
+        .reverse(),
+    [floorOptions],
   );
 
   useEffect(() => {
@@ -170,18 +184,19 @@ export default function ProjectExplorer3D({ asset, project }) {
         setStatus("loading");
 
         const THREE = await import("three");
-        const { OrbitControls } = await import(
-          "three/examples/jsm/controls/OrbitControls.js"
-        );
-        const { GLTFLoader } = await import(
-          "three/examples/jsm/loaders/GLTFLoader.js"
-        );
+        const { OrbitControls } =
+          await import("three/examples/jsm/controls/OrbitControls.js");
+        const { GLTFLoader } =
+          await import("three/examples/jsm/loaders/GLTFLoader.js");
 
         if (cancelled || !stageRef.current) {
           return;
         }
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        const renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          alpha: true,
+        });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.domElement.className = "three-model-stage";
@@ -237,7 +252,10 @@ export default function ProjectExplorer3D({ asset, project }) {
 
         const modelScene = baseScene.clone(true);
         const bounds = normalizeModel(modelScene, THREE);
-        const namedFloorNodes = collectNamedFloorNodes(modelScene, asset.floorExplorer);
+        const namedFloorNodes = collectNamedFloorNodes(
+          modelScene,
+          asset.floorExplorer,
+        );
 
         scene.add(modelScene);
 
@@ -250,7 +268,7 @@ export default function ProjectExplorer3D({ asset, project }) {
           renderer,
           root: modelScene,
           scene,
-          size: new THREE.Vector3()
+          size: new THREE.Vector3(),
         };
 
         viewerStateRef.current = viewerState;
@@ -293,7 +311,12 @@ export default function ProjectExplorer3D({ asset, project }) {
   }, [asset.id, asset.src, project.id]);
 
   useEffect(() => {
-    syncFloorPresentation(viewerStateRef.current, asset, project, selectedFloor);
+    syncFloorPresentation(
+      viewerStateRef.current,
+      asset,
+      project,
+      selectedFloor,
+    );
   }, [asset, project, selectedFloor]);
 
   return (
@@ -303,7 +326,9 @@ export default function ProjectExplorer3D({ asset, project }) {
           <p className="section-label">Full Project Explorer</p>
           <h3>{asset.label}</h3>
         </div>
-        <span className="status-pill subtle">{getFloorLabel(project, selectedFloor)}</span>
+        <span className="status-pill subtle">
+          {getFloorLabel(project, selectedFloor)}
+        </span>
       </div>
 
       <div className="floor-explorer-panel">
@@ -315,7 +340,11 @@ export default function ProjectExplorer3D({ asset, project }) {
             </p>
           </div>
 
-          <div className="floor-grid" role="list" aria-label="All building floors">
+          <div
+            className="floor-grid"
+            role="list"
+            aria-label="All building floors"
+          >
             <button
               type="button"
               className={`floor-grid-button floor-grid-button-overview${
@@ -334,7 +363,9 @@ export default function ProjectExplorer3D({ asset, project }) {
                   selectedFloor === option.value ? " active" : ""
                 }`}
                 onClick={() =>
-                  setSelectedFloor(clampFloorValue(project, Number(option.value)))
+                  setSelectedFloor(
+                    clampFloorValue(project, Number(option.value)),
+                  )
                 }
               >
                 <span>Level {String(option.value).padStart(2, "0")}</span>
@@ -349,13 +380,19 @@ export default function ProjectExplorer3D({ asset, project }) {
         <div ref={stageRef} className="three-model-shell" />
 
         {status === "error" && asset.posterSrc ? (
-          <img className="model-fallback" src={asset.posterSrc} alt={asset.label} />
+          <img
+            className="model-fallback"
+            src={asset.posterSrc}
+            alt={asset.label}
+          />
         ) : null}
 
         {status !== "ready" ? (
           <div className="model-overlay">
             <p className="section-label">
-              {status === "error" ? "Preview unavailable" : "Loading floor explorer"}
+              {status === "error"
+                ? "Preview unavailable"
+                : "Loading floor explorer"}
             </p>
             <p>
               {status === "error"
@@ -366,9 +403,12 @@ export default function ProjectExplorer3D({ asset, project }) {
         ) : null}
       </div>
 
-      <p className="model-caption">{getFloorFocusCopy(project, selectedFloor)}</p>
+      <p className="model-caption">
+        {getFloorFocusCopy(project, selectedFloor)}
+      </p>
       <p className="model-meta">
-        Explorer mode: <code>{asset.floorExplorer?.mode ?? "namedNodes"}</code>. Required export:
+        Explorer mode: <code>{asset.floorExplorer?.mode ?? "namedNodes"}</code>.
+        Required export:
         <code> {asset.floorExplorer?.namedNodePattern ?? "floor_01"}</code>
       </p>
     </article>

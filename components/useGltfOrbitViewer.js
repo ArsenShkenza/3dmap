@@ -29,7 +29,12 @@ function setDoubleSidedMaterial(node, THREE) {
 export function normalizeGltfModel(root, THREE) {
   const initialBox = new THREE.Box3().setFromObject(root);
   const initialSize = initialBox.getSize(new THREE.Vector3());
-  const longestSide = Math.max(initialSize.x, initialSize.y, initialSize.z, 0.001);
+  const longestSide = Math.max(
+    initialSize.x,
+    initialSize.y,
+    initialSize.z,
+    0.001,
+  );
   const scaleFactor = 5.6 / longestSide;
 
   root.scale.setScalar(scaleFactor);
@@ -44,7 +49,12 @@ export function normalizeGltfModel(root, THREE) {
 export function focusOrbitCamera(viewerState) {
   const { THREE, camera, controls, bounds, size } = viewerState;
   const dimensions = bounds.getSize(size);
-  const maxDimension = Math.max(dimensions.x, dimensions.y, dimensions.z, 0.001);
+  const maxDimension = Math.max(
+    dimensions.x,
+    dimensions.y,
+    dimensions.z,
+    0.001,
+  );
   const center = new THREE.Vector3();
   bounds.getCenter(center);
 
@@ -64,7 +74,7 @@ export function focusOrbitCamera(viewerState) {
   const eye = new THREE.Vector3(
     maxDimension * 0.52,
     maxDimension * 0.3,
-    maxDimension * 0.58
+    maxDimension * 0.58,
   );
   camera.position.copy(center).add(eye);
   camera.near = 0.003;
@@ -94,19 +104,20 @@ export function useGltfOrbitViewer(asset, containerRef, variant, options = {}) {
         setStatus("loading");
 
         const THREE = await import("three");
-        const { OrbitControls } = await import(
-          "three/examples/jsm/controls/OrbitControls.js"
-        );
-        const { GLTFLoader } = await import(
-          "three/examples/jsm/loaders/GLTFLoader.js"
-        );
+        const { OrbitControls } =
+          await import("three/examples/jsm/controls/OrbitControls.js");
+        const { GLTFLoader } =
+          await import("three/examples/jsm/loaders/GLTFLoader.js");
 
         if (cancelled || !containerRef.current) {
           return;
         }
 
         const useAlpha = variant === "interior";
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: useAlpha });
+        const renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          alpha: useAlpha,
+        });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         if (!useAlpha) {
@@ -124,7 +135,11 @@ export function useGltfOrbitViewer(asset, containerRef, variant, options = {}) {
         controls.autoRotateSpeed = 1.15;
 
         const ambientLight = new THREE.AmbientLight(0xffffff, 2.15);
-        const hemisphereLight = new THREE.HemisphereLight(0xf7efe0, 0x172436, 1.25);
+        const hemisphereLight = new THREE.HemisphereLight(
+          0xf7efe0,
+          0x172436,
+          1.25,
+        );
         const keyLight = new THREE.DirectionalLight(0xf7ddbc, 1.7);
         keyLight.position.set(4.6, 5.2, 4.2);
         const fillLight = new THREE.DirectionalLight(0x94c7ea, 0.95);
@@ -183,7 +198,7 @@ export function useGltfOrbitViewer(asset, containerRef, variant, options = {}) {
           controls,
           renderer,
           scene,
-          size: new THREE.Vector3()
+          size: new THREE.Vector3(),
         };
 
         viewerStateRef.current = viewerState;

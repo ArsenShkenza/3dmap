@@ -559,7 +559,10 @@ function bootstrap() {
     antialias: true,
   });
 
-  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "top-right");
+  map.addControl(
+    new maplibregl.NavigationControl({ visualizePitch: true }),
+    "bottom-right"
+  );
 
   map.on("load", () => {
     mapReady = true;

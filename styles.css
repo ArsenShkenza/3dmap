@@ -460,8 +460,8 @@ button:disabled {
   color: var(--text-soft);
 }
 
-.maplibregl-ctrl-top-right {
-  top: 18px;
+.maplibregl-ctrl-bottom-right {
+  bottom: 18px;
   right: 18px;
 }
 

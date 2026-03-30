@@ -5,15 +5,13 @@ import {
   useDeferredValue,
   useEffect,
   useMemo,
-  useState
+  useState,
+  useTransition,
 } from "react";
 import AssetVault from "@/components/AssetVault";
 import MapExperience from "@/components/MapExperience";
 import ModelStage from "@/components/ModelStage";
-import {
-  assetVaultPreviewProject,
-  exploreCategories
-} from "@/lib/projects";
+import { assetVaultPreviewProject, exploreCategories } from "@/lib/projects";
 import { filterProjectsBySearchQuery } from "@/lib/searchFilter";
 
 const RESULTS_PREVIEW = 4;
@@ -30,18 +28,18 @@ export default function ExperienceShell({
   assetLibrary,
   projects,
   initialQuery = "",
-  initialSelectedId = null
+  initialSelectedId = null,
 }) {
   const panelViews = [
     { id: "discover", label: "Discover" },
     { id: "browse", label: "Browse" },
     { id: "models", label: "Models" },
-    { id: "platform", label: "Platform" }
+    { id: "platform", label: "Platform" },
   ];
   const [activeView, setActiveView] = useState("discover");
   const [query, setQuery] = useState(initialQuery);
   const [selectedId, setSelectedId] = useState(() =>
-    normalizeInitialSelectedId(initialSelectedId, projects)
+    normalizeInitialSelectedId(initialSelectedId, projects),
   );
   const [mapFocusRequest, setMapFocusRequest] = useState(0);
   const [resultsExpanded, setResultsExpanded] = useState(false);
@@ -50,15 +48,19 @@ export default function ExperienceShell({
   const [browseCategoryId, setBrowseCategoryId] = useState("all");
   const [vaultPreviewAssetId, setVaultPreviewAssetId] = useState(null);
   const [isAccessOverlayVisible, setIsAccessOverlayVisible] = useState(true);
+  const [isViewPending, startViewTransition] = useTransition();
   const deferredQuery = useDeferredValue(query);
   const filteredProjects = useMemo(
     () => filterProjectsBySearchQuery(projects, deferredQuery),
-    [projects, deferredQuery]
+    [projects, deferredQuery],
   );
 
   const browseFilteredProjects = useMemo(() => {
     return projects.filter((project) => {
-      if (browseCategoryId !== "all" && project.categoryId !== browseCategoryId) {
+      if (
+        browseCategoryId !== "all" &&
+        project.categoryId !== browseCategoryId
+      ) {
         return false;
       }
       return true;
@@ -89,7 +91,9 @@ export default function ExperienceShell({
       setVaultPreviewAssetId(null);
       return;
     }
-    setVaultPreviewAssetId((currentId) => currentId ?? assetLibrary[0]?.id ?? null);
+    setVaultPreviewAssetId(
+      (currentId) => currentId ?? assetLibrary[0]?.id ?? null,
+    );
   }, [activeView, assetLibrary]);
 
   useEffect(() => {
@@ -129,15 +133,15 @@ export default function ExperienceShell({
 
   const selectedProject =
     projects.find((project) => project.id === selectedId) ?? null;
-  const selectedAsset =
-    selectedProject
-      ? assetLibrary.find((asset) => asset.id === selectedProject.primaryAssetId) ??
-        null
-      : null;
+  const selectedAsset = selectedProject
+    ? (assetLibrary.find(
+        (asset) => asset.id === selectedProject.primaryAssetId,
+      ) ?? null)
+    : null;
   const vaultPreviewAsset = useMemo(
     () =>
       assetLibrary.find((asset) => asset.id === vaultPreviewAssetId) ?? null,
-    [assetLibrary, vaultPreviewAssetId]
+    [assetLibrary, vaultPreviewAssetId],
   );
   const hasSearchQuery = query.trim().length > 0;
   const shouldShowPanel =
@@ -159,16 +163,18 @@ export default function ExperienceShell({
       setActiveView(nextView);
       setMapFocusRequest((currentValue) => currentValue + 1);
     },
-    [activeView]
+    [activeView],
   );
 
   const handleActivateView = useCallback((viewId) => {
-    setActiveView(viewId);
-    setSelectedId(null);
-    setHoveredListProjectId(null);
-    if (viewId !== "discover") {
-      setQuery("");
-    }
+    startViewTransition(() => {
+      setActiveView(viewId);
+      setSelectedId(null);
+      setHoveredListProjectId(null);
+      if (viewId !== "discover") {
+        setQuery("");
+      }
+    });
   }, []);
 
   const handleBackToResults = useCallback(() => {
@@ -245,8 +251,8 @@ export default function ExperienceShell({
                 <div className="empty-state">
                   <p className="section-label">No exact match</p>
                   <p>
-                    Try a broader search term or remove the property-type keyword
-                    to reopen the full deck.
+                    Try a broader search term or remove the property-type
+                    keyword to reopen the full deck.
                   </p>
                 </div>
               )}
@@ -291,7 +297,7 @@ export default function ExperienceShell({
                       disabled={resultsPage >= totalResultPages}
                       onClick={() =>
                         setResultsPage((page) =>
-                          Math.min(totalResultPages, page + 1)
+                          Math.min(totalResultPages, page + 1),
                         )
                       }
                     >
@@ -450,7 +456,9 @@ export default function ExperienceShell({
                     </div>
                   </div>
                   <div className="browse-card-meta">
-                    <span className="browse-meta-pill">{project.categoryLabel}</span>
+                    <span className="browse-meta-pill">
+                      {project.categoryLabel}
+                    </span>
                   </div>
                   <p className="deal-copy">{project.stageSummary}</p>
                 </button>
@@ -459,7 +467,8 @@ export default function ExperienceShell({
               <div className="empty-state">
                 <p className="section-label">No matches</p>
                 <p>
-                  Widen the category filter to bring opportunities back into view.
+                  Widen the category filter to bring opportunities back into
+                  view.
                 </p>
               </div>
             )}
@@ -536,8 +545,8 @@ export default function ExperienceShell({
           <div>
             <strong>Xplan Studio</strong>
             <p>
-              Supplies the future-state vision, design language, and 3D
-              material that makes the investment story believable.
+              Supplies the future-state vision, design language, and 3D material
+              that makes the investment story believable.
             </p>
           </div>
           <div>
@@ -576,6 +585,33 @@ export default function ExperienceShell({
 
   return (
     <main className="page-shell">
+      <MapExperience
+        assetLibrary={assetLibrary}
+        projects={mapProjectList}
+        selectedProject={selectedProject}
+        selectedAsset={selectedAsset}
+        onSelectProject={handleSelectProject}
+        searchQuery={query}
+        viewMode={activeView}
+        focusRequest={mapFocusRequest}
+        panelVisible={shouldShowPanel}
+        resultCount={
+          activeView === "browse"
+            ? browseFilteredProjects.length
+            : activeView === "discover"
+              ? filteredProjects.length
+              : activeView === "models"
+                ? assetLibrary.length
+                : projects.length
+        }
+        panelHoveredProjectId={
+          (activeView === "discover" || activeView === "browse") &&
+          !selectedProject
+            ? hoveredListProjectId
+            : null
+        }
+      />
+
       <header className="page-topbar">
         <div className="topbar-brand">
           <div className="topbar-brand-mark">PX</div>
@@ -602,7 +638,10 @@ export default function ExperienceShell({
           ))}
         </div>
 
-        <div className="profile-placeholder" aria-label="Investor profile placeholder">
+        <div
+          className="profile-placeholder"
+          aria-label="Investor profile placeholder"
+        >
           <span className="profile-avatar">PX</span>
           <div className="profile-copy">
             <strong>Investor Profile</strong>
@@ -611,7 +650,9 @@ export default function ExperienceShell({
         </div>
       </header>
 
-      <div className={`experience-stage${shouldShowPanel ? " rail-open" : " rail-closed"}`}>
+      <div
+        className={`experience-stage${shouldShowPanel ? " rail-open" : " rail-closed"}${isViewPending ? " view-switch-pending" : ""}`}
+      >
         {shouldShowPanel ? (
           <section className="panel-shell">
             <div className="content-grid">{panelContent}</div>
@@ -630,33 +671,6 @@ export default function ExperienceShell({
             </label>
             <p className="map-search-helper">{searchHelperText}</p>
           </div>
-
-          <MapExperience
-            assetLibrary={assetLibrary}
-            projects={mapProjectList}
-            selectedProject={selectedProject}
-            selectedAsset={selectedAsset}
-            onSelectProject={handleSelectProject}
-            searchQuery={query}
-            viewMode={activeView}
-            focusRequest={mapFocusRequest}
-            panelVisible={shouldShowPanel}
-            resultCount={
-              activeView === "browse"
-                ? browseFilteredProjects.length
-                : activeView === "discover"
-                  ? filteredProjects.length
-                  : activeView === "models"
-                    ? assetLibrary.length
-                    : projects.length
-            }
-            panelHoveredProjectId={
-              (activeView === "discover" || activeView === "browse") &&
-              !selectedProject
-                ? hoveredListProjectId
-                : null
-            }
-          />
         </section>
       </div>
 
@@ -685,11 +699,13 @@ export default function ExperienceShell({
             </div>
 
             <p className="eyebrow">Investor Access Required</p>
-            <h2 id="premium-access-title">Login to enter the PRO X capital room.</h2>
+            <h2 id="premium-access-title">
+              Login to enter the PRO X capital room.
+            </h2>
             <p className="premium-access-copy">
               This page is framed as an invitation-only investor surface for VIP
-              and standard accounts. Use the gate as a premium front door for the
-              demo.
+              and standard accounts. Use the gate as a premium front door for
+              the demo.
             </p>
 
             <form
@@ -709,7 +725,10 @@ export default function ExperienceShell({
               </label>
 
               <div className="premium-access-actions">
-                <button type="submit" className="primary-link-button premium-access-button">
+                <button
+                  type="submit"
+                  className="primary-link-button premium-access-button"
+                >
                   Login To Continue
                 </button>
                 <button
