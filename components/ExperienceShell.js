@@ -403,6 +403,8 @@ export default function ExperienceShell({
           hideAssetMeta
           fullProjectHref={`/project/${selectedProject.id}`}
         />
+        {/* Dedicated row below the 3D card so bottom breathing room is always in the layout (not margin/padding alone). */}
+        <div className="opportunity-model-tail-gap" aria-hidden="true" />
       </div>
     </section>
   ) : null;
@@ -689,7 +691,7 @@ export default function ExperienceShell({
               <input
                 value={query}
                 onChange={(event) => handleSearchChange(event.target.value)}
-                placeholder="Search by city, land, building, toke, or ndertese"
+                placeholder="Search by city, land or building"
               />
             </label>
             <p className="map-search-helper">{searchHelperText}</p>
