@@ -17,6 +17,22 @@ import { filterProjectsBySearchQuery } from "@/lib/searchFilter";
 const RESULTS_PREVIEW = 4;
 const RESULTS_PAGE_SIZE = 5;
 
+function ProfileAvatarIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.65"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+      <circle cx="12" cy="7" r="4" />
+    </svg>
+  );
+}
+
 function normalizeInitialSelectedId(id, projectList) {
   if (!id || typeof id !== "string") {
     return null;
@@ -616,6 +632,12 @@ export default function ExperienceShell({
       <header className="page-topbar">
         <div className="topbar-brand">
           <div className="topbar-brand-mark">PX</div>
+          <span
+            className="profile-avatar topbar-brand-profile-avatar"
+            aria-hidden="true"
+          >
+            <ProfileAvatarIcon />
+          </span>
           <div className="topbar-brand-copy">
             <strong>PRO X</strong>
             <p className="eyebrow">Invitation-Only Investment Intelligence</p>
@@ -644,17 +666,7 @@ export default function ExperienceShell({
           aria-label="Investor profile placeholder"
         >
           <span className="profile-avatar" aria-hidden="true">
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.65"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
+            <ProfileAvatarIcon />
           </span>
           <div className="profile-copy">
             <strong>Investor Profile</strong>
