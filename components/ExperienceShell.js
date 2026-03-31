@@ -691,53 +691,51 @@ export default function ExperienceShell({
         }
       />
 
-      {!isNarrowStack ? (
-        <header className="page-topbar">
-          <div className="topbar-brand">
-            <div className="topbar-brand-mark">PX</div>
-            <span
-              className="profile-avatar topbar-brand-profile-avatar"
-              aria-hidden="true"
-            >
-              <ProfileAvatarIcon />
-            </span>
-            <div className="topbar-brand-copy">
-              <strong>PRO X</strong>
-              <p className="eyebrow">Invitation-Only Investment Intelligence</p>
-            </div>
-          </div>
-
-          <div className="topbar-nav" role="tablist" aria-label="PRO X sections">
-            {panelViews.map((view) => (
-              <button
-                key={view.id}
-                type="button"
-                role="tab"
-                aria-selected={activeView === view.id}
-                className={`panel-nav-button${
-                  activeView === view.id ? " active" : ""
-                }`}
-                onClick={() => handleActivateView(view.id)}
-              >
-                {view.label}
-              </button>
-            ))}
-          </div>
-
-          <div
-            className="profile-placeholder"
-            aria-label="Investor profile placeholder"
+      <header className="page-topbar">
+        <div className="topbar-brand">
+          <div className="topbar-brand-mark">PX</div>
+          <span
+            className="profile-avatar topbar-brand-profile-avatar"
+            aria-hidden="true"
           >
-            <span className="profile-avatar" aria-hidden="true">
-              <ProfileAvatarIcon />
-            </span>
-            <div className="profile-copy">
-              <strong>Investor Profile</strong>
-              <span>VIP / Standard placeholder</span>
-            </div>
+            <ProfileAvatarIcon />
+          </span>
+          <div className="topbar-brand-copy">
+            <strong>PRO X</strong>
+            <p className="eyebrow">Invitation-Only Investment Intelligence</p>
           </div>
-        </header>
-      ) : null}
+        </div>
+
+        <div className="topbar-nav" role="tablist" aria-label="PRO X sections">
+          {panelViews.map((view) => (
+            <button
+              key={view.id}
+              type="button"
+              role="tab"
+              aria-selected={activeView === view.id}
+              className={`panel-nav-button${
+                activeView === view.id ? " active" : ""
+              }`}
+              onClick={() => handleActivateView(view.id)}
+            >
+              {view.label}
+            </button>
+          ))}
+        </div>
+
+        <div
+          className="profile-placeholder"
+          aria-label="Investor profile placeholder"
+        >
+          <span className="profile-avatar" aria-hidden="true">
+            <ProfileAvatarIcon />
+          </span>
+          <div className="profile-copy">
+            <strong>Investor Profile</strong>
+            <span>VIP / Standard placeholder</span>
+          </div>
+        </div>
+      </header>
 
       <div
         className={`experience-stage${shouldShowPanel ? " rail-open" : " rail-closed"}${isViewPending ? " view-switch-pending" : ""}`}
@@ -749,26 +747,6 @@ export default function ExperienceShell({
         <section className="map-shell">
           {isNarrowStack ? (
             <div className="map-search-stack">
-              <div
-                className="map-mobile-section-nav"
-                role="tablist"
-                aria-label="PRO X sections"
-              >
-                {panelViews.map((view) => (
-                  <button
-                    key={view.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={activeView === view.id}
-                    className={`panel-nav-button${
-                      activeView === view.id ? " active" : ""
-                    }`}
-                    onClick={() => handleActivateView(view.id)}
-                  >
-                    {view.label}
-                  </button>
-                ))}
-              </div>
               <div className="map-search-overlay map-search-overlay--stacked">
                 {mapSearchOverlayInner}
               </div>

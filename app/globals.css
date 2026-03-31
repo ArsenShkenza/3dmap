@@ -3071,7 +3071,7 @@ button.primary-link-button.project-preview-2d-button {
   pointer-events: auto;
 }
 
-/* Narrow: section tabs + search (topbar is not rendered). */
+/* Narrow: search over the map (section tabs live in .page-topbar). */
 .map-search-stack {
   position: absolute;
   z-index: 3;
@@ -3094,27 +3094,6 @@ button.primary-link-button.project-preview-2d-button {
   left: auto;
   transform: none;
   width: 100%;
-}
-
-.map-mobile-section-nav {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: stretch;
-  gap: 8px;
-  width: 100%;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-.map-mobile-section-nav::-webkit-scrollbar {
-  display: none;
-}
-
-.map-mobile-section-nav .panel-nav-button {
-  flex: 1 1 0;
-  min-width: 0;
-  min-height: 42px;
 }
 
 .map-search-input input {
@@ -3500,8 +3479,10 @@ button.primary-link-button.project-preview-2d-button {
     --elevation-tower-vw: 92vw;
     --elevation-tower-max: 480px;
     --experience-content-width: calc(100% - 16px);
+    /* Shell padding + gap + stacked topbar + map search strip — sheet must not cover chrome */
     --opportunity-sheet-top-reserve: calc(
-      max(12px, env(safe-area-inset-top, 0px)) + 12px
+      max(12px, env(safe-area-inset-top, 0px)) + 12px + 12px +
+        min(max(140px, 26dvh), 230px) + 10px
     );
   }
 
