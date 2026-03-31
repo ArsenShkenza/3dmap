@@ -536,37 +536,35 @@ export default function ExperienceShell({
         </p>
       </div>
 
-      <article className="advantage-card platform-card">
-        <div className="section-head">
-          <div>
-            <p className="section-label">Unfair Advantage</p>
-            <h3>Why this collaboration is compelling.</h3>
-          </div>
+      <div className="section-head">
+        <div>
+          <p className="section-label">Unfair Advantage</p>
+          <h3>Why this collaboration is compelling.</h3>
         </div>
-        <div className="advantage-list">
-          <div>
-            <strong>Xplan Studio</strong>
-            <p>
-              Supplies the future-state vision, design language, and 3D material
-              that makes the investment story believable.
-            </p>
-          </div>
-          <div>
-            <strong>PRO Real Estate</strong>
-            <p>
-              Supplies the market access, investor network, and financing
-              narrative that closes the commercial side.
-            </p>
-          </div>
-          <div>
-            <strong>Better Tech</strong>
-            <p>
-              Turns static documents and renders into a Silicon Valley-style
-              product surface for high-ticket conversations.
-            </p>
-          </div>
+      </div>
+      <div className="advantage-list">
+        <div>
+          <strong>Xplan Studio</strong>
+          <p>
+            Supplies the future-state vision, design language, and 3D material
+            that makes the investment story believable.
+          </p>
         </div>
-      </article>
+        <div>
+          <strong>PRO Real Estate</strong>
+          <p>
+            Supplies the market access, investor network, and financing
+            narrative that closes the commercial side.
+          </p>
+        </div>
+        <div>
+          <strong>Better Tech</strong>
+          <p>
+            Turns static documents and renders into a Silicon Valley-style
+            product surface for high-ticket conversations.
+          </p>
+        </div>
+      </div>
     </section>
   );
 

@@ -252,8 +252,8 @@ button {
 }
 
 .controls-wrapper.controls-wrapper-centered {
-  top: 50%;
-  transform: translateY(-30%);
+  top: 10%;
+  transform: translateY(-50%);
 }
 
 .controls-wrapper br {
@@ -1654,16 +1654,25 @@ h3 {
   scrollbar-width: thin;
   scrollbar-color: rgba(241, 211, 161, 0.24) transparent;
   clip-path: inset(0 round var(--radius-lg));
+  scroll-padding-bottom: clamp(12px, 2vw, 24px);
 }
 
 /* Avoid stretching grid rows to fill the rail — keep blocks pinned to the top */
 .detail-card.detail-card-scroll {
   align-content: start;
+  /* Bottom inset inside clip-path so last scroll content clears the rail edge */
+  padding-bottom: calc(22px + clamp(14px, 2.8vw, 28px));
+}
+
+.detail-card.detail-card-opportunity.detail-card-scroll {
+  padding-bottom: calc(22px + clamp(28px, 5vw, 48px));
 }
 
 .detail-card-scroll > .view-stack {
   align-content: start;
   min-height: 0;
+  /* Generous end inset so last blocks (vault model, etc.) clear the scroll clip */
+  padding-bottom: clamp(20px, 3.5vw, 40px);
 }
 
 .detail-card-scroll .view-section {
@@ -1797,6 +1806,27 @@ h3 {
 .switcher-list {
   display: grid;
   gap: 10px;
+}
+
+.detail-card-scroll .switcher-list {
+  padding-bottom: clamp(12px, 2.4vw, 26px);
+}
+
+/* Gap below model preview before outer .detail-card-scroll edge */
+.detail-card-scroll > .view-stack > .detail-card:has(> article.model-card) {
+  margin-bottom: clamp(14px, 3vw, 32px);
+}
+
+.detail-card-scroll > .view-stack > article.model-card {
+  margin-bottom: clamp(14px, 3vw, 32px);
+}
+
+.detail-card-opportunity.detail-card-scroll > .view-stack > article.model-card {
+  margin-bottom: clamp(20px, 4vw, 40px);
+}
+
+.detail-card-scroll .model-card {
+  min-height: auto;
 }
 
 .switcher-card {
@@ -2471,6 +2501,42 @@ button.primary-link-button.project-preview-2d-button {
   min-height: 320px;
   margin-top: 0;
   box-sizing: border-box;
+}
+
+.floor-elevation.is-tirana .controls-outer {
+  width: min(152px, calc(100% - 28px));
+  left: 72px;
+}
+
+.floor-elevation.is-tirana .controls-wrapper.controls-wrapper-centered {
+  width: 100%;
+  max-width: 152px;
+  gap: 8px;
+  padding: 8px 10px 6px;
+}
+
+.floor-elevation.is-tirana .controls-title {
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+}
+
+.floor-elevation.is-tirana .controls-dots {
+  gap: 12px;
+  padding: 6px 0 4px;
+}
+
+.floor-elevation.is-tirana .controls-dot {
+  width: 5px;
+  height: 5px;
+}
+
+.floor-elevation.is-tirana .current-holder {
+  gap: 4px;
+}
+
+.floor-elevation.is-tirana .current-floor-number {
+  font-size: 1.05rem;
+  padding: 0;
 }
 
 .project-memo-card {

@@ -795,6 +795,12 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
       return;
     }
 
+    /* Tirana: center purely inside .controls-outer via CSS; scroll sync drifts visually */
+    if (isTiranaSignature) {
+      wrapper.style.top = "";
+      return;
+    }
+
     const page = embedded
       ? document.documentElement
       : outer.closest(".experience-page");
@@ -824,7 +830,7 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
       scrollTarget.removeEventListener("scroll", reposition);
       window.removeEventListener("resize", reposition);
     };
-  }, [embedded]);
+  }, [embedded, isTiranaSignature]);
 
   useEffect(() => {
     if (!traceEnabled) {
