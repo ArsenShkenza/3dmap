@@ -36,6 +36,8 @@ body {
 }
 
 body {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   font-family: "Avenir Next", Avenir, "Segoe UI", sans-serif;
   color: var(--text);
   background:
@@ -1007,15 +1009,9 @@ button {
   width: 52px;
   height: 52px;
   border-radius: 18px;
-  border: 1px solid rgba(241, 211, 161, 0.28);
-  background:
-    radial-gradient(
-      circle at top left,
-      rgba(241, 211, 161, 0.22),
-      transparent 58%
-    ),
-    rgba(11, 17, 26, 0.9);
-  color: var(--gold-bright);
+  border: 1px solid rgba(0, 0, 0, 0.12);
+  background: var(--gold-bright);
+  color: #000;
   font-size: 0.9rem;
   font-weight: 700;
   letter-spacing: 0.18em;
@@ -1029,10 +1025,15 @@ button {
 }
 
 .topbar-brand-copy strong {
+  color: var(--gold-bright);
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 0.2em;
   text-transform: uppercase;
+}
+
+.topbar-brand-copy .eyebrow {
+  color: #fff;
 }
 
 .topbar-nav {
@@ -1089,10 +1090,12 @@ button {
   border: 1px solid rgba(241, 211, 161, 0.24);
   background: rgba(214, 180, 123, 0.1);
   color: var(--gold-bright);
-  font-size: 0.74rem;
-  font-weight: 700;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+}
+
+.profile-avatar svg {
+  width: 22px;
+  height: 22px;
+  display: block;
 }
 
 .profile-copy {
@@ -2504,25 +2507,26 @@ button.primary-link-button.project-preview-2d-button {
 }
 
 .floor-elevation.is-tirana .controls-outer {
-  width: min(152px, calc(100% - 28px));
-  left: 72px;
+  width: min(96px, calc(100% - 20px));
+  left: max(52px, env(safe-area-inset-left, 0px));
+  right: auto;
 }
 
 .floor-elevation.is-tirana .controls-wrapper.controls-wrapper-centered {
   width: 100%;
-  max-width: 152px;
-  gap: 8px;
-  padding: 8px 10px 6px;
+  max-width: 96px;
+  gap: 4px;
+  padding: 4px 4px 3px;
 }
 
 .floor-elevation.is-tirana .controls-title {
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
+  font-size: 0.52rem;
+  letter-spacing: 0.07em;
 }
 
 .floor-elevation.is-tirana .controls-dots {
-  gap: 12px;
-  padding: 6px 0 4px;
+  gap: 6px;
+  padding: 3px 0 2px;
 }
 
 .floor-elevation.is-tirana .controls-dot {
@@ -2535,7 +2539,7 @@ button.primary-link-button.project-preview-2d-button {
 }
 
 .floor-elevation.is-tirana .current-floor-number {
-  font-size: 1.05rem;
+  font-size: 0.8rem;
   padding: 0;
 }
 
@@ -3031,14 +3035,21 @@ button.primary-link-button.project-preview-2d-button {
 }
 
 @media (max-width: 1240px) {
+  :root {
+    --experience-content-width: min(1520px, calc(100% - 24px));
+  }
+
   body {
     overflow: auto;
   }
 
   .page-shell {
     height: auto;
-    min-height: 100vh;
-    padding: 16px;
+    min-height: 100dvh;
+    padding-top: max(16px, env(safe-area-inset-top, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
     overflow: visible;
   }
 
@@ -3055,13 +3066,25 @@ button.primary-link-button.project-preview-2d-button {
   .experience-stage.rail-closed {
     display: flex;
     flex-direction: column-reverse;
+    /* column-reverse: flex-end packs toward the top so a lone map-shell isn’t stuck at the bottom */
+    justify-content: flex-end;
     min-height: auto;
+    gap: 12px;
   }
 
   .content-grid,
   .map-shell {
     height: auto;
     min-height: auto;
+  }
+
+  /* Reserve space for search over the fixed map; avoids zero-height overlay host */
+  .experience-stage .map-shell {
+    position: relative;
+    z-index: 2;
+    min-height: clamp(108px, 24dvh, 200px);
+    width: 100%;
+    flex-shrink: 0;
   }
 
   .detail-card-scroll {
@@ -3089,9 +3112,155 @@ button.primary-link-button.project-preview-2d-button {
   }
 }
 
+/* Tirana facade: compact controls on the left, elevation fills the rest */
+@media (max-width: 960px) {
+  .floor-elevation.is-tirana {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+    padding-top: 10px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
+    padding-right: max(14px, env(safe-area-inset-right, 0px));
+  }
+
+  .floor-elevation.is-tirana .controls-outer {
+    position: relative;
+    inset: auto;
+    left: auto;
+    right: auto;
+    top: auto;
+    bottom: auto;
+    flex: 0 0 auto;
+    width: auto;
+    max-width: min(118px, 22vw);
+    margin: 0;
+    align-self: center;
+  }
+
+  .floor-elevation.is-tirana .controls-wrapper.controls-wrapper-centered {
+    position: relative;
+    top: auto;
+    transform: none;
+    width: 100%;
+    max-width: none;
+    margin: 0;
+    gap: 2px;
+    padding: 2px 1px 2px 3px;
+  }
+
+  .floor-elevation.is-tirana .controls-title {
+    font-size: 0.46rem;
+    letter-spacing: 0.055em;
+    line-height: 1.15;
+  }
+
+  .floor-elevation.is-tirana .current-floor-number {
+    font-size: 0.68rem;
+    line-height: 1;
+    padding: 0;
+  }
+
+  .floor-elevation.is-tirana .current-holder {
+    gap: 1px;
+  }
+
+  .floor-elevation.is-tirana .controls-dots {
+    gap: 2px;
+    padding: 0;
+  }
+
+  .floor-elevation.is-tirana .controls-dot {
+    width: 24px;
+    height: 24px;
+    border-radius: 999px;
+    background: transparent;
+    box-shadow: none;
+    display: grid;
+    place-items: center;
+  }
+
+  .floor-elevation.is-tirana .controls-dot::before {
+    content: "";
+    width: 4px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(247, 240, 228, 0.55);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.25),
+      0 0 12px rgba(141, 211, 255, 0.1);
+    transition:
+      transform 140ms ease,
+      background 140ms ease,
+      box-shadow 140ms ease,
+      opacity 140ms ease;
+  }
+
+  .floor-elevation.is-tirana .controls-dot:hover::before {
+    transform: scale(1.22);
+    background: rgba(247, 240, 228, 0.78);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.25),
+      0 0 18px rgba(141, 211, 255, 0.18);
+  }
+
+  .floor-elevation.is-tirana .controls-dot:focus-visible {
+    outline: 2px solid rgba(141, 211, 255, 0.7);
+    outline-offset: 1px;
+  }
+
+  .floor-elevation.is-tirana .controls-dot:disabled,
+  .floor-elevation.is-tirana .controls-dot:disabled:hover {
+    transform: none;
+  }
+
+  .floor-elevation.is-tirana .controls-dot:disabled::before,
+  .floor-elevation.is-tirana .controls-dot:disabled:hover::before {
+    opacity: 0.35;
+    transform: none;
+    background: rgba(247, 240, 228, 0.55);
+    box-shadow:
+      0 0 0 1px rgba(0, 0, 0, 0.25),
+      0 0 14px rgba(141, 211, 255, 0.12);
+  }
+
+  .floor-elevation.is-tirana .elevation-tower {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 0;
+    width: auto;
+    max-width: none;
+    margin-top: 0;
+    margin-inline: 0;
+    border-radius: 20px 20px 14px 14px;
+  }
+
+  .floor-elevation.is-tirana .elevation-floor {
+    padding: 0 clamp(6px, 2vw, 12px);
+  }
+
+  .floor-elevation.is-tirana .elevation-floor strong {
+    font-size: 0.7rem;
+  }
+
+  .floor-elevation.is-tirana .elevation-floor span {
+    font-size: 0.65rem;
+  }
+}
+
 @media (max-width: 820px) {
+  :root {
+    --elevation-tower-min: 260px;
+    --elevation-tower-vw: 92vw;
+    --elevation-tower-max: 480px;
+    --experience-content-width: calc(100% - 16px);
+  }
+
   .page-shell {
-    padding: 12px;
+    padding-top: max(12px, env(safe-area-inset-top, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
+    padding-bottom: max(12px, env(safe-area-inset-bottom, 0px));
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
     gap: 12px;
   }
 
@@ -3113,8 +3282,21 @@ button.primary-link-button.project-preview-2d-button {
   }
 
   .page-topbar {
-    padding: 16px;
-    gap: 14px;
+    padding: 14px 16px;
+    gap: 12px;
+    border-radius: 22px;
+  }
+
+  .topbar-brand-mark {
+    width: 46px;
+    height: 46px;
+    border-radius: 16px;
+    font-size: 0.82rem;
+  }
+
+  .topbar-brand-copy strong {
+    font-size: 0.92rem;
+    letter-spacing: 0.14em;
   }
 
   .topbar-brand,
@@ -3129,12 +3311,78 @@ button.primary-link-button.project-preview-2d-button {
 
   .topbar-nav .panel-nav-button {
     flex: 1 1 0;
+    min-height: 44px;
+    padding-block: 10px;
   }
 
   .profile-placeholder {
     min-width: 0;
     justify-content: flex-start;
     justify-self: stretch;
+  }
+
+  .control-card,
+  .detail-card {
+    padding: 16px;
+    border-radius: var(--radius-md);
+  }
+
+  .experience-shell {
+    width: 100%;
+    max-width: 100%;
+    margin: 12px auto 16px;
+    padding: 16px;
+    border-radius: 22px;
+  }
+
+  .experience-elevation-below {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto 32px;
+  }
+
+  .experience-stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .floor-elevation {
+    margin-top: 12px;
+    padding: 28px 12px 24px;
+    border-radius: 20px;
+  }
+
+  .floor-elevation.is-tirana {
+    padding-left: max(20px, env(safe-area-inset-left, 0px));
+    padding-right: max(18px, env(safe-area-inset-right, 0px));
+  }
+
+  .controls-outer {
+    left: 12px;
+    top: 180px;
+    bottom: 24px;
+    width: min(200px, calc(100% - 20px));
+  }
+
+  .controls-wrapper {
+    width: min(200px, calc(100% - 20px));
+    padding: 10px 10px 8px;
+    gap: 10px;
+  }
+
+  .model-stage {
+    min-height: min(52vw, 280px);
+    margin-top: 12px;
+    border-radius: 18px;
+  }
+
+  .viewer-toolbar {
+    top: 10px;
+    right: 10px;
+  }
+
+  .viewer-toolbar-button {
+    width: 44px;
+    height: 44px;
   }
 
   .detail-columns,
@@ -3163,12 +3411,14 @@ button.primary-link-button.project-preview-2d-button {
   }
 
   .map-search-overlay {
-    top: 44px;
-    width: calc(100% - 24px);
+    top: max(8px, env(safe-area-inset-top, 0px));
+    width: calc(100% - 20px);
+    max-width: 100%;
   }
 
   .map-search-input input {
-    padding: 16px 18px;
+    padding: 14px 18px;
+    font-size: 16px;
     text-align: left;
   }
 
@@ -3186,11 +3436,18 @@ button.primary-link-button.project-preview-2d-button {
   }
 
   .project-page-shell {
-    padding: 16px;
+    padding-top: max(16px, env(safe-area-inset-top, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    padding-left: max(16px, env(safe-area-inset-left, 0px));
   }
 
   .project-page-hero {
-    padding: 20px;
+    padding: 18px 16px;
+  }
+
+  .search-input input {
+    font-size: 16px;
   }
 
   .project-hero-copy h1 {
@@ -3216,6 +3473,87 @@ button.primary-link-button.project-preview-2d-button {
 
   .map-summary-kpis {
     grid-template-columns: 1fr;
+  }
+
+  .model-card,
+  .advantage-card,
+  .insight-card,
+  .timeline-card,
+  .vault-card {
+    padding: 14px 16px;
+    border-radius: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-topbar {
+    padding: 12px 14px;
+  }
+
+  .panel-nav-button {
+    font-size: 0.66rem;
+    letter-spacing: 0.09em;
+    padding-inline: 8px;
+  }
+
+  .category-chip,
+  .chip-button {
+    padding: 9px 12px;
+    font-size: 0.7rem;
+  }
+
+  .model-card-full-project-link {
+    width: 100%;
+    max-width: 100%;
+    justify-content: center;
+    text-align: center;
+    box-sizing: border-box;
+  }
+
+  .floor-elevation {
+    padding: 22px 10px 20px;
+  }
+
+  .floor-elevation.is-tirana {
+    padding-left: max(18px, env(safe-area-inset-left, 0px));
+    padding-right: max(16px, env(safe-area-inset-right, 0px));
+  }
+
+  .controls-outer {
+    left: 8px;
+    width: min(180px, calc(100% - 14px));
+  }
+
+  .floor-elevation.is-tirana .controls-outer {
+    left: auto;
+    right: auto;
+    width: auto;
+    max-width: min(102px, 20vw);
+    flex-shrink: 0;
+  }
+
+  .floor-elevation.is-tirana .controls-wrapper.controls-wrapper-centered {
+    gap: 1px;
+    padding: 1px 1px 1px 2px;
+  }
+
+  .floor-elevation.is-tirana .controls-title {
+    font-size: 0.42rem;
+    letter-spacing: 0.04em;
+  }
+
+  .floor-elevation.is-tirana .current-floor-number {
+    font-size: 0.62rem;
+  }
+
+  .floor-elevation.is-tirana .controls-dot {
+    width: 22px;
+    height: 22px;
+  }
+
+  .floor-elevation.is-tirana .controls-dot::before {
+    width: 3px;
+    height: 3px;
   }
 }
 
