@@ -17,6 +17,25 @@ import { filterProjectsBySearchQuery } from "@/lib/searchFilter";
 const RESULTS_PREVIEW = 4;
 const RESULTS_PAGE_SIZE = 5;
 
+const NARROW_STACK_MEDIA = "(max-width: 1240px)";
+
+function useMatchMedia(query) {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    const media = window.matchMedia(query);
+    setMatches(media.matches);
+    const listener = () => setMatches(media.matches);
+    media.addEventListener("change", listener);
+    return () => media.removeEventListener("change", listener);
+  }, [query]);
+
+  return matches;
+}
+
 function ProfileAvatarIcon() {
   return (
     <svg
@@ -64,7 +83,10 @@ export default function ExperienceShell({
   const [browseCategoryId, setBrowseCategoryId] = useState("all");
   const [vaultPreviewAssetId, setVaultPreviewAssetId] = useState(null);
   const [isAccessOverlayVisible, setIsAccessOverlayVisible] = useState(true);
+  const [mobileOpportunitySheetOpen, setMobileOpportunitySheetOpen] =
+    useState(false);
   const [isViewPending, startViewTransition] = useTransition();
+  const isNarrowStack = useMatchMedia(NARROW_STACK_MEDIA);
   const deferredQuery = useDeferredValue(query);
   const filteredProjects = useMemo(
     () => filterProjectsBySearchQuery(projects, deferredQuery),
@@ -117,6 +139,23 @@ export default function ExperienceShell({
     setResultsPage(1);
   }, [deferredQuery]);
 
+  useEffect(() => {
+    setMobileOpportunitySheetOpen(false);
+  }, [selectedId]);
+
+  useEffect(() => {
+    if (!mobileOpportunitySheetOpen || typeof window === "undefined") {
+      return;
+    }
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setMobileOpportunitySheetOpen(false);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [mobileOpportunitySheetOpen]);
+
   const totalResultPages = useMemo(() => {
     const count = filteredProjects.length;
     if (count === 0) {
@@ -160,8 +199,13 @@ export default function ExperienceShell({
     [assetLibrary, vaultPreviewAssetId],
   );
   const hasSearchQuery = query.trim().length > 0;
+  const useOpportunityMobileSheet =
+    isNarrowStack &&
+    Boolean(selectedProject) &&
+    (activeView === "discover" || activeView === "browse");
   const shouldShowPanel =
-    activeView !== "discover" || hasSearchQuery || Boolean(selectedProject);
+    (activeView !== "discover" || hasSearchQuery || Boolean(selectedProject)) &&
+    !useOpportunityMobileSheet;
 
   const handleSearchChange = (value) => {
     setQuery(value);
@@ -201,7 +245,9 @@ export default function ExperienceShell({
   const searchHelperText =
     activeView === "discover"
       ? selectedProject && !hasSearchQuery
-        ? "The opportunity rail stays open while a project is selected."
+        ? useOpportunityMobileSheet
+          ? "Map is in focus. Open the opportunity sheet for the full memo and 3D preview."
+          : "The opportunity rail stays open while a project is selected."
         : hasSearchQuery
           ? `${filteredProjects.length} matching opportunit${
               filteredProjects.length === 1 ? "y" : "ies"
@@ -344,70 +390,80 @@ export default function ExperienceShell({
     </section>
   );
 
-  const opportunityContent = selectedProject ? (
-    <section className="detail-card detail-card-opportunity detail-card-scroll">
-      <div className="opportunity-top-bar">
-        <button
-          type="button"
-          className="opportunity-dismiss"
-          onClick={handleBackToResults}
-          aria-label="Close opportunity"
-        >
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M18 6L6 18M6 6l12 12"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
-      </div>
+  const renderOpportunityDetails = (isMobileSheetBody = false) => {
+    if (!selectedProject) {
+      return null;
+    }
+    return (
+      <section
+        className={`detail-card detail-card-opportunity detail-card-scroll${
+          isMobileSheetBody ? " detail-card-opportunity--mobile-sheet" : ""
+        }`}
+      >
+        {!isMobileSheetBody ? (
+          <div className="opportunity-top-bar">
+            <button
+              type="button"
+              className="opportunity-dismiss"
+              onClick={handleBackToResults}
+              aria-label="Close opportunity"
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M18 6L6 18M6 6l12 12"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+            </button>
+          </div>
+        ) : null}
 
-      <div className="detail-hero">
-        <div className="opportunity-heading">
-          <p className="section-label">Opportunity</p>
-          <h2>{selectedProject.name}</h2>
-        </div>
-      </div>
-
-      <div className="view-stack">
-        <div className="view-section">
-          <p className="detail-copy compact">{selectedProject.memo}</p>
-        </div>
-
-        <div className="detail-stats tight">
-          <article>
-            <span className="stat-label">Target ROI</span>
-            <strong>{selectedProject.roi}</strong>
-          </article>
-          <article>
-            <span className="stat-label">Funding Ask</span>
-            <strong>{selectedProject.ticket}</strong>
-          </article>
-          <article>
-            <span className="stat-label">Program</span>
-            <strong>{selectedProject.program}</strong>
-          </article>
-          <article>
-            <span className="stat-label">Access</span>
-            <strong>{selectedProject.access}</strong>
-          </article>
+        <div className="detail-hero">
+          <div className="opportunity-heading">
+            <p className="section-label">Opportunity</p>
+            <h2 id="opportunity-sheet-title">{selectedProject.name}</h2>
+          </div>
         </div>
 
-        <ModelStage
-          asset={selectedAsset}
-          project={selectedProject}
-          hideCaption
-          hideAssetMeta
-          fullProjectHref={`/project/${selectedProject.id}`}
-        />
-        {/* Dedicated row below the 3D card so bottom breathing room is always in the layout (not margin/padding alone). */}
-        <div className="opportunity-model-tail-gap" aria-hidden="true" />
-      </div>
-    </section>
-  ) : null;
+        <div className="view-stack">
+          <div className="view-section">
+            <p className="detail-copy compact">{selectedProject.memo}</p>
+          </div>
+
+          <div className="detail-stats tight">
+            <article>
+              <span className="stat-label">Target ROI</span>
+              <strong>{selectedProject.roi}</strong>
+            </article>
+            <article>
+              <span className="stat-label">Funding Ask</span>
+              <strong>{selectedProject.ticket}</strong>
+            </article>
+            <article>
+              <span className="stat-label">Program</span>
+              <strong>{selectedProject.program}</strong>
+            </article>
+            <article>
+              <span className="stat-label">Access</span>
+              <strong>{selectedProject.access}</strong>
+            </article>
+          </div>
+
+          <ModelStage
+            asset={selectedAsset}
+            project={selectedProject}
+            hideCaption
+            hideAssetMeta
+            fullProjectHref={`/project/${selectedProject.id}`}
+          />
+          <div className="opportunity-model-tail-gap" aria-hidden="true" />
+        </div>
+      </section>
+    );
+  };
 
   const browseContent = (
     <section className="detail-card detail-card-scroll">
@@ -590,17 +646,31 @@ export default function ExperienceShell({
   const panelContent =
     activeView === "discover"
       ? selectedProject
-        ? opportunityContent
+        ? renderOpportunityDetails(false)
         : discoverContent
       : activeView === "browse"
         ? selectedProject
-          ? opportunityContent
+          ? renderOpportunityDetails(false)
           : browseContent
         : activeView === "models"
           ? modelsContent
           : activeView === "platform"
             ? platformContent
             : null;
+
+  const mapSearchOverlayInner = (
+    <>
+      <label className="search-input map-search-input">
+        <span className="sr-only">Search deals</span>
+        <input
+          value={query}
+          onChange={(event) => handleSearchChange(event.target.value)}
+          placeholder="Search by city, land or building"
+        />
+      </label>
+      <p className="map-search-helper">{searchHelperText}</p>
+    </>
+  );
 
   return (
     <main className="page-shell">
@@ -631,51 +701,53 @@ export default function ExperienceShell({
         }
       />
 
-      <header className="page-topbar">
-        <div className="topbar-brand">
-          <div className="topbar-brand-mark">PX</div>
-          <span
-            className="profile-avatar topbar-brand-profile-avatar"
-            aria-hidden="true"
-          >
-            <ProfileAvatarIcon />
-          </span>
-          <div className="topbar-brand-copy">
-            <strong>PRO X</strong>
-            <p className="eyebrow">Invitation-Only Investment Intelligence</p>
-          </div>
-        </div>
-
-        <div className="topbar-nav" role="tablist" aria-label="PRO X sections">
-          {panelViews.map((view) => (
-            <button
-              key={view.id}
-              type="button"
-              role="tab"
-              aria-selected={activeView === view.id}
-              className={`panel-nav-button${
-                activeView === view.id ? " active" : ""
-              }`}
-              onClick={() => handleActivateView(view.id)}
+      {!isNarrowStack ? (
+        <header className="page-topbar">
+          <div className="topbar-brand">
+            <div className="topbar-brand-mark">PX</div>
+            <span
+              className="profile-avatar topbar-brand-profile-avatar"
+              aria-hidden="true"
             >
-              {view.label}
-            </button>
-          ))}
-        </div>
-
-        <div
-          className="profile-placeholder"
-          aria-label="Investor profile placeholder"
-        >
-          <span className="profile-avatar" aria-hidden="true">
-            <ProfileAvatarIcon />
-          </span>
-          <div className="profile-copy">
-            <strong>Investor Profile</strong>
-            <span>VIP / Standard placeholder</span>
+              <ProfileAvatarIcon />
+            </span>
+            <div className="topbar-brand-copy">
+              <strong>PRO X</strong>
+              <p className="eyebrow">Invitation-Only Investment Intelligence</p>
+            </div>
           </div>
-        </div>
-      </header>
+
+          <div className="topbar-nav" role="tablist" aria-label="PRO X sections">
+            {panelViews.map((view) => (
+              <button
+                key={view.id}
+                type="button"
+                role="tab"
+                aria-selected={activeView === view.id}
+                className={`panel-nav-button${
+                  activeView === view.id ? " active" : ""
+                }`}
+                onClick={() => handleActivateView(view.id)}
+              >
+                {view.label}
+              </button>
+            ))}
+          </div>
+
+          <div
+            className="profile-placeholder"
+            aria-label="Investor profile placeholder"
+          >
+            <span className="profile-avatar" aria-hidden="true">
+              <ProfileAvatarIcon />
+            </span>
+            <div className="profile-copy">
+              <strong>Investor Profile</strong>
+              <span>VIP / Standard placeholder</span>
+            </div>
+          </div>
+        </header>
+      ) : null}
 
       <div
         className={`experience-stage${shouldShowPanel ? " rail-open" : " rail-closed"}${isViewPending ? " view-switch-pending" : ""}`}
@@ -685,19 +757,72 @@ export default function ExperienceShell({
         ) : null}
 
         <section className="map-shell">
-          <div className="map-search-overlay">
-            <label className="search-input map-search-input">
-              <span className="sr-only">Search deals</span>
-              <input
-                value={query}
-                onChange={(event) => handleSearchChange(event.target.value)}
-                placeholder="Search by city, land or building"
-              />
-            </label>
-            <p className="map-search-helper">{searchHelperText}</p>
-          </div>
+          {isNarrowStack ? (
+            <div className="map-search-stack">
+              <div
+                className="map-mobile-section-nav"
+                role="tablist"
+                aria-label="PRO X sections"
+              >
+                {panelViews.map((view) => (
+                  <button
+                    key={view.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={activeView === view.id}
+                    className={`panel-nav-button${
+                      activeView === view.id ? " active" : ""
+                    }`}
+                    onClick={() => handleActivateView(view.id)}
+                  >
+                    {view.label}
+                  </button>
+                ))}
+              </div>
+              <div className="map-search-overlay map-search-overlay--stacked">
+                {mapSearchOverlayInner}
+              </div>
+            </div>
+          ) : (
+            <div className="map-search-overlay">{mapSearchOverlayInner}</div>
+          )}
         </section>
       </div>
+
+      {useOpportunityMobileSheet ? (
+        <div className="opportunity-mobile-sheet-host">
+          {mobileOpportunitySheetOpen ? (
+            <div
+              className="opportunity-mobile-sheet-scrim"
+              aria-hidden="true"
+              onClick={() => setMobileOpportunitySheetOpen(false)}
+            />
+          ) : null}
+          {mobileOpportunitySheetOpen ? (
+            <div
+              className="opportunity-mobile-sheet-panel"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="opportunity-sheet-title"
+            >
+              {renderOpportunityDetails(true)}
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="opportunity-mobile-sheet-launch"
+              onClick={() => setMobileOpportunitySheetOpen(true)}
+            >
+              <span className="opportunity-mobile-sheet-launch-label">
+                Opportunity
+              </span>
+              <span className="opportunity-mobile-sheet-launch-name">
+                {selectedProject.name}
+              </span>
+            </button>
+          )}
+        </div>
+      ) : null}
 
       {/* {isAccessOverlayVisible ? (
         <div

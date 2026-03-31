@@ -950,8 +950,12 @@ button {
 }
 
 .page-shell > .page-topbar {
+  /* In normal document flow — not fixed/sticky — so it scrolls with the shell. */
   position: relative;
-  z-index: 2;
+  top: auto;
+  left: auto;
+  right: auto;
+  z-index: 6;
   grid-row: 1;
   grid-column: 1;
   pointer-events: auto;
@@ -969,6 +973,18 @@ button {
   grid-row: 1 / -1;
   grid-column: 1;
   z-index: 40;
+  pointer-events: auto;
+}
+
+.page-shell > .opportunity-mobile-sheet-host {
+  grid-row: 1 / -1;
+  grid-column: 1;
+  z-index: 4;
+  pointer-events: none;
+  position: relative;
+}
+
+.page-shell > .opportunity-mobile-sheet-host > * {
   pointer-events: auto;
 }
 
@@ -1737,7 +1753,9 @@ h3 {
 
 .opportunity-top-bar {
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 10px;
   margin: -4px 0 2px;
 }
 
@@ -1768,6 +1786,162 @@ h3 {
 .opportunity-dismiss svg {
   width: 18px;
   height: 18px;
+}
+
+.opportunity-mobile-sheet-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: rgba(3, 7, 13, 0.55);
+  backdrop-filter: blur(5px);
+  animation: opportunity-sheet-scrim-in 0.2s ease;
+}
+
+.opportunity-mobile-sheet-panel {
+  position: fixed;
+  z-index: 1;
+  left: max(10px, env(safe-area-inset-left, 0px));
+  right: max(10px, env(safe-area-inset-right, 0px));
+  bottom: 0;
+  max-height: min(
+    85dvh,
+    calc(
+      100dvh - var(--opportunity-sheet-top-reserve, 200px) -
+        env(safe-area-inset-bottom, 0px)
+    )
+  );
+  display: flex;
+  flex-direction: column;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  border-radius: 24px 24px 0 0;
+  border: 1px solid rgba(241, 211, 161, 0.2);
+  border-bottom: none;
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(214, 180, 123, 0.12),
+      transparent 42%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.06),
+      rgba(255, 255, 255, 0.02)
+    ),
+    rgba(8, 14, 21, 0.96);
+  box-shadow:
+    0 -24px 64px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  overflow: hidden;
+  animation: opportunity-sheet-panel-in 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/*
+  Narrow breakpoint sets .detail-card-scroll { overflow: visible } for the stacked rail.
+  Restore a real scrollport for the opportunity bottom sheet (higher specificity than that rule).
+*/
+.opportunity-mobile-sheet-panel
+  .detail-card-opportunity--mobile-sheet.detail-card-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+  border-radius: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  clip-path: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.opportunity-mobile-sheet-launch {
+  position: fixed;
+  left: 50%;
+  /* Above map controls + home bar; tune clamp / offset to nudge vertical position. */
+  bottom: max(
+    clamp(44px, 9dvh, 140px),
+    calc(env(safe-area-inset-bottom, 0px) + 26px)
+  );
+  z-index: 1;
+  transform: translateX(-50%);
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  max-width: min(calc(100vw - 40px), 340px);
+  padding: 11px 22px 13px;
+  border-radius: 999px;
+  border: 1px solid rgba(241, 211, 161, 0.26);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08),
+      rgba(255, 255, 255, 0.03)
+    ),
+    rgba(8, 14, 21, 0.92);
+  backdrop-filter: blur(18px);
+  color: var(--gold-bright);
+  box-shadow:
+    0 16px 44px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  text-align: center;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+}
+
+.opportunity-mobile-sheet-launch:hover {
+  border-color: rgba(241, 211, 161, 0.38);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.42),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.opportunity-mobile-sheet-launch:active {
+  transform: translateX(-50%) scale(0.98);
+}
+
+.opportunity-mobile-sheet-launch-label {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(247, 240, 228, 0.72);
+}
+
+.opportunity-mobile-sheet-launch-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--gold-bright);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+@keyframes opportunity-sheet-scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes opportunity-sheet-panel-in {
+  from {
+    transform: translateY(100%);
+    opacity: 0.92;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .opportunity-heading {
@@ -2897,6 +3071,52 @@ button.primary-link-button.project-preview-2d-button {
   pointer-events: auto;
 }
 
+/* Narrow: section tabs + search (topbar is not rendered). */
+.map-search-stack {
+  position: absolute;
+  z-index: 3;
+  top: max(12px, env(safe-area-inset-top, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(var(--search-track-width), calc(100% - 32px));
+  display: grid;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.map-search-stack > * {
+  pointer-events: auto;
+}
+
+.map-search-overlay.map-search-overlay--stacked {
+  position: relative;
+  top: auto;
+  left: auto;
+  transform: none;
+  width: 100%;
+}
+
+.map-mobile-section-nav {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 8px;
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.map-mobile-section-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.map-mobile-section-nav .panel-nav-button {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 42px;
+}
+
 .map-search-input input {
   padding: 18px 22px;
   border-radius: 999px;
@@ -3055,6 +3275,14 @@ button.primary-link-button.project-preview-2d-button {
 @media (max-width: 1240px) {
   :root {
     --experience-content-width: min(1520px, calc(100% - 24px));
+    /*
+      Distance from viewport top to where the opportunity bottom sheet may extend.
+      Shell padding + grid gap + stacked topbar (brand + tabs) — avoids sitting under .page-topbar.
+    */
+    --opportunity-sheet-top-reserve: calc(
+      max(16px, env(safe-area-inset-top, 0px)) + 18px +
+        min(max(148px, 28dvh), 248px) + 10px
+    );
   }
 
   body {
@@ -3272,6 +3500,9 @@ button.primary-link-button.project-preview-2d-button {
     --elevation-tower-vw: 92vw;
     --elevation-tower-max: 480px;
     --experience-content-width: calc(100% - 16px);
+    --opportunity-sheet-top-reserve: calc(
+      max(12px, env(safe-area-inset-top, 0px)) + 12px
+    );
   }
 
   .page-shell {
@@ -3444,6 +3675,26 @@ button.primary-link-button.project-preview-2d-button {
   .detail-hero {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  /* Keep title + 2D control on one row (section-head is column elsewhere on mobile). */
+  .project-preview-card .section-head {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .project-preview-card .section-head > div {
+    min-width: 0;
+  }
+
+  .project-preview-card .project-preview-2d-button {
+    flex-shrink: 0;
+    padding: 5px 10px;
+    min-height: 30px;
+    font-size: 0.62rem;
+    letter-spacing: 0.08em;
   }
 
   .model-card .section-head .model-card-head-end {
@@ -4050,5 +4301,10 @@ button.primary-link-button.project-preview-2d-button {
   .splash-screen__pro-x {
     filter: none;
     text-shadow: 0 0 28px rgba(241, 211, 161, 0.4);
+  }
+
+  .opportunity-mobile-sheet-scrim,
+  .opportunity-mobile-sheet-panel {
+    animation: none;
   }
 }
