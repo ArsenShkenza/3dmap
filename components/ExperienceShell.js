@@ -680,19 +680,9 @@ export default function ExperienceShell({
         selectedProject={selectedProject}
         selectedAsset={selectedAsset}
         onSelectProject={handleSelectProject}
-        searchQuery={query}
         viewMode={activeView}
         focusRequest={mapFocusRequest}
         panelVisible={shouldShowPanel}
-        resultCount={
-          activeView === "browse"
-            ? browseFilteredProjects.length
-            : activeView === "discover"
-              ? filteredProjects.length
-              : activeView === "models"
-                ? assetLibrary.length
-                : projects.length
-        }
         panelHoveredProjectId={
           (activeView === "discover" || activeView === "browse") &&
           !selectedProject

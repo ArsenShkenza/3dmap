@@ -274,11 +274,9 @@ export default function MapExperience({
   selectedProject,
   selectedAsset,
   onSelectProject,
-  searchQuery,
   viewMode,
   focusRequest,
   panelVisible = true,
-  resultCount,
   panelHoveredProjectId = null
 }) {
   const containerRef = useRef(null);
@@ -289,7 +287,6 @@ export default function MapExperience({
   const modelEntriesRef = useRef([]);
   const threeStateRef = useRef(null);
   const [ready, setReady] = useState(false);
-  const [isSummaryVisible, setIsSummaryVisible] = useState(false);
   const activeMapProject = selectedProject
     ? projects.find((project) => project.id === selectedProject.id) ?? selectedProject
     : null;
@@ -302,10 +299,6 @@ export default function MapExperience({
         ? assetLibrary.find((asset) => asset.id === activeMapProject.primaryAssetId) ??
           null
         : null;
-  const landResultCount = projects.filter(
-    (project) => project.propertyType === "land"
-  ).length;
-  const buildingResultCount = projects.length - landResultCount;
 
   useEffect(() => {
     let disposed = false;
@@ -528,37 +521,6 @@ export default function MapExperience({
   }, [onSelectProject]);
 
   useEffect(() => {
-    if (viewMode === "models") {
-      setIsSummaryVisible(true);
-      return;
-    }
-
-    if (viewMode === "platform") {
-      setIsSummaryVisible(false);
-      return;
-    }
-
-    if (viewMode === "browse") {
-      setIsSummaryVisible(false);
-      return;
-    }
-
-    if (!searchQuery.trim()) {
-      setIsSummaryVisible(false);
-      return;
-    }
-
-    setIsSummaryVisible(false);
-    const timeoutId = window.setTimeout(() => {
-      setIsSummaryVisible(true);
-    }, 1000);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [searchQuery, viewMode]);
-
-  useEffect(() => {
     const map = mapRef.current;
     if (!map || !ready) {
       return;
@@ -740,74 +702,6 @@ export default function MapExperience({
           <div ref={containerRef} className="map-canvas" />
         </div>
       </div>
-      {isSummaryVisible ? (
-        <div
-          className={`map-summary-card${panelVisible ? " map-summary-card--panel-open" : ""}`}
-        >
-          {/* <p className="section-label">Market View</p> */}
-          {/* <h2>
-            {viewMode === "discover"
-              ? "Search Results Overview"
-              : viewMode === "models"
-                ? "3D asset library"
-                : activeMapProject?.name ?? "No Property Selected"}
-          </h2> */}
-          {/* <p>
-            {viewMode === "discover"
-              ? "The map stays zoomed out while you search. Click a property card or a map marker to focus a specific opportunity."
-              : viewMode === "models"
-                ? "The map shows every opportunity. In Models, open any GLB—including library exteriors not tied to a single deal."
-                : activeMapProject?.stageSummary ??
-                  "Select a property from Discover to move the map and open its memo."}
-          </p> */}
-          {/* <div className="map-summary-kpis">
-            <div>
-              <span className="stat-label">
-                {viewMode === "discover"
-                  ? "Results"
-                  : viewMode === "models"
-                    ? "GLB files"
-                    : "Access"}
-              </span>
-              <strong>
-                {viewMode === "discover"
-                  ? resultCount
-                  : viewMode === "models"
-                    ? resultCount
-                    : activeMapProject?.access ?? "None"}
-              </strong>
-            </div>
-            <div>
-              <span className="stat-label">
-                {viewMode === "discover"
-                  ? "Buildings"
-                  : viewMode === "models"
-                    ? "Map deals"
-                    : "Stage"}
-              </span>
-              <strong>
-                {viewMode === "discover"
-                  ? buildingResultCount
-                  : viewMode === "models"
-                    ? projects.length
-                    : activeMapProject?.program ?? "--"}
-              </strong>
-            </div>
-            <div>
-              <span className="stat-label">
-                {viewMode === "discover" ? "Land" : viewMode === "models" ? "Land" : "Return"}
-              </span>
-              <strong>
-                {viewMode === "discover"
-                  ? landResultCount
-                  : viewMode === "models"
-                    ? landResultCount
-                    : activeMapProject?.roi ?? "--"}
-              </strong>
-            </div>
-          </div> */}
-        </div>
-      ) : null}
     </div>
   );
 }
