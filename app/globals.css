@@ -2421,6 +2421,58 @@ h3 {
   min-height: auto;
 }
 
+button.primary-link-button.project-preview-2d-button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.project-preview-2d-button.is-active {
+  box-shadow: 0 0 0 1px rgba(241, 211, 161, 0.35);
+}
+
+/* Direct-child + extra class beats `.model-stage > .three-model-shell { height: 320px }` */
+.model-stage:not(.interior-model-stage)
+  > .three-model-shell.project-floor-elevation-shell {
+  display: flex;
+  flex-direction: column;
+  height: auto;
+  min-height: 320px;
+  max-height: min(72vh, 620px);
+  overflow: auto;
+  padding: 0;
+  background: rgba(6, 12, 18, 0.5);
+}
+
+.model-stage:not(.interior-model-stage)
+  > .three-model-shell.project-floor-elevation-shell
+  .project-floor-elevation-embed {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  /* Beat legacy .visual-frame (e.g. styles.css) and any panel gradients */
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.04),
+      rgba(255, 255, 255, 0.02)
+    ),
+    #08121d !important;
+}
+
+/* Tirana card fills the same box as the shell (width + min height + flex growth) */
+.model-stage:not(.interior-model-stage)
+  > .three-model-shell.project-floor-elevation-shell
+  .floor-elevation.is-tirana {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 320px;
+  margin-top: 0;
+  box-sizing: border-box;
+}
+
 .project-memo-card {
   gap: 18px;
   background:
@@ -3136,7 +3188,8 @@ h3 {
   z-index: 60;
   display: block;
   padding: 0;
-  font-family: var(--font-splash-sans), "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  font-family:
+    var(--font-splash-sans), "Avenir Next", Avenir, "Segoe UI", sans-serif;
   color: var(--text);
   isolation: isolate;
   overflow: hidden;
@@ -3211,8 +3264,16 @@ h3 {
     linear-gradient(rgba(241, 211, 161, 0.045) 1px, transparent 1px),
     linear-gradient(90deg, rgba(141, 211, 255, 0.04) 1px, transparent 1px);
   background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 72% 58% at 50% 44%, #000 18%, transparent 72%);
-  -webkit-mask-image: radial-gradient(ellipse 72% 58% at 50% 44%, #000 18%, transparent 72%);
+  mask-image: radial-gradient(
+    ellipse 72% 58% at 50% 44%,
+    #000 18%,
+    transparent 72%
+  );
+  -webkit-mask-image: radial-gradient(
+    ellipse 72% 58% at 50% 44%,
+    #000 18%,
+    transparent 72%
+  );
   animation: splash-grid-drift 28s linear infinite;
   opacity: 0.85;
 }
@@ -3239,8 +3300,16 @@ h3 {
       rgba(241, 211, 161, 0.16),
       transparent 36%
     ),
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(241, 211, 161, 0.06), transparent 55%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.02)),
+    radial-gradient(
+      ellipse 80% 50% at 50% 0%,
+      rgba(241, 211, 161, 0.06),
+      transparent 55%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.09),
+      rgba(255, 255, 255, 0.02)
+    ),
     rgba(5, 10, 16, 0.52);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.12),
@@ -3333,7 +3402,8 @@ h3 {
   line-height: 1;
   text-align: center;
   /* Override global h1 serif; match .splash-screen / logo row */
-  font-family: var(--font-splash-sans), "Avenir Next", Avenir, "Segoe UI", sans-serif;
+  font-family:
+    var(--font-splash-sans), "Avenir Next", Avenir, "Segoe UI", sans-serif;
 }
 
 .splash-screen__tagline {
@@ -3427,8 +3497,7 @@ h3 {
   max-height: min(104px, 19vh);
   object-fit: contain;
   flex-shrink: 0;
-  filter:
-    drop-shadow(0 14px 36px rgba(2, 6, 12, 0.62))
+  filter: drop-shadow(0 14px 36px rgba(2, 6, 12, 0.62))
     drop-shadow(0 6px 20px rgba(0, 0, 0, 0.45))
     drop-shadow(0 2px 8px rgba(0, 0, 0, 0.35))
     drop-shadow(0 0 48px rgba(241, 211, 161, 0.28))
@@ -3444,7 +3513,12 @@ h3 {
   text-transform: uppercase;
   flex-shrink: 0;
   text-align: center;
-  background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold) 55%, rgba(247, 240, 228, 0.92) 100%);
+  background: linear-gradient(
+    180deg,
+    var(--gold-bright) 0%,
+    var(--gold) 55%,
+    rgba(247, 240, 228, 0.92) 100%
+  );
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -3484,7 +3558,11 @@ h3 {
       rgba(214, 180, 123, 0.1) 45%,
       rgba(255, 255, 255, 0.05) 100%
     ),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02)),
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08),
+      rgba(255, 255, 255, 0.02)
+    ),
     rgba(6, 12, 20, 0.55);
   box-shadow:
     0 0 0 1px rgba(241, 211, 161, 0.06) inset,

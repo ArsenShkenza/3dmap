@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import InteriorExplorer3D from "@/components/InteriorExplorer3D";
+import { ProjectFloorElevationBlock } from "@/components/ProjectFloorElevationBlock";
 import { useGltfOrbitViewer } from "@/components/useGltfOrbitViewer";
 
 async function toggleFullscreen(container, isFullscreen) {
@@ -44,7 +45,21 @@ function FullscreenIcon({ isFullscreen }) {
   );
 }
 
-function StandardModelStage({
+function Model3DIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9m9-13.5-9 5.25m0 0 9 5.25M12 12.75 3 7.5m9 5.25v9l-9 5.25M9 18l-6-3.375v-9"
+        stroke="currentColor"
+        strokeWidth="1.65"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+function StandardModelStageGltf({
   asset,
   project,
   caption,
@@ -140,7 +155,99 @@ function StandardModelStage({
   );
 }
 
+function StandardModelStage({
+  asset,
+  project,
+  caption,
+  statusLabel = null,
+  hideCaption = false,
+  hideAssetMeta = false,
+  fullProjectHref = null,
+  inline2DProject = null,
+  showInline2DExperience = false,
+  onToggleInline2DExperience = () => {}
+}) {
+  const stageRef = useRef(null);
+
+  if (inline2DProject && showInline2DExperience) {
+    return (
+      <article className="model-card">
+        <div className="section-head">
+          <div>
+            <p className="section-label">Virtual Experience</p>
+            <h3>{asset.label}</h3>
+          </div>
+          {statusLabel || fullProjectHref ? (
+            <div className="model-card-head-end">
+              {fullProjectHref ? (
+                <Link
+                  href={fullProjectHref}
+                  className="primary-link-button model-card-full-project-link"
+                >
+                  View Full Project
+                </Link>
+              ) : null}
+              {statusLabel ? (
+                <span className="status-pill subtle">{statusLabel}</span>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+
+        <div ref={stageRef} className="model-stage">
+          <div className="viewer-toolbar">
+            <button
+              type="button"
+              className="viewer-toolbar-button"
+              onClick={() => onToggleInline2DExperience(false)}
+              aria-label="Show 3D model"
+              title="Show 3D model"
+            >
+              <Model3DIcon />
+            </button>
+          </div>
+          <div className="three-model-shell project-floor-elevation-shell">
+            <ProjectFloorElevationBlock project={inline2DProject} embedded />
+          </div>
+        </div>
+
+        <p className="viewer-controls-note">
+          2D elevation: use the floor controls beside the tower. Click a floor to open plans.
+        </p>
+        {!hideCaption ? (
+          <p className="model-caption">{caption ?? project.virtualExperience}</p>
+        ) : null}
+        {!hideAssetMeta ? (
+          <p className="model-meta">
+            Current asset: <code>{asset.fileName}</code>
+          </p>
+        ) : null}
+      </article>
+    );
+  }
+
+  return (
+    <StandardModelStageGltf
+      asset={asset}
+      project={project}
+      caption={caption}
+      statusLabel={statusLabel}
+      hideCaption={hideCaption}
+      hideAssetMeta={hideAssetMeta}
+      fullProjectHref={fullProjectHref}
+    />
+  );
+}
+
 export default function ModelStage(props) {
+  const showInline2D =
+    props.inline2DProject != null && props.showInline2DExperience;
+
+  /* Inline 2D elevation must win over interior-navigation (e.g. Tirana integrated-building). */
+  if (showInline2D) {
+    return <StandardModelStage {...props} />;
+  }
+
   if (props.viewerMode === "interior-navigation") {
     return (
       <InteriorExplorer3D

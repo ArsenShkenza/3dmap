@@ -44,10 +44,15 @@ export default function FullProjectExperience({
       ? initialAssetKey
       : "building";
   const [activeAssetKey, setActiveAssetKey] = useState(preferredAssetKey);
+  const [showInline2DView, setShowInline2DView] = useState(false);
 
   useEffect(() => {
     setActiveAssetKey(preferredAssetKey);
   }, [preferredAssetKey]);
+
+  useEffect(() => {
+    setShowInline2DView(false);
+  }, [activeAssetKey]);
 
   const selectedUnit = useMemo(
     () =>
@@ -66,6 +71,22 @@ export default function FullProjectExperience({
   const show2DViewButton = ["tirana-signature-residences", "prishtina-prime-offices"].includes(
     project.id
   );
+  const inline2DExperienceProject =
+    show2DViewButton && (!separateFilesFlow || activeAssetKey === "building") ? project : null;
+  const modelStage2DProps =
+    inline2DExperienceProject !== null
+      ? {
+          inline2DProject: inline2DExperienceProject,
+          showInline2DExperience: showInline2DView,
+          onToggleInline2DExperience: setShowInline2DView
+        }
+      : {};
+
+  useEffect(() => {
+    if (!inline2DExperienceProject) {
+      setShowInline2DView(false);
+    }
+  }, [inline2DExperienceProject]);
   const handleAssetSelection = (nextAssetKey) => {
     setActiveAssetKey(nextAssetKey);
 
@@ -113,14 +134,22 @@ export default function FullProjectExperience({
                   <h3>Exterior review</h3>
                 </div>
                 {show2DViewButton ? (
-                  <a
-                    href={`/experience/${project.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="primary-link-button project-preview-2d-button"
+                  <button
+                    type="button"
+                    className={`primary-link-button project-preview-2d-button${
+                      showInline2DView ? " is-active" : ""
+                    }`}
+                    aria-pressed={showInline2DView}
+                    disabled={!inline2DExperienceProject}
+                    title={
+                      !inline2DExperienceProject
+                        ? "Select Whole Building to use the 2D elevation in this panel."
+                        : undefined
+                    }
+                    onClick={() => setShowInline2DView((open) => !open)}
                   >
-                    2D View
-                  </a>
+                    {showInline2DView ? "3D model" : "2D view"}
+                  </button>
                 ) : null}
               </div>
               {separateFilesFlow ? (
@@ -162,6 +191,7 @@ export default function FullProjectExperience({
                     statusLabel={selectedStatusLabel}
                     hideCaption={activeAssetKey === "building"}
                     hideAssetMeta
+                    {...modelStage2DProps}
                   />
                   <ProjectExperienceDescription project={project} />
                 </div>
@@ -179,12 +209,19 @@ export default function FullProjectExperience({
                       "Use the integrated building file for a single exterior-plus-interior project review."
                     }
                     hideAssetMeta
+                    {...modelStage2DProps}
                   />
                   <ProjectExperienceDescription project={project} />
                 </>
               ) : (
                 <>
-                  <ModelStage asset={asset} project={project} hideCaption hideAssetMeta />
+                  <ModelStage
+                    asset={asset}
+                    project={project}
+                    hideCaption
+                    hideAssetMeta
+                    {...modelStage2DProps}
+                  />
                   <ProjectExperienceDescription project={project} />
                 </>
               )}
