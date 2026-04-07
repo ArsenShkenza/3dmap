@@ -155,6 +155,10 @@ export function useGltfOrbitViewer(asset, containerRef, variant, options = {}) {
           }
 
           const { clientWidth, clientHeight } = containerRef.current;
+          if (clientWidth === 0 || clientHeight === 0) {
+            return;
+          }
+
           renderer.setSize(clientWidth, clientHeight, false);
           camera.aspect = clientWidth / Math.max(clientHeight, 1);
           camera.updateProjectionMatrix();
@@ -209,7 +213,10 @@ export function useGltfOrbitViewer(asset, containerRef, variant, options = {}) {
 
         const render = () => {
           controls.update();
-          renderer.render(scene, camera);
+          const { clientWidth, clientHeight } = containerRef.current || {};
+          if (clientWidth > 0 && clientHeight > 0) {
+            renderer.render(scene, camera);
+          }
           frameRef.current = window.requestAnimationFrame(render);
         };
 
@@ -236,6 +243,9 @@ export function useGltfOrbitViewer(asset, containerRef, variant, options = {}) {
       const viewerState = viewerStateRef.current;
       if (viewerState) {
         viewerState.controls.dispose();
+        if (viewerState.renderer.forceContextLoss) {
+          viewerState.renderer.forceContextLoss();
+        }
         viewerState.renderer.dispose();
       }
       viewerStateRef.current = null;
