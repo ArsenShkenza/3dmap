@@ -8,6 +8,7 @@ import {
   getFloorLabel,
   getFloorOptions,
 } from "@/lib/floor-explorer";
+import { setupPackedGltfLoader } from "@/lib/setupPackedGltfLoader";
 
 const floorSceneCache = new Map();
 
@@ -241,6 +242,7 @@ export default function ProjectExplorer3D({ asset, project }) {
         let cachedScene = floorSceneCache.get(asset.src);
         if (!cachedScene) {
           const loader = new GLTFLoader();
+          await setupPackedGltfLoader(loader, renderer);
           cachedScene = loader.loadAsync(asset.src).then((gltf) => gltf.scene);
           floorSceneCache.set(asset.src, cachedScene);
         }

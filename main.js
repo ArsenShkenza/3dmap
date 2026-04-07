@@ -194,7 +194,7 @@ const projects = [
     floorHeight: 3.55,
     roofHeight: 3.1,
     objectKind: "glb",
-    modelSrc: "./assets/louisiana_state_house.glb",
+    modelSrc: "./assets/louisiana_state_house_min.glb",
     searchTerms: ["tirana", "permit", "residences", "land", "development", "premium"],
   },
   {
@@ -229,7 +229,7 @@ const projects = [
     floorHeight: 3.35,
     roofHeight: 3.3,
     objectKind: "glb",
-    modelSrc: "./assets/le_millefiori.glb",
+    modelSrc: "./assets/le_millefiori_min.glb",
     searchTerms: ["tirana", "partner", "co-investor", "roi", "tower", "boulevard", "bulevardi"],
   },
   {
@@ -264,7 +264,7 @@ const projects = [
     floorHeight: 3.2,
     roofHeight: 2.8,
     objectKind: "glb",
-    modelSrc: "./assets/singer_building.glb",
+    modelSrc: "./assets/singer_building_min.glb",
     searchTerms: ["prishtina", "office", "commercial", "yield", "built", "turnkey", "leased"],
   },
   {
@@ -2171,6 +2171,7 @@ async function initGlbLayer() {
       camera: null,
       renderer: null,
       loader: null,
+      loaderReady: null,
       modelCache: new Map(),
       modelEntries: new Map(),
     };
@@ -2215,6 +2216,22 @@ async function initGlbLayer() {
         pmremGenerator.dispose();
 
         glbState.loader = new GLTFLoader();
+        glbState.loaderReady = (async () => {
+          const { MeshoptDecoder } = await import(
+            "https://esm.sh/three@0.161.0/examples/jsm/libs/meshopt_decoder.module.js?deps=three@0.161.0"
+          );
+          await MeshoptDecoder.ready;
+          glbState.loader.setMeshoptDecoder(MeshoptDecoder);
+          const { KTX2Loader } = await import(
+            "https://esm.sh/three@0.161.0/examples/jsm/loaders/KTX2Loader.js?deps=three@0.161.0"
+          );
+          const ktx2Loader = new KTX2Loader();
+          ktx2Loader.setTranscoderPath(
+            "https://cdn.jsdelivr.net/npm/three@0.161.0/examples/jsm/libs/basis/"
+          );
+          ktx2Loader.detectSupport(glbState.renderer);
+          glbState.loader.setKTX2Loader(ktx2Loader);
+        })();
       },
       render(_gl, matrix) {
         if (!glbState || !glbState.ready || !glbState.modelEntries.size) {
@@ -2272,8 +2289,16 @@ async function ensureProjectModel(project, loadToken) {
   }
 
   await initGlbLayer();
-  if (!glbState || !glbState.scene || !glbState.loader || loadToken !== projectLoadToken) {
+  if (
+    !glbState ||
+    !glbState.scene ||
+    !glbState.loader ||
+    loadToken !== projectLoadToken
+  ) {
     return;
+  }
+  if (glbState.loaderReady) {
+    await glbState.loaderReady;
   }
 
   if (glbState.modelEntries.has(project.id)) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { setupPackedGltfLoader } from "@/lib/setupPackedGltfLoader";
 
 const gltfSceneCache = new Map();
 
@@ -166,6 +167,7 @@ export function useGltfOrbitViewer(asset, containerRef, variant, options = {}) {
         let cachedScene = gltfSceneCache.get(asset.src);
         if (!cachedScene) {
           const loader = new GLTFLoader();
+          await setupPackedGltfLoader(loader, renderer);
           cachedScene = loader.loadAsync(asset.src).then((gltf) => gltf.scene);
           gltfSceneCache.set(asset.src, cachedScene);
         }

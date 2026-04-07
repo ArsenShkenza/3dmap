@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
+import { setupPackedGltfLoader } from "@/lib/setupPackedGltfLoader";
 
 const MODEL_LAYER_ID = "project-models";
 const MAX_EXTERIOR_MAP_ZOOM = 20;
@@ -673,12 +674,14 @@ export default function MapExperience({
       detachModelEntries();
 
       try {
+        const sharedLoader = new GLTFLoader();
+        await setupPackedGltfLoader(sharedLoader, modelLayer.renderer);
+
         const loadedScenes = await Promise.all(
           mappedProjects.map(async ({ project, asset }) => {
             let cachedModel = modelCacheRef.current.get(asset.src);
             if (!cachedModel) {
-              const loader = new GLTFLoader();
-              cachedModel = loader.loadAsync(asset.src).then((gltf) => {
+              cachedModel = sharedLoader.loadAsync(asset.src).then((gltf) => {
                 const baseScene = gltf.scene;
                 // Pre-process materials and properties ONCE per asset
                 baseScene.traverse((node) => {
