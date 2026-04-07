@@ -1158,11 +1158,6 @@ button {
   transition: opacity 0.22s ease;
 }
 
-.experience-stage.view-switch-pending .detail-card-scroll,
-.experience-stage.view-switch-pending .map-search-overlay {
-  opacity: 0.9;
-}
-
 .premium-access-overlay {
   position: fixed;
   inset: 0;

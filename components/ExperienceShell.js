@@ -5,9 +5,11 @@ import {
   useDeferredValue,
   useEffect,
   useMemo,
+  useRef,
+  startTransition,
   useState,
-  useTransition,
 } from "react";
+import { flushSync } from "react-dom";
 import AssetVault from "@/components/AssetVault";
 import MapExperience from "@/components/MapExperience";
 import ModelStage from "@/components/ModelStage";
@@ -72,6 +74,8 @@ export default function ExperienceShell({
     { id: "platform", label: "Platform" },
   ];
   const [activeView, setActiveView] = useState("discover");
+  const activeViewRef = useRef(activeView);
+  activeViewRef.current = activeView;
   const [query, setQuery] = useState(initialQuery);
   const [selectedId, setSelectedId] = useState(() =>
     normalizeInitialSelectedId(initialSelectedId, projects),
@@ -85,7 +89,6 @@ export default function ExperienceShell({
   const [isAccessOverlayVisible, setIsAccessOverlayVisible] = useState(true);
   const [mobileOpportunitySheetOpen, setMobileOpportunitySheetOpen] =
     useState(false);
-  const [isViewPending, startViewTransition] = useTransition();
   const isNarrowStack = useMatchMedia(NARROW_STACK_MEDIA);
   const deferredQuery = useDeferredValue(query);
   const filteredProjects = useMemo(
@@ -216,25 +219,24 @@ export default function ExperienceShell({
     }
   };
 
-  const handleSelectProject = useCallback(
-    (projectId, nextView = activeView) => {
-      setSelectedId(projectId);
-      setHoveredListProjectId(null);
-      setActiveView(nextView);
-      setMapFocusRequest((currentValue) => currentValue + 1);
-    },
-    [activeView],
-  );
+  const handleSelectProject = useCallback((projectId, nextView) => {
+    setSelectedId(projectId);
+    setHoveredListProjectId(null);
+    setActiveView(nextView ?? activeViewRef.current);
+    setMapFocusRequest((currentValue) => currentValue + 1);
+  }, []);
 
   const handleActivateView = useCallback((viewId) => {
-    startViewTransition(() => {
+    flushSync(() => {
       setActiveView(viewId);
       setSelectedId(null);
       setHoveredListProjectId(null);
-      if (viewId !== "discover") {
-        setQuery("");
-      }
     });
+    if (viewId !== "discover") {
+      startTransition(() => {
+        setQuery("");
+      });
+    }
   }, []);
 
   const handleBackToResults = useCallback(() => {
@@ -707,20 +709,21 @@ export default function ExperienceShell({
         </div>
 
         <div className="topbar-nav" role="tablist" aria-label="PRO X sections">
-          {panelViews.map((view) => (
-            <button
-              key={view.id}
-              type="button"
-              role="tab"
-              aria-selected={activeView === view.id}
-              className={`panel-nav-button${
-                activeView === view.id ? " active" : ""
-              }`}
-              onClick={() => handleActivateView(view.id)}
-            >
-              {view.label}
-            </button>
-          ))}
+          {panelViews.map((view) => {
+            const isViewActive = activeView === view.id;
+            return (
+              <button
+                key={view.id}
+                type="button"
+                role="tab"
+                aria-selected={isViewActive}
+                className={`panel-nav-button${isViewActive ? " active" : ""}`}
+                onClick={() => handleActivateView(view.id)}
+              >
+                {view.label}
+              </button>
+            );
+          })}
         </div>
 
         <div
@@ -738,7 +741,7 @@ export default function ExperienceShell({
       </header>
 
       <div
-        className={`experience-stage${shouldShowPanel ? " rail-open" : " rail-closed"}${isViewPending ? " view-switch-pending" : ""}`}
+        className={`experience-stage${shouldShowPanel ? " rail-open" : " rail-closed"}`}
       >
         {shouldShowPanel ? (
           <div className="content-grid">{panelContent}</div>

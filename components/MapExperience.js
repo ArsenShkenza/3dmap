@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import maplibregl from "maplibre-gl";
 
 const MODEL_LAYER_ID = "project-models";
@@ -112,6 +112,8 @@ function getFocusView(project, hasModel) {
 }
 
 function focusOverview(map, maplibregl, projects) {
+  map.stop();
+
   if (!projects.length) {
     map.easeTo({
       ...DISCOVER_OVERVIEW,
@@ -192,35 +194,11 @@ function getFootprintDimensions(project) {
   };
 }
 
-function createProjectModelGroup(THREE, maplibregl, project, baseScene) {
-  const modelScene = baseScene.clone(true);
-  modelScene.traverse((node) => {
-    if (!node.isMesh) {
-      return;
-    }
+function getProjectModelSpecs(THREE, project, baseScene) {
+  baseScene.scale.setScalar(1);
+  baseScene.position.set(0, 0, 0);
 
-    node.frustumCulled = false;
-    node.castShadow = true;
-    node.receiveShadow = true;
-
-    if (Array.isArray(node.material)) {
-      node.material = node.material.map((material) => {
-        const clonedMaterial = material.clone();
-        clonedMaterial.side = THREE.DoubleSide;
-        clonedMaterial.needsUpdate = true;
-        return clonedMaterial;
-      });
-      return;
-    }
-
-    if (node.material) {
-      node.material = node.material.clone();
-      node.material.side = THREE.DoubleSide;
-      node.material.needsUpdate = true;
-    }
-  });
-
-  const initialBox = new THREE.Box3().setFromObject(modelScene);
+  const initialBox = new THREE.Box3().setFromObject(baseScene);
   const initialSize = initialBox.getSize(new THREE.Vector3());
   const targetHeight = Math.max(project.massingHeight ?? 24, 12);
   const { width, depth } = getFootprintDimensions(project);
@@ -234,16 +212,13 @@ function createProjectModelGroup(THREE, maplibregl, project, baseScene) {
   const maxHeightScale = heightScale * (project.mapModelMaxHeightFactor ?? 1.8);
   const scaleFactor = Math.min(footprintScale, maxHeightScale) * (project.mapModelScale ?? 1);
 
-  modelScene.scale.setScalar(scaleFactor);
+  baseScene.scale.setScalar(scaleFactor);
 
-  const scaledBox = new THREE.Box3().setFromObject(modelScene);
+  const scaledBox = new THREE.Box3().setFromObject(baseScene);
   const scaledCenter = scaledBox.getCenter(new THREE.Vector3());
-  modelScene.position.set(-scaledCenter.x, -scaledBox.min.y, -scaledCenter.z);
+  const position = new THREE.Vector3(-scaledCenter.x, -scaledBox.min.y, -scaledCenter.z);
 
-  const modelGroup = new THREE.Group();
-  modelGroup.add(modelScene);
-
-  return modelGroup;
+  return { scaleFactor, position };
 }
 
 function getModelMatrix(THREE, transform) {
@@ -286,6 +261,9 @@ export default function MapExperience({
   const modelLayerRef = useRef(null);
   const modelEntriesRef = useRef([]);
   const threeStateRef = useRef(null);
+  const showModelsRef = useRef(false);
+  const onSelectProjectRef = useRef(onSelectProject);
+  onSelectProjectRef.current = onSelectProject;
   const [ready, setReady] = useState(false);
   const activeMapProject = selectedProject
     ? projects.find((project) => project.id === selectedProject.id) ?? selectedProject
@@ -299,6 +277,17 @@ export default function MapExperience({
         ? assetLibrary.find((asset) => asset.id === activeMapProject.primaryAssetId) ??
           null
         : null;
+
+  /** Stable while project set + view are unchanged — avoids effects re-firing on deferred `projects` reference churn. */
+  const mapBrowseSignature =
+    viewMode === "discover" || viewMode === "browse"
+      ? `${viewMode}:${projects.map((p) => p.id).join("\u001f")}`
+      : viewMode;
+
+  const markersGeoJson = useMemo(() => pointCollection(projects), [mapBrowseSignature]);
+
+  // Keep a ref in sync with the prop so the MapLibre render() callback can read it without stale closure
+  showModelsRef.current = viewMode === "discover" || viewMode === "browse";
 
   useEffect(() => {
     let disposed = false;
@@ -416,31 +405,46 @@ export default function MapExperience({
             modelLayerRef.current = this;
           },
           render(gl, matrix) {
-            this.renderer.resetState();
-            const viewMatrix = new THREE.Matrix4().fromArray(matrix);
-            const modelEntries = modelEntriesRef.current;
-
-            if (!modelEntries.length) {
+            // Guard against drawing to an incomplete framebuffer (zero-size canvas).
+            // Without this, MapLibre calls render() before the canvas is sized,
+            // flooding the console with GL_INVALID_FRAMEBUFFER_OPERATION warnings.
+            const canvas = map.getCanvas();
+            if (!canvas || canvas.width === 0 || canvas.height === 0) {
               return;
             }
 
-            // Render each preloaded model with its own Mercator transform to
-            // avoid precision loss from baking country-scale translations into
-            // every object matrix at once.
-            modelEntries.forEach(({ modelGroup }) => {
-              modelGroup.visible = false;
+            const fbStatus = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+            if (fbStatus !== gl.FRAMEBUFFER_COMPLETE) {
+              return;
+            }
+
+            this.renderer.resetState();
+            const modelEntries = modelEntriesRef.current;
+            const showModels = showModelsRef.current;
+
+            if (!modelEntries.length || !showModels) {
+              return;
+            }
+
+            const viewMatrix = new THREE.Matrix4().fromArray(matrix);
+
+            modelEntries.forEach(({ baseScene }) => {
+              baseScene.visible = false;
             });
 
-            modelEntries.forEach(({ modelGroup, transform }) => {
-              modelGroup.visible = true;
+            modelEntries.forEach(({ baseScene, scaleFactor, position, transform }) => {
+              baseScene.scale.setScalar(scaleFactor);
+              baseScene.position.copy(position);
+              baseScene.visible = true;
+
               this.camera.projectionMatrix = viewMatrix.clone().multiply(
                 getModelMatrix(THREE, transform)
               );
               this.renderer.render(this.scene, this.camera);
-              modelGroup.visible = false;
+              baseScene.visible = false;
               this.renderer.resetState();
             });
-            map.triggerRepaint();
+            // Static models — no triggerRepaint() here. MapLibre redraws on camera change.
           }
         };
 
@@ -472,7 +476,7 @@ export default function MapExperience({
         const handleSelect = (event) => {
           const id = event.features?.[0]?.properties?.id;
           if (id) {
-            onSelectProject(id);
+            onSelectProjectRef.current(id);
           }
         };
 
@@ -518,7 +522,7 @@ export default function MapExperience({
       mapRef.current?.remove();
       mapRef.current = null;
     };
-  }, [onSelectProject]);
+  }, []);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -526,7 +530,7 @@ export default function MapExperience({
       return;
     }
 
-    map.getSource("markers")?.setData(pointCollection(projects));
+    map.getSource("markers")?.setData(markersGeoJson);
 
     setPaintIfLayerExists(
       map,
@@ -558,12 +562,7 @@ export default function MapExperience({
         "#8dd3ff"
       )
     );
-  }, [
-    hoverMarkerId,
-    projects,
-    ready,
-    selectedProjectId
-  ]);
+  }, [hoverMarkerId, markersGeoJson, ready, selectedProjectId]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -577,7 +576,18 @@ export default function MapExperience({
     }
 
     focusOverview(map, threeState.maplibregl, projects);
-  }, [projects, ready, viewMode]);
+  }, [mapBrowseSignature, ready, viewMode]);
+
+  // When switching back to discover/browse, trigger a single repaint so models reappear.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready) return;
+    if (viewMode === "discover" || viewMode === "browse") {
+      map.triggerRepaint();
+    } else {
+      map.stop();
+    }
+  }, [viewMode, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -603,6 +613,7 @@ export default function MapExperience({
     const shouldZoomForModel = Boolean(activeMapAsset?.src);
     const focusView = getFocusView(activeMapProject, shouldZoomForModel);
 
+    map.stop();
     map.flyTo({
       center: focusView.center,
       zoom: focusView.zoom,
@@ -617,6 +628,9 @@ export default function MapExperience({
   useEffect(() => {
     let cancelled = false;
 
+    const mapShowsProjectModels =
+      viewMode === "discover" || viewMode === "browse";
+
     async function syncProjectModels() {
       const modelLayer = modelLayerRef.current;
       const threeState = threeStateRef.current;
@@ -626,6 +640,22 @@ export default function MapExperience({
 
       const { GLTFLoader, THREE, map, maplibregl } = threeState;
       const scene = modelLayer.scene;
+
+      const detachModelEntries = () => {
+        modelEntriesRef.current.forEach(({ baseScene }) => {
+          if (baseScene?.parent === scene) {
+            scene.remove(baseScene);
+          }
+        });
+        modelEntriesRef.current = [];
+      };
+
+      if (!mapShowsProjectModels) {
+        detachModelEntries();
+        map.triggerRepaint();
+        return;
+      }
+
       const mappedProjects = projects
         .map((project) => ({
           project,
@@ -634,36 +664,47 @@ export default function MapExperience({
         }))
         .filter(({ asset }) => Boolean(asset?.src));
 
-      modelEntriesRef.current.forEach(({ modelGroup }) => {
-        scene.remove(modelGroup);
-      });
-      modelEntriesRef.current = [];
-
       if (!mappedProjects.length) {
+        detachModelEntries();
         map.triggerRepaint();
         return;
       }
 
+      detachModelEntries();
+
       try {
-        const modelEntries = await Promise.all(
+        const loadedScenes = await Promise.all(
           mappedProjects.map(async ({ project, asset }) => {
             let cachedModel = modelCacheRef.current.get(asset.src);
             if (!cachedModel) {
               const loader = new GLTFLoader();
-              cachedModel = loader.loadAsync(asset.src).then((gltf) => gltf.scene);
+              cachedModel = loader.loadAsync(asset.src).then((gltf) => {
+                const baseScene = gltf.scene;
+                // Pre-process materials and properties ONCE per asset
+                baseScene.traverse((node) => {
+                  if (!node.isMesh) return;
+                  node.frustumCulled = false;
+                  node.castShadow = true;
+                  node.receiveShadow = true;
+                  if (node.material) {
+                    if (Array.isArray(node.material)) {
+                      node.material.forEach((m) => {
+                        m.side = THREE.DoubleSide;
+                        m.needsUpdate = true;
+                      });
+                    } else {
+                      node.material.side = THREE.DoubleSide;
+                      node.material.needsUpdate = true;
+                    }
+                  }
+                });
+                return baseScene;
+              });
               modelCacheRef.current.set(asset.src, cachedModel);
             }
 
             const baseScene = await cachedModel;
-            if (!baseScene) {
-              return null;
-            }
-
-            return {
-              projectId: project.id,
-              modelGroup: createProjectModelGroup(THREE, maplibregl, project, baseScene),
-              transform: getModelTransform(maplibregl, project)
-            };
+            return { project, baseScene };
           })
         );
 
@@ -671,29 +712,40 @@ export default function MapExperience({
           return;
         }
 
-        modelEntries.forEach((entry) => {
-          if (!entry?.modelGroup || !entry?.transform) {
-            return;
-          }
+        const modelEntries = [];
+        for (const { project, baseScene } of loadedScenes) {
+          if (!baseScene) continue;
 
-          scene.add(entry.modelGroup);
-          entry.modelGroup.visible = false;
+          const { scaleFactor, position } = getProjectModelSpecs(THREE, project, baseScene);
+
+          modelEntries.push({
+            projectId: project.id,
+            baseScene,
+            scaleFactor,
+            position,
+            transform: getModelTransform(maplibregl, project)
+          });
+        }
+
+        modelEntries.forEach((entry) => {
+          if (entry.baseScene.parent !== scene) {
+            scene.add(entry.baseScene);
+            entry.baseScene.visible = false;
+          }
         });
-        modelEntriesRef.current = modelEntries.filter(
-          (entry) => entry?.modelGroup && entry?.transform
-        );
+        modelEntriesRef.current = modelEntries;
         map.triggerRepaint();
       } catch (error) {
         console.error("Failed to place map models", error);
       }
     }
 
-    syncProjectModels();
+    void syncProjectModels();
 
     return () => {
       cancelled = true;
     };
-  }, [assetLibrary, projects, ready]);
+  }, [assetLibrary, mapBrowseSignature, ready, viewMode]);
 
   return (
     <div className="map-underlay-stack">
