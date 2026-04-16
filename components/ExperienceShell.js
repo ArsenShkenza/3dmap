@@ -18,19 +18,17 @@ import { assetVaultPreviewProject, exploreCategories } from "@/lib/projects";
 import { filterProjectsBySearchQuery } from "@/lib/searchFilter";
 import {
   chipButton,
-  chipButtonActive,
   countPill,
   detailCard,
+  detailCardScrollShell,
   ghostLinkButton,
   iconButton,
   navButton,
-  navButtonActive,
   proseSoft,
   sectionLabel,
   serifHeading,
   statLabel,
   switcherCard,
-  switcherCardActive,
 } from "@/lib/uiClasses";
 
 const RESULTS_PREVIEW = 4;
@@ -79,31 +77,37 @@ function normalizeInitialSelectedId(id, projectList) {
 }
 
 const topbarShellClass =
-  "relative z-[6] grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[24px] border border-pro-line px-[14px] py-[10px] shadow-pro-panel backdrop-blur-[20px] [background:radial-gradient(circle_at_top_right,rgba(214,180,123,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02)),rgba(6,11,18,0.84)] max-[1240px]:grid-cols-1 max-[820px]:gap-[10px] max-[820px]:rounded-[24px] max-[820px]:px-[16px] max-[820px]:py-[14px] max-[480px]:px-[14px] max-[480px]:py-3";
+  "relative z-[6] grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[24px] border border-pro-line border-white/8 px-[14px] py-[18px] shadow-pro-panel backdrop-blur-[20px] [background:radial-gradient(circle_at_top_right,rgba(214,180,123,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02)),rgba(6,11,18,0.84)] max-[1240px]:grid-cols-1 max-[820px]:gap-[10px] max-[820px]:rounded-[24px] max-[820px]:px-[16px] max-[820px]:py-[14px] max-[480px]:px-[14px] max-[480px]:py-3";
+/** PX mark — matches legacy topbar brand tile (`52px`, `18px` radius, `var(--gold-bright)`, type scale). */
 const brandMarkClass =
-  "grid h-[34px] w-[34px] place-items-center rounded-[12px] border border-black/12 bg-pro-gold-bright text-[0.72rem] font-bold uppercase tracking-[0.15em] text-black max-[820px]:h-[38px] max-[820px]:w-[38px] max-[820px]:rounded-[14px] max-[820px]:text-[0.8rem]";
+  "font-sans grid h-[52px] w-[52px] place-items-center rounded-[18px] border border-black/12 bg-[var(--gold-bright)] text-[0.9rem] font-bold uppercase tracking-[0.18em] text-black antialiased max-[820px]:h-[44px] max-[820px]:w-[44px] max-[820px]:rounded-[16px] max-[820px]:text-[0.82rem] max-[820px]:tracking-[0.14em]";
+/** Legacy profile avatar ring: `42px`, gold border/fill, icon inherits `var(--gold-bright)`. */
 const profileAvatarClass =
-  "grid h-[34px] w-[34px] place-items-center rounded-full border border-[rgba(241,211,161,0.28)] bg-[rgba(214,180,123,0.08)] text-pro-gold-bright [&_svg]:h-[16px] [&_svg]:w-[16px] max-[820px]:h-[38px] max-[820px]:w-[38px] max-[820px]:[&_svg]:h-[18px] max-[820px]:[&_svg]:w-[18px]";
+  "font-sans grid h-[42px] w-[42px] place-items-center rounded-full border border-[rgba(241,211,161,0.24)] bg-[rgba(214,180,123,0.1)] text-(--gold-bright) box-border [&_svg]:h-[16px] [&_svg]:w-[16px] max-[820px]:[&_svg]:h-[18px] max-[820px]:[&_svg]:w-[18px]";
+/** Legacy `.topbar-nav` — tab rail (gap 10px, centered, scroll, inset padding). */
+const topbarNavTablistClass =
+  "font-sans box-border pointer-events-auto text-(--text) flex w-auto max-w-full flex-nowrap items-center justify-center justify-self-center gap-[10px] overflow-x-auto px-[4px] py-[6px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[1240px]:w-full max-[1240px]:min-w-0 max-[1240px]:justify-self-stretch";
 const pageStageClass =
   "min-h-0 gap-5 pointer-events-none max-[1240px]:flex max-[1240px]:min-h-auto max-[1240px]:flex-col-reverse max-[1240px]:justify-end max-[1240px]:gap-3";
 const viewStackClass = "grid gap-[18px]";
 const viewSectionClass = "grid gap-4";
 const sectionHeadClass =
   "flex items-start justify-between gap-3 max-[820px]:flex-col max-[820px]:items-start";
-const compactCopyClass = "m-0 text-pro-text-soft leading-[1.6]";
+const compactCopyClass = "m-0 text-(--text-soft) leading-[1.6]";
 const switcherHeadClass =
   "flex items-start justify-between gap-3 max-[1480px]:flex-col max-[1480px]:items-start";
 const dealCityClass =
-  "mb-2 text-[0.78rem] uppercase tracking-[0.12em] text-pro-text-faint";
-const dealCopyClass = "mt-[10px] text-[0.92rem] leading-[1.6] text-pro-text-soft";
+  "mb-2 text-[0.78rem] uppercase tracking-[0.12em] text-(--text-soft)";
+const dealCopyClass =
+  "mt-[10px] text-[0.92rem] leading-[1.6] text-(--text-soft)";
 const statCardClass =
   "rounded-[18px] border border-white/8 p-[14px] [background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)),rgba(255,255,255,0.02)]";
 const statValueClass = "mt-2 block text-base text-pro-text";
 const emptyStateClass = "rounded-[18px] bg-white/3 p-[18px]";
 const metaPillClass =
-  "inline-block rounded-full border border-[rgba(241,211,161,0.2)] bg-[rgba(214,180,123,0.1)] px-[10px] py-1 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-pro-gold-bright";
+  "inline-block rounded-full border border-[rgba(241,211,161,0.3)] bg-[rgba(214,180,123,0.12)] px-[10px] py-1 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-(--gold-bright)";
 const paginationButtonClass =
-  "rounded-full border border-[rgba(241,211,161,0.2)] bg-white/3 px-[14px] py-2 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-pro-text-soft transition duration-200 ease-out hover:-translate-y-px hover:border-[rgba(241,211,161,0.32)] hover:text-pro-gold-bright disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:translate-y-0";
+  "rounded-full border border-[rgba(241,211,161,0.3)] bg-white/3 px-[14px] py-2 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-(--gold-bright) transition duration-200 ease-out hover:-translate-y-px hover:border-[rgba(241,211,161,0.4)] hover:text-(--gold-bright) disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:translate-y-0";
 const searchInputClass =
   "w-full rounded-full border border-[rgba(241,211,161,0.22)] bg-[rgba(8,14,21,0.18)] px-[22px] py-[18px] text-[0.96rem] text-pro-gold-bright caret-pro-gold-bright outline-none backdrop-blur-[6px] placeholder:text-[rgba(241,211,161,0.84)] focus:border-[rgba(241,211,161,0.44)] focus:shadow-[0_0_0_4px_rgba(214,180,123,0.08)] max-[820px]:px-[18px] max-[820px]:py-[14px] max-[820px]:text-base max-[820px]:text-left";
 
@@ -307,10 +311,8 @@ export default function ExperienceShell({
     <button
       key={project.id}
       type="button"
-      className={cn(
-        switcherCard,
-        project.id === selectedId && switcherCardActive,
-      )}
+      aria-pressed={project.id === selectedId}
+      className={switcherCard}
       onClick={() => handleSelectProject(project.id)}
       onMouseEnter={() => setHoveredListProjectId(project.id)}
       onMouseLeave={() => setHoveredListProjectId(null)}
@@ -332,10 +334,7 @@ export default function ExperienceShell({
 
   const discoverContent = (
     <section
-      className={cn(
-        detailCard,
-        "detail-card-scroll flex-1 min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain [clip-path:inset(0_round_var(--radius-lg))] [scrollbar-color:rgba(241,211,161,0.24)_transparent] [scrollbar-width:thin] scroll-pb-[clamp(12px,2vw,24px)] max-[1240px]:flex-none max-[1240px]:overflow-visible max-[1240px]:[clip-path:none]",
-      )}
+      className={cn(detailCard, detailCardScrollShell)}
     >
       {/* <div className="detail-hero">
         <div>
@@ -470,10 +469,10 @@ export default function ExperienceShell({
       <section
         className={cn(
           detailCard,
-          "detail-card-opportunity detail-card-scroll relative",
+          "detail-card detail-card-opportunity detail-card-scroll relative",
           isMobileSheetBody
             ? "detail-card-opportunity--mobile-sheet m-0 flex-1 min-h-0 rounded-none border-none bg-transparent p-0 shadow-none [clip-path:none] overflow-x-hidden overflow-y-auto overscroll-contain overscroll-y-contain [-webkit-overflow-scrolling:touch]"
-            : "pb-[calc(22px+clamp(28px,5vw,48px))]",
+            : null,
         )}
       >
         {!isMobileSheetBody ? (
@@ -484,7 +483,11 @@ export default function ExperienceShell({
               onClick={handleBackToResults}
               aria-label="Close opportunity"
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-[18px] w-[18px]">
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+                className="h-[18px] w-[18px]"
+              >
                 <path
                   d="M18 6L6 18M6 6l12 12"
                   fill="none"
@@ -526,15 +529,21 @@ export default function ExperienceShell({
             </article>
             <article className={statCardClass}>
               <span className={statLabel}>Funding Ask</span>
-              <strong className={statValueClass}>{selectedProject.ticket}</strong>
+              <strong className={statValueClass}>
+                {selectedProject.ticket}
+              </strong>
             </article>
             <article className={statCardClass}>
               <span className={statLabel}>Program</span>
-              <strong className={statValueClass}>{selectedProject.program}</strong>
+              <strong className={statValueClass}>
+                {selectedProject.program}
+              </strong>
             </article>
             <article className={statCardClass}>
               <span className={statLabel}>Access</span>
-              <strong className={statValueClass}>{selectedProject.access}</strong>
+              <strong className={statValueClass}>
+                {selectedProject.access}
+              </strong>
             </article>
           </div>
 
@@ -553,10 +562,7 @@ export default function ExperienceShell({
 
   const browseContent = (
     <section
-      className={cn(
-        detailCard,
-        "detail-card-scroll flex-1 min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain [clip-path:inset(0_round_var(--radius-lg))] [scrollbar-color:rgba(241,211,161,0.24)_transparent] [scrollbar-width:thin] scroll-pb-[clamp(12px,2vw,24px)] max-[1240px]:flex-none max-[1240px]:overflow-visible max-[1240px]:[clip-path:none]",
-      )}
+      className={cn(detailCard, detailCardScrollShell)}
     >
       <div className={sectionHeadClass}>
         <div className="min-w-0">
@@ -584,10 +590,8 @@ export default function ExperienceShell({
               <button
                 key={category.id}
                 type="button"
-                className={cn(
-                  chipButton,
-                  browseCategoryId === category.id && chipButtonActive,
-                )}
+                aria-pressed={browseCategoryId === category.id}
+                className={chipButton}
                 onClick={() => setBrowseCategoryId(category.id)}
               >
                 {category.label}
@@ -608,7 +612,9 @@ export default function ExperienceShell({
                 renderProjectCard(
                   project,
                   <div className="my-[10px] mb-[2px] flex flex-wrap gap-2">
-                    <span className={metaPillClass}>{project.categoryLabel}</span>
+                    <span className={metaPillClass}>
+                      {project.categoryLabel}
+                    </span>
                   </div>,
                 ),
               )
@@ -629,10 +635,7 @@ export default function ExperienceShell({
 
   const modelsContent = (
     <section
-      className={cn(
-        detailCard,
-        "detail-card-scroll flex-1 min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain [clip-path:inset(0_round_var(--radius-lg))] [scrollbar-color:rgba(241,211,161,0.24)_transparent] [scrollbar-width:thin] scroll-pb-[clamp(12px,2vw,24px)] max-[1240px]:flex-none max-[1240px]:overflow-visible max-[1240px]:[clip-path:none]",
-      )}
+      className={cn(detailCard, detailCardScrollShell)}
     >
       <div className={viewStackClass}>
         <section className={detailCard}>
@@ -672,10 +675,7 @@ export default function ExperienceShell({
 
   const platformContent = (
     <section
-      className={cn(
-        detailCard,
-        "detail-card-scroll flex-1 min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain [clip-path:inset(0_round_var(--radius-lg))] [scrollbar-color:rgba(241,211,161,0.24)_transparent] [scrollbar-width:thin] scroll-pb-[clamp(12px,2vw,24px)] max-[1240px]:flex-none max-[1240px]:overflow-visible max-[1240px]:[clip-path:none]",
-      )}
+      className={cn(detailCard, detailCardScrollShell)}
     >
       <div className={sectionHeadClass}>
         <div className="min-w-0">
@@ -791,7 +791,12 @@ export default function ExperienceShell({
         }
       />
 
-      <header className={cn(topbarShellClass, "row-start-1 col-start-1 pointer-events-auto")}>
+      <header
+        className={cn(
+          topbarShellClass,
+          "row-start-1 col-start-1 pointer-events-auto",
+        )}
+      >
         <div className="flex min-w-0 items-center gap-[10px] max-[820px]:grid max-[820px]:w-full max-[820px]:grid-cols-[auto_auto_1fr] max-[820px]:items-center max-[820px]:gap-x-[10px] max-[820px]:gap-y-0">
           <div className={brandMarkClass}>PX</div>
           <span
@@ -804,17 +809,17 @@ export default function ExperienceShell({
             <ProfileAvatarIcon />
           </span>
           <div className="grid min-w-0 gap-[2px] max-[820px]:col-start-2 max-[820px]:row-start-1 max-[820px]:gap-[4px]">
-            <strong className="text-[0.8rem] font-bold uppercase tracking-[0.26em] text-pro-gold-bright max-[820px]:text-[0.92rem] max-[820px]:tracking-[0.14em]">
+            <strong className="font-sans text-base font-bold uppercase tracking-[0.2em] text-(--gold-bright) antialiased max-[820px]:text-[0.92rem] max-[820px]:tracking-[0.14em]">
               PRO X
             </strong>
-            <p className="m-0 text-[0.52rem] font-bold uppercase tracking-[0.16em] text-white/92 max-[820px]:hidden">
+            <p className="font-sans m-0 text-[0.72rem] font-bold uppercase tracking-[0.16em] text-white antialiased max-[820px]:hidden">
               Invitation-Only Investment Intelligence
             </p>
           </div>
         </div>
 
         <div
-          className="flex max-w-full items-center justify-center gap-[8px] overflow-x-auto px-0 py-[2px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[1240px]:w-full max-[820px]:w-full max-[820px]:justify-center max-[820px]:gap-[10px] max-[820px]:py-[4px]"
+          className={topbarNavTablistClass}
           role="tablist"
           aria-label="PRO X sections"
         >
@@ -828,8 +833,7 @@ export default function ExperienceShell({
                 aria-selected={isViewActive}
                 className={cn(
                   navButton,
-                  "min-w-0 flex-1 whitespace-nowrap text-center box-border max-[820px]:min-h-[42px] max-[820px]:py-[10px] max-[820px]:text-[0.72rem]",
-                  isViewActive && navButtonActive,
+                  "min-w-0 flex-1 whitespace-nowrap text-center max-[820px]:min-h-[42px] max-[820px]:py-[10px] max-[820px]:text-[0.72rem]",
                 )}
                 onClick={() => handleActivateView(view.id)}
               >
@@ -847,8 +851,10 @@ export default function ExperienceShell({
             <ProfileAvatarIcon />
           </span>
           <div className="grid gap-1">
-            <strong className="text-[0.72rem] font-bold text-pro-text">Investor Profile</strong>
-            <span className="text-[0.55rem] uppercase tracking-[0.08em] text-pro-text-soft">
+            <strong className="font-sans text-[0.88rem] font-bold text-(--text) antialiased">
+              Investor Profile
+            </strong>
+            <span className="font-sans text-[0.7rem] uppercase tracking-[0.08em] text-(--text-soft) antialiased">
               VIP / Standard placeholder
             </span>
           </div>

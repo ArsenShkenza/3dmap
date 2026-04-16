@@ -6,7 +6,6 @@ import {
   sectionLabel,
   serifHeading,
   switcherCard,
-  switcherCardActive,
 } from "@/lib/uiClasses";
 
 export default function AssetVault({
@@ -31,20 +30,17 @@ export default function AssetVault({
           <button
             key={asset.id}
             type="button"
-            className={cn(
-              switcherCard,
-              "rounded-2xl p-[14px]",
-              asset.id === selectedAssetId && switcherCardActive,
-            )}
+            aria-pressed={asset.id === selectedAssetId}
+            className={cn(switcherCard, "rounded-2xl p-[14px]")}
             onClick={() => onSelectAsset(asset)}
           >
-            <span className="block text-[0.7rem] uppercase tracking-[0.12em] text-pro-gold-bright">
+            <span className="block text-[0.7rem] uppercase tracking-[0.12em] text-(--gold-bright)">
               {asset.assignedProjectId ? "Mapped hero asset" : "Library asset"}
             </span>
             <strong className={cn(serifHeading, "mt-2 block text-base")}>
               {asset.label}
             </strong>
-            <span className="mt-[6px] block wrap-break-word text-[0.82rem] text-pro-text-faint">
+            <span className="mt-[6px] block wrap-break-word text-[0.82rem] text-(--text-soft)">
               {asset.fileName}
             </span>
           </button>
