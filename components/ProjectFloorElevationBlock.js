@@ -383,8 +383,22 @@ const legacyGhostButtonClass = cn(
   ghostLinkButton,
   "px-3 py-[9px] normal-case tracking-[0.04em]",
 );
-const elevationFrameClass =
-  "experience-elevation-frame rounded-[28px] border border-white/8 p-[18px] [background:linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02)),rgba(10,17,27,0.78)]";
+const elevationFrameBg =
+  "[background:linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02)),rgba(10,17,27,0.78)]";
+/** Standalone card below the page (border + 28px radius). */
+const elevationFrameClass = cn(
+  "experience-elevation-frame overflow-hidden rounded-[28px] border border-white/8 p-[18px]",
+  elevationFrameBg,
+);
+/**
+ * Embedded in ModelStage (`stageClass`): one frame only — match stage radius (22px / 18px on narrow),
+ * no second border; background matches standalone frame.
+ */
+const elevationFrameEmbeddedClass = cn(
+  "experience-elevation-frame overflow-hidden border-0 p-[18px]",
+  elevationFrameBg,
+  "rounded-[22px] max-[820px]:rounded-[18px]",
+);
 
 function getFloorPanelPlanSrc(projectId, floorNumber) {
   if (projectId === "tirana-signature-residences") {
@@ -879,7 +893,7 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
 
   const wrapElevation = (content) =>
     embedded ? (
-      <div className={cn("project-floor-elevation-embed", elevationFrameClass)}>
+      <div className={cn("project-floor-elevation-embed", elevationFrameEmbeddedClass)}>
         {content}
       </div>
     ) : (

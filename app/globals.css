@@ -217,6 +217,22 @@ body {
   border-radius: 0 0 20px 20px;
 }
 
+/* Same surface as `.project-floor-elevation-embed` / `elevationFrameClass` in ProjectFloorElevationBlock.js */
+.floor-elevation.is-tirana {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.05),
+      rgba(255, 255, 255, 0.02)
+    ),
+    rgba(10, 17, 27, 0.78);
+  box-shadow: none;
+}
+
+.floor-elevation.is-tirana::before {
+  display: none;
+}
+
 .elevation-caption {
   position: absolute;
   top: 16px;
@@ -2750,14 +2766,20 @@ button.primary-link-button.project-preview-2d-button {
   flex: 1 1 auto;
   width: 100%;
   min-height: 0;
-  /* Keep the embedded elevation frame neutral against surrounding panel gradients. */
+  overflow: hidden;
+  /* Align with Tailwind `elevationFrameClass` — same tokens as `.floor-elevation.is-tirana` */
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.04),
+      rgba(255, 255, 255, 0.05),
       rgba(255, 255, 255, 0.02)
     ),
-    #08121d !important;
+    rgba(10, 17, 27, 0.78);
+}
+
+/* One rounded surface inside the embed — avoid a second “card” corner stack vs. the frame. */
+.project-floor-elevation-embed > .floor-elevation {
+  border-radius: 0 !important;
 }
 
 /* Tirana card fills the same box as the shell (width + min height + flex growth) */
