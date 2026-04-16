@@ -174,7 +174,7 @@ export default function FullProjectExperience({
                 "project-detail-card project-preview-card gap-[18px] max-[820px]:rounded-[22px] max-[820px]:p-[14px]",
               )}
             >
-              <div className={sectionHeadClass}>
+              <div className="section-head min-w-0 w-full">
                 <div className="min-w-0">
                   <p className={sectionLabel}>Project Preview</p>
                   <h3 className={cn(serifHeading, "text-[1.05rem]")}>
