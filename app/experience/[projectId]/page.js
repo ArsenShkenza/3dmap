@@ -8,7 +8,7 @@ export default async function ExperiencePage({ params }) {
 
   if (!project) {
     return (
-      <main style={{ padding: 24 }}>
+      <main className="p-6 text-pro-text">
         <p>Project not found.</p>
       </main>
     );

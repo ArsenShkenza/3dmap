@@ -13,8 +13,25 @@ import { flushSync } from "react-dom";
 import AssetVault from "@/components/AssetVault";
 import MapExperience from "@/components/MapExperience";
 import ModelStage from "@/components/ModelStage";
+import { cn } from "@/lib/cn";
 import { assetVaultPreviewProject, exploreCategories } from "@/lib/projects";
 import { filterProjectsBySearchQuery } from "@/lib/searchFilter";
+import {
+  chipButton,
+  chipButtonActive,
+  countPill,
+  detailCard,
+  ghostLinkButton,
+  iconButton,
+  navButton,
+  navButtonActive,
+  proseSoft,
+  sectionLabel,
+  serifHeading,
+  statLabel,
+  switcherCard,
+  switcherCardActive,
+} from "@/lib/uiClasses";
 
 const RESULTS_PREVIEW = 4;
 const RESULTS_PAGE_SIZE = 5;
@@ -60,6 +77,35 @@ function normalizeInitialSelectedId(id, projectList) {
   }
   return projectList.some((project) => project.id === id) ? id : null;
 }
+
+const topbarShellClass =
+  "relative z-[6] grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-[24px] border border-pro-line px-[14px] py-[10px] shadow-pro-panel backdrop-blur-[20px] [background:radial-gradient(circle_at_top_right,rgba(214,180,123,0.16),transparent_28%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02)),rgba(6,11,18,0.84)] max-[1240px]:grid-cols-1 max-[820px]:gap-[10px] max-[820px]:rounded-[24px] max-[820px]:px-[16px] max-[820px]:py-[14px] max-[480px]:px-[14px] max-[480px]:py-3";
+const brandMarkClass =
+  "grid h-[34px] w-[34px] place-items-center rounded-[12px] border border-black/12 bg-pro-gold-bright text-[0.72rem] font-bold uppercase tracking-[0.15em] text-black max-[820px]:h-[38px] max-[820px]:w-[38px] max-[820px]:rounded-[14px] max-[820px]:text-[0.8rem]";
+const profileAvatarClass =
+  "grid h-[34px] w-[34px] place-items-center rounded-full border border-[rgba(241,211,161,0.28)] bg-[rgba(214,180,123,0.08)] text-pro-gold-bright [&_svg]:h-[16px] [&_svg]:w-[16px] max-[820px]:h-[38px] max-[820px]:w-[38px] max-[820px]:[&_svg]:h-[18px] max-[820px]:[&_svg]:w-[18px]";
+const pageStageClass =
+  "min-h-0 gap-5 pointer-events-none max-[1240px]:flex max-[1240px]:min-h-auto max-[1240px]:flex-col-reverse max-[1240px]:justify-end max-[1240px]:gap-3";
+const viewStackClass = "grid gap-[18px]";
+const viewSectionClass = "grid gap-4";
+const sectionHeadClass =
+  "flex items-start justify-between gap-3 max-[820px]:flex-col max-[820px]:items-start";
+const compactCopyClass = "m-0 text-pro-text-soft leading-[1.6]";
+const switcherHeadClass =
+  "flex items-start justify-between gap-3 max-[1480px]:flex-col max-[1480px]:items-start";
+const dealCityClass =
+  "mb-2 text-[0.78rem] uppercase tracking-[0.12em] text-pro-text-faint";
+const dealCopyClass = "mt-[10px] text-[0.92rem] leading-[1.6] text-pro-text-soft";
+const statCardClass =
+  "rounded-[18px] border border-white/8 p-[14px] [background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)),rgba(255,255,255,0.02)]";
+const statValueClass = "mt-2 block text-base text-pro-text";
+const emptyStateClass = "rounded-[18px] bg-white/3 p-[18px]";
+const metaPillClass =
+  "inline-block rounded-full border border-[rgba(241,211,161,0.2)] bg-[rgba(214,180,123,0.1)] px-[10px] py-1 text-[0.65rem] font-bold uppercase tracking-[0.08em] text-pro-gold-bright";
+const paginationButtonClass =
+  "rounded-full border border-[rgba(241,211,161,0.2)] bg-white/3 px-[14px] py-2 text-[0.72rem] font-bold uppercase tracking-[0.08em] text-pro-text-soft transition duration-200 ease-out hover:-translate-y-px hover:border-[rgba(241,211,161,0.32)] hover:text-pro-gold-bright disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:translate-y-0";
+const searchInputClass =
+  "w-full rounded-full border border-[rgba(241,211,161,0.22)] bg-[rgba(8,14,21,0.18)] px-[22px] py-[18px] text-[0.96rem] text-pro-gold-bright caret-pro-gold-bright outline-none backdrop-blur-[6px] placeholder:text-[rgba(241,211,161,0.84)] focus:border-[rgba(241,211,161,0.44)] focus:shadow-[0_0_0_4px_rgba(214,180,123,0.08)] max-[820px]:px-[18px] max-[820px]:py-[14px] max-[820px]:text-base max-[820px]:text-left";
 
 export default function ExperienceShell({
   assetLibrary,
@@ -257,8 +303,40 @@ export default function ExperienceShell({
           : "Type to reveal the investment rail and review matching opportunities."
       : "Search at any time to jump back into Discover.";
 
+  const renderProjectCard = (project, extraMeta = null) => (
+    <button
+      key={project.id}
+      type="button"
+      className={cn(
+        switcherCard,
+        project.id === selectedId && switcherCardActive,
+      )}
+      onClick={() => handleSelectProject(project.id)}
+      onMouseEnter={() => setHoveredListProjectId(project.id)}
+      onMouseLeave={() => setHoveredListProjectId(null)}
+    >
+      <div className={switcherHeadClass}>
+        <div className="min-w-0">
+          <p className={dealCityClass}>
+            {project.city} / {project.district}
+          </p>
+          <strong className={cn(serifHeading, "block text-base")}>
+            {project.name}
+          </strong>
+        </div>
+      </div>
+      {extraMeta}
+      <p className={dealCopyClass}>{project.stageSummary}</p>
+    </button>
+  );
+
   const discoverContent = (
-    <section className="detail-card detail-card-scroll">
+    <section
+      className={cn(
+        detailCard,
+        "detail-card-scroll flex-1 min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain [clip-path:inset(0_round_var(--radius-lg))] [scrollbar-color:rgba(241,211,161,0.24)_transparent] [scrollbar-width:thin] scroll-pb-[clamp(12px,2vw,24px)] max-[1240px]:flex-none max-[1240px]:overflow-visible max-[1240px]:[clip-path:none]",
+      )}
+    >
       {/* <div className="detail-hero">
         <div>
           <p className="section-label">Discover</p>
@@ -266,7 +344,12 @@ export default function ExperienceShell({
         </div>
       </div> */}
 
-      <div className="view-stack">
+      <div
+        className={cn(
+          viewStackClass,
+          "min-h-0 content-start pb-[clamp(20px,3.5vw,40px)]",
+        )}
+      >
         {/* <div className="view-section">
           <p className="detail-copy compact discover-panel-copy">
             Search stays on the map so the market context remains visible while
@@ -275,46 +358,27 @@ export default function ExperienceShell({
         </div> */}
 
         {hasSearchQuery ? (
-          <div className="view-section">
-            <div className="section-head">
-              <div>
-                <p className="section-label">Results</p>
-                <h3>Select a property to review it below.</h3>
+          <div className={viewSectionClass}>
+            <div className={sectionHeadClass}>
+              <div className="min-w-0">
+                <p className={sectionLabel}>Results</p>
+                <h3 className={cn(serifHeading, "text-[1.05rem]")}>
+                  Select a property to review it below.
+                </h3>
               </div>
-              <span className="count-pill">
+              <span className={countPill}>
                 {filteredProjects.length} result
                 {filteredProjects.length === 1 ? "" : "s"}
               </span>
             </div>
 
-            <div className="switcher-list">
+            <div className="grid gap-[10px] pb-[clamp(12px,2.4vw,26px)]">
               {filteredProjects.length ? (
-                visibleProjects.map((project) => (
-                  <button
-                    key={project.id}
-                    type="button"
-                    className={`switcher-card${
-                      project.id === selectedId ? " active" : ""
-                    }`}
-                    onClick={() => handleSelectProject(project.id)}
-                    onMouseEnter={() => setHoveredListProjectId(project.id)}
-                    onMouseLeave={() => setHoveredListProjectId(null)}
-                  >
-                    <div className="switcher-card-head">
-                      <div>
-                        <p className="deal-city">
-                          {project.city} / {project.district}
-                        </p>
-                        <strong>{project.name}</strong>
-                      </div>
-                    </div>
-                    <p className="deal-copy">{project.stageSummary}</p>
-                  </button>
-                ))
+                visibleProjects.map((project) => renderProjectCard(project))
               ) : (
-                <div className="empty-state">
-                  <p className="section-label">No exact match</p>
-                  <p>
+                <div className={emptyStateClass}>
+                  <p className={sectionLabel}>No exact match</p>
+                  <p className={compactCopyClass}>
                     Try a broader search term or remove the property-type
                     keyword to reopen the full deck.
                   </p>
@@ -324,12 +388,15 @@ export default function ExperienceShell({
 
             {filteredProjects.length > 0 &&
             (hasMoreThanPreview || resultsExpanded) ? (
-              <div className="results-list-footer">
+              <div className="mt-[14px] flex flex-col items-center gap-3 border-t border-white/6 pt-[14px] pb-[clamp(12px,2.2vw,22px)]">
                 {!resultsExpanded && hasMoreThanPreview ? (
-                  <div className="see-all-results-row">
+                  <div className="flex w-full justify-center">
                     <button
                       type="button"
-                      className="ghost-link-button see-all-results-button"
+                      className={cn(
+                        ghostLinkButton,
+                        "text-[0.85rem] normal-case tracking-[0.04em]",
+                      )}
                       onClick={() => {
                         setResultsExpanded(true);
                         setResultsPage(1);
@@ -341,10 +408,10 @@ export default function ExperienceShell({
                 ) : null}
 
                 {resultsExpanded && totalResultPages > 1 ? (
-                  <div className="results-pagination-bar">
+                  <div className="flex w-full flex-wrap items-center justify-center gap-[14px]">
                     <button
                       type="button"
-                      className="results-pagination-button"
+                      className={paginationButtonClass}
                       disabled={resultsPage <= 1}
                       onClick={() =>
                         setResultsPage((page) => Math.max(1, page - 1))
@@ -352,12 +419,12 @@ export default function ExperienceShell({
                     >
                       Previous
                     </button>
-                    <span className="results-pagination-status">
+                    <span className="text-[0.78rem] uppercase tracking-[0.06em] text-pro-text-soft">
                       Page {resultsPage} of {totalResultPages}
                     </span>
                     <button
                       type="button"
-                      className="results-pagination-button"
+                      className={paginationButtonClass}
                       disabled={resultsPage >= totalResultPages}
                       onClick={() =>
                         setResultsPage((page) =>
@@ -371,10 +438,13 @@ export default function ExperienceShell({
                 ) : null}
 
                 {resultsExpanded && hasMoreThanPreview ? (
-                  <div className="see-all-results-row">
+                  <div className="flex w-full justify-center">
                     <button
                       type="button"
-                      className="ghost-link-button see-all-results-button"
+                      className={cn(
+                        ghostLinkButton,
+                        "text-[0.85rem] normal-case tracking-[0.04em]",
+                      )}
                       onClick={() => {
                         setResultsExpanded(false);
                         setResultsPage(1);
@@ -398,19 +468,23 @@ export default function ExperienceShell({
     }
     return (
       <section
-        className={`detail-card detail-card-opportunity detail-card-scroll${
-          isMobileSheetBody ? " detail-card-opportunity--mobile-sheet" : ""
-        }`}
+        className={cn(
+          detailCard,
+          "detail-card-opportunity detail-card-scroll relative",
+          isMobileSheetBody
+            ? "detail-card-opportunity--mobile-sheet m-0 flex-1 min-h-0 rounded-none border-none bg-transparent p-0 shadow-none [clip-path:none] overflow-x-hidden overflow-y-auto overscroll-contain overscroll-y-contain [-webkit-overflow-scrolling:touch]"
+            : "pb-[calc(22px+clamp(28px,5vw,48px))]",
+        )}
       >
         {!isMobileSheetBody ? (
-          <div className="opportunity-top-bar">
+          <div className="my-[-4px] mb-[2px] flex items-center justify-end gap-[10px]">
             <button
               type="button"
-              className="opportunity-dismiss"
+              className={iconButton}
               onClick={handleBackToResults}
               aria-label="Close opportunity"
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true">
+              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-[18px] w-[18px]">
                 <path
                   d="M18 6L6 18M6 6l12 12"
                   fill="none"
@@ -423,34 +497,44 @@ export default function ExperienceShell({
           </div>
         ) : null}
 
-        <div className="detail-hero">
-          <div className="opportunity-heading">
-            <p className="section-label">Opportunity</p>
-            <h2 id="opportunity-sheet-title">{selectedProject.name}</h2>
+        <div className="flex items-start justify-between gap-3 max-[820px]:flex-col max-[820px]:items-start">
+          <div className="min-w-0 flex-1">
+            <p className={sectionLabel}>Opportunity</p>
+            <h2
+              id="opportunity-sheet-title"
+              className={cn(serifHeading, "text-[1.6rem]")}
+            >
+              {selectedProject.name}
+            </h2>
           </div>
         </div>
 
-        <div className="view-stack">
-          <div className="view-section">
-            <p className="detail-copy compact">{selectedProject.memo}</p>
+        <div
+          className={cn(
+            viewStackClass,
+            "content-start pb-[clamp(44px,8vw,88px)]",
+          )}
+        >
+          <div className={viewSectionClass}>
+            <p className={compactCopyClass}>{selectedProject.memo}</p>
           </div>
 
-          <div className="detail-stats tight">
-            <article>
-              <span className="stat-label">Target ROI</span>
-              <strong>{selectedProject.roi}</strong>
+          <div className="grid grid-cols-2 gap-3 max-[1480px]:grid-cols-2 max-[820px]:grid-cols-1">
+            <article className={statCardClass}>
+              <span className={statLabel}>Target ROI</span>
+              <strong className={statValueClass}>{selectedProject.roi}</strong>
             </article>
-            <article>
-              <span className="stat-label">Funding Ask</span>
-              <strong>{selectedProject.ticket}</strong>
+            <article className={statCardClass}>
+              <span className={statLabel}>Funding Ask</span>
+              <strong className={statValueClass}>{selectedProject.ticket}</strong>
             </article>
-            <article>
-              <span className="stat-label">Program</span>
-              <strong>{selectedProject.program}</strong>
+            <article className={statCardClass}>
+              <span className={statLabel}>Program</span>
+              <strong className={statValueClass}>{selectedProject.program}</strong>
             </article>
-            <article>
-              <span className="stat-label">Access</span>
-              <strong>{selectedProject.access}</strong>
+            <article className={statCardClass}>
+              <span className={statLabel}>Access</span>
+              <strong className={statValueClass}>{selectedProject.access}</strong>
             </article>
           </div>
 
@@ -468,24 +552,31 @@ export default function ExperienceShell({
   };
 
   const browseContent = (
-    <section className="detail-card detail-card-scroll">
-      <div className="detail-hero">
-        <div>
-          <p className="section-label">Browse</p>
-          <h2>Explore the deck by mandate.</h2>
+    <section
+      className={cn(
+        detailCard,
+        "detail-card-scroll flex-1 min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain [clip-path:inset(0_round_var(--radius-lg))] [scrollbar-color:rgba(241,211,161,0.24)_transparent] [scrollbar-width:thin] scroll-pb-[clamp(12px,2vw,24px)] max-[1240px]:flex-none max-[1240px]:overflow-visible max-[1240px]:[clip-path:none]",
+      )}
+    >
+      <div className={sectionHeadClass}>
+        <div className="min-w-0">
+          <p className={sectionLabel}>Browse</p>
+          <h2 className={cn(serifHeading, "text-[1.6rem]")}>
+            Explore the deck by mandate.
+          </h2>
         </div>
       </div>
 
-      <div className="view-stack">
-        <p className="detail-copy compact browse-deck-caption">
+      <div className={viewStackClass}>
+        <p className={cn(compactCopyClass, "mt-[-4px] leading-[1.55]")}>
           Filter the curated stack by investment mandate—land and development,
           partnership asks, or turn-key income.
         </p>
 
-        <div className="view-section browse-filter-section">
-          <p className="section-label">Category</p>
+        <div className="grid gap-[10px]">
+          <p className={sectionLabel}>Category</p>
           <div
-            className="category-row"
+            className="mt-0 flex flex-wrap gap-[10px]"
             role="group"
             aria-label="Investment category"
           >
@@ -493,9 +584,10 @@ export default function ExperienceShell({
               <button
                 key={category.id}
                 type="button"
-                className={`category-chip${
-                  browseCategoryId === category.id ? " active" : ""
-                }`}
+                className={cn(
+                  chipButton,
+                  browseCategoryId === category.id && chipButtonActive,
+                )}
                 onClick={() => setBrowseCategoryId(category.id)}
               >
                 {category.label}
@@ -503,46 +595,27 @@ export default function ExperienceShell({
             ))}
           </div>
 
-          <div className="browse-inline-count">
-            <span className="count-pill">
+          <div className="mt-3 flex justify-end">
+            <span className={countPill}>
               {browseFilteredProjects.length} result
               {browseFilteredProjects.length === 1 ? "" : "s"}
             </span>
           </div>
 
-          <div className="switcher-list">
+          <div className="grid gap-[10px] pb-[clamp(12px,2.4vw,26px)]">
             {browseFilteredProjects.length ? (
-              browseFilteredProjects.map((project) => (
-                <button
-                  key={project.id}
-                  type="button"
-                  className={`switcher-card${
-                    project.id === selectedId ? " active" : ""
-                  }`}
-                  onClick={() => handleSelectProject(project.id)}
-                  onMouseEnter={() => setHoveredListProjectId(project.id)}
-                  onMouseLeave={() => setHoveredListProjectId(null)}
-                >
-                  <div className="switcher-card-head">
-                    <div>
-                      <p className="deal-city">
-                        {project.city} / {project.district}
-                      </p>
-                      <strong>{project.name}</strong>
-                    </div>
-                  </div>
-                  <div className="browse-card-meta">
-                    <span className="browse-meta-pill">
-                      {project.categoryLabel}
-                    </span>
-                  </div>
-                  <p className="deal-copy">{project.stageSummary}</p>
-                </button>
-              ))
+              browseFilteredProjects.map((project) =>
+                renderProjectCard(
+                  project,
+                  <div className="my-[10px] mb-[2px] flex flex-wrap gap-2">
+                    <span className={metaPillClass}>{project.categoryLabel}</span>
+                  </div>,
+                ),
+              )
             ) : (
-              <div className="empty-state">
-                <p className="section-label">No matches</p>
-                <p>
+              <div className={emptyStateClass}>
+                <p className={sectionLabel}>No matches</p>
+                <p className={compactCopyClass}>
                   Widen the category filter to bring opportunities back into
                   view.
                 </p>
@@ -555,16 +628,23 @@ export default function ExperienceShell({
   );
 
   const modelsContent = (
-    <section className="detail-card detail-card-scroll">
-      <div className="view-stack">
-        <section className="detail-card">
-          <div className="detail-hero">
-            <div>
-              <p className="section-label">Models</p>
-              <h2>Explore the full 3D library.</h2>
+    <section
+      className={cn(
+        detailCard,
+        "detail-card-scroll flex-1 min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain [clip-path:inset(0_round_var(--radius-lg))] [scrollbar-color:rgba(241,211,161,0.24)_transparent] [scrollbar-width:thin] scroll-pb-[clamp(12px,2vw,24px)] max-[1240px]:flex-none max-[1240px]:overflow-visible max-[1240px]:[clip-path:none]",
+      )}
+    >
+      <div className={viewStackClass}>
+        <section className={detailCard}>
+          <div className={sectionHeadClass}>
+            <div className="min-w-0">
+              <p className={sectionLabel}>Models</p>
+              <h2 className={cn(serifHeading, "text-[1.6rem]")}>
+                Explore the full 3D library.
+              </h2>
             </div>
           </div>
-          <p className="detail-copy compact browse-deck-caption">
+          <p className={cn(compactCopyClass, "mt-[-4px] leading-[1.55]")}>
             Mapped heroes, integrated towers, interiors, and every exterior in
             the vault—the same files you can open from Discover and Browse on
             the map.
@@ -578,7 +658,7 @@ export default function ExperienceShell({
         />
 
         {vaultPreviewAsset ? (
-          <section className="detail-card">
+          <section className={detailCard}>
             <ModelStage
               asset={vaultPreviewAsset}
               project={assetVaultPreviewProject}
@@ -591,21 +671,28 @@ export default function ExperienceShell({
   );
 
   const platformContent = (
-    <section className="detail-card detail-card-scroll">
-      <div className="detail-hero">
-        <div>
-          <p className="section-label">Platform</p>
-          <h2>How PRO X wins the room.</h2>
+    <section
+      className={cn(
+        detailCard,
+        "detail-card-scroll flex-1 min-h-0 overflow-x-hidden overflow-y-auto overscroll-contain [clip-path:inset(0_round_var(--radius-lg))] [scrollbar-color:rgba(241,211,161,0.24)_transparent] [scrollbar-width:thin] scroll-pb-[clamp(12px,2vw,24px)] max-[1240px]:flex-none max-[1240px]:overflow-visible max-[1240px]:[clip-path:none]",
+      )}
+    >
+      <div className={sectionHeadClass}>
+        <div className="min-w-0">
+          <p className={sectionLabel}>Platform</p>
+          <h2 className={cn(serifHeading, "text-[1.6rem]")}>
+            How PRO X wins the room.
+          </h2>
         </div>
       </div>
 
-      <div className="platform-copy">
-        <p className="lead platform-lead">
+      <div className="grid gap-[14px]">
+        <p className="m-0 text-[1.04rem] leading-[1.6] text-pro-text-soft">
           A cinematic capital-raising surface for premium real estate
           opportunities, built to feel closer to private banking than a local
           property portal.
         </p>
-        <p className="detail-copy compact">
+        <p className={compactCopyClass}>
           The concept stays intentionally narrow: a curated set of flagship
           opportunities, a map-led market view, and a presentation surface that
           turns static development narratives into investor-facing product
@@ -613,30 +700,38 @@ export default function ExperienceShell({
         </p>
       </div>
 
-      <div className="section-head">
-        <div>
-          <p className="section-label">Unfair Advantage</p>
-          <h3>Why this collaboration is compelling.</h3>
+      <div className={sectionHeadClass}>
+        <div className="min-w-0">
+          <p className={sectionLabel}>Unfair Advantage</p>
+          <h3 className={cn(serifHeading, "text-[1.05rem]")}>
+            Why this collaboration is compelling.
+          </h3>
         </div>
       </div>
-      <div className="advantage-list">
-        <div>
-          <strong>Xplan Studio</strong>
-          <p>
+      <div className="grid gap-3 pt-4">
+        <div className="rounded-2xl bg-white/3 p-[14px]">
+          <strong className={cn(serifHeading, "block text-base")}>
+            Xplan Studio
+          </strong>
+          <p className={cn(proseSoft, "mt-2")}>
             Supplies the future-state vision, design language, and 3D material
             that makes the investment story believable.
           </p>
         </div>
-        <div>
-          <strong>PRO Real Estate</strong>
-          <p>
+        <div className="rounded-2xl bg-white/3 p-[14px]">
+          <strong className={cn(serifHeading, "block text-base")}>
+            PRO Real Estate
+          </strong>
+          <p className={cn(proseSoft, "mt-2")}>
             Supplies the market access, investor network, and financing
             narrative that closes the commercial side.
           </p>
         </div>
-        <div>
-          <strong>Better Tech</strong>
-          <p>
+        <div className="rounded-2xl bg-white/3 p-[14px]">
+          <strong className={cn(serifHeading, "block text-base")}>
+            Better Tech
+          </strong>
+          <p className={cn(proseSoft, "mt-2")}>
             Turns static documents and renders into a Silicon Valley-style
             product surface for high-ticket conversations.
           </p>
@@ -662,20 +757,23 @@ export default function ExperienceShell({
 
   const mapSearchOverlayInner = (
     <>
-      <label className="search-input map-search-input">
+      <label className="block w-full">
         <span className="sr-only">Search deals</span>
         <input
           value={query}
           onChange={(event) => handleSearchChange(event.target.value)}
           placeholder="Search by city, land or building"
+          className={searchInputClass}
         />
       </label>
-      <p className="map-search-helper">{searchHelperText}</p>
+      <p className="m-0 text-center text-[0.78rem] leading-[1.45] text-pro-gold-bright drop-shadow-[0_2px_12px_rgba(0,0,0,0.55)] max-[820px]:text-[clamp(0.58rem,2.4vw,0.65rem)] max-[820px]:leading-[1.3]">
+        {searchHelperText}
+      </p>
     </>
   );
 
   return (
-    <main className="page-shell">
+    <main className="relative grid h-dvh min-h-dvh grid-rows-[auto_minmax(0,1fr)] gap-[18px] overflow-hidden p-[18px] *:min-w-0 *:min-h-0 max-[1240px]:h-auto max-[1240px]:min-h-dvh max-[1240px]:gap-3 max-[1240px]:overflow-visible max-[1240px]:pt-[max(16px,env(safe-area-inset-top,0px))] max-[1240px]:pr-[max(16px,env(safe-area-inset-right,0px))] max-[1240px]:pb-[max(16px,env(safe-area-inset-bottom,0px))] max-[1240px]:pl-[max(16px,env(safe-area-inset-left,0px))] max-[820px]:gap-3 max-[820px]:pt-[max(12px,env(safe-area-inset-top,0px))] max-[820px]:pr-[max(12px,env(safe-area-inset-right,0px))] max-[820px]:pb-[max(12px,env(safe-area-inset-bottom,0px))] max-[820px]:pl-[max(12px,env(safe-area-inset-left,0px))]">
       <MapExperience
         assetLibrary={assetLibrary}
         projects={mapProjectList}
@@ -693,22 +791,33 @@ export default function ExperienceShell({
         }
       />
 
-      <header className="page-topbar">
-        <div className="topbar-brand">
-          <div className="topbar-brand-mark">PX</div>
+      <header className={cn(topbarShellClass, "row-start-1 col-start-1 pointer-events-auto")}>
+        <div className="flex min-w-0 items-center gap-[10px] max-[820px]:grid max-[820px]:w-full max-[820px]:grid-cols-[auto_auto_1fr] max-[820px]:items-center max-[820px]:gap-x-[10px] max-[820px]:gap-y-0">
+          <div className={brandMarkClass}>PX</div>
           <span
-            className="profile-avatar topbar-brand-profile-avatar"
+            className={cn(
+              profileAvatarClass,
+              "hidden max-[820px]:grid max-[820px]:col-start-3 max-[820px]:row-start-1 max-[820px]:justify-self-end",
+            )}
             aria-hidden="true"
           >
             <ProfileAvatarIcon />
           </span>
-          <div className="topbar-brand-copy">
-            <strong>PRO X</strong>
-            <p className="eyebrow">Invitation-Only Investment Intelligence</p>
+          <div className="grid min-w-0 gap-[2px] max-[820px]:col-start-2 max-[820px]:row-start-1 max-[820px]:gap-[4px]">
+            <strong className="text-[0.8rem] font-bold uppercase tracking-[0.26em] text-pro-gold-bright max-[820px]:text-[0.92rem] max-[820px]:tracking-[0.14em]">
+              PRO X
+            </strong>
+            <p className="m-0 text-[0.52rem] font-bold uppercase tracking-[0.16em] text-white/92 max-[820px]:hidden">
+              Invitation-Only Investment Intelligence
+            </p>
           </div>
         </div>
 
-        <div className="topbar-nav" role="tablist" aria-label="PRO X sections">
+        <div
+          className="flex max-w-full items-center justify-center gap-[8px] overflow-x-auto px-0 py-[2px] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-[1240px]:w-full max-[820px]:w-full max-[820px]:justify-center max-[820px]:gap-[10px] max-[820px]:py-[4px]"
+          role="tablist"
+          aria-label="PRO X sections"
+        >
           {panelViews.map((view) => {
             const isViewActive = activeView === view.id;
             return (
@@ -717,7 +826,11 @@ export default function ExperienceShell({
                 type="button"
                 role="tab"
                 aria-selected={isViewActive}
-                className={`panel-nav-button${isViewActive ? " active" : ""}`}
+                className={cn(
+                  navButton,
+                  "min-w-0 flex-1 whitespace-nowrap text-center box-border max-[820px]:min-h-[42px] max-[820px]:py-[10px] max-[820px]:text-[0.72rem]",
+                  isViewActive && navButtonActive,
+                )}
                 onClick={() => handleActivateView(view.id)}
               >
                 {view.label}
@@ -727,51 +840,63 @@ export default function ExperienceShell({
         </div>
 
         <div
-          className="profile-placeholder"
+          className="flex min-w-[190px] items-center gap-[10px] justify-self-end rounded-[16px] border border-white/8 bg-white/3 px-[12px] py-[8px] max-[820px]:hidden"
           aria-label="Investor profile placeholder"
         >
-          <span className="profile-avatar" aria-hidden="true">
+          <span className={profileAvatarClass} aria-hidden="true">
             <ProfileAvatarIcon />
           </span>
-          <div className="profile-copy">
-            <strong>Investor Profile</strong>
-            <span>VIP / Standard placeholder</span>
+          <div className="grid gap-1">
+            <strong className="text-[0.72rem] font-bold text-pro-text">Investor Profile</strong>
+            <span className="text-[0.55rem] uppercase tracking-[0.08em] text-pro-text-soft">
+              VIP / Standard placeholder
+            </span>
           </div>
         </div>
       </header>
 
       <div
-        className={`experience-stage${shouldShowPanel ? " rail-open" : " rail-closed"}`}
+        className={cn(
+          pageStageClass,
+          "relative z-2 row-start-2 col-start-1",
+          shouldShowPanel
+            ? "grid grid-cols-[minmax(360px,500px)_minmax(0,1fr)] max-[1360px]:grid-cols-[minmax(320px,440px)_minmax(0,1fr)]"
+            : "grid grid-cols-[minmax(0,1fr)]",
+        )}
       >
         {shouldShowPanel ? (
-          <div className="content-grid">{panelContent}</div>
+          <div className="relative z-2 flex h-full min-h-0 flex-col gap-[18px] pointer-events-auto max-[1240px]:h-auto max-[1240px]:min-h-auto">
+            {panelContent}
+          </div>
         ) : null}
 
-        <section className="map-shell">
+        <section className="relative min-h-0 overflow-visible bg-transparent pointer-events-none max-[1240px]:z-2 max-[1240px]:min-h-[clamp(108px,24dvh,200px)] max-[1240px]:w-full max-[1240px]:shrink-0">
           {isNarrowStack ? (
-            <div className="map-search-stack">
-              <div className="map-search-overlay map-search-overlay--stacked">
+            <div className="pointer-events-none absolute left-1/2 top-[max(12px,env(safe-area-inset-top,0px))] z-3 grid w-[min(var(--search-track-width),calc(100%-32px))] -translate-x-1/2 gap-[10px]">
+              <div className="pointer-events-auto relative grid w-full gap-3">
                 {mapSearchOverlayInner}
               </div>
             </div>
           ) : (
-            <div className="map-search-overlay">{mapSearchOverlayInner}</div>
+            <div className="pointer-events-auto absolute left-1/2 top-0 z-3 grid w-[min(var(--search-track-width),calc(100%-48px))] -translate-x-1/2 gap-3">
+              {mapSearchOverlayInner}
+            </div>
           )}
         </section>
       </div>
 
       {useOpportunityMobileSheet ? (
-        <div className="opportunity-mobile-sheet-host">
+        <div className="pointer-events-none relative z-4 row-span-full col-start-1">
           {mobileOpportunitySheetOpen ? (
             <div
-              className="opportunity-mobile-sheet-scrim"
+              className="opportunity-mobile-sheet-scrim pointer-events-auto"
               aria-hidden="true"
               onClick={() => setMobileOpportunitySheetOpen(false)}
             />
           ) : null}
           {mobileOpportunitySheetOpen ? (
             <div
-              className="opportunity-mobile-sheet-panel"
+              className="opportunity-mobile-sheet-panel pointer-events-auto"
               role="dialog"
               aria-modal="true"
               aria-labelledby="opportunity-sheet-title"
@@ -781,7 +906,7 @@ export default function ExperienceShell({
           ) : (
             <button
               type="button"
-              className="opportunity-mobile-sheet-launch"
+              className="opportunity-mobile-sheet-launch pointer-events-auto"
               onClick={() => setMobileOpportunitySheetOpen(true)}
             >
               <span className="opportunity-mobile-sheet-launch-label">

@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   color-scheme: dark;
   --bg: #071019; 
@@ -56,13 +58,15 @@ body {
   overflow-y: auto;
 }
 
-button,
-input {
-  font: inherit;
-}
+@layer base {
+  button,
+  input {
+    font: inherit;
+  }
 
-button {
-  cursor: pointer;
+  button {
+    cursor: pointer;
+  }
 }
 
 .experience-page {
@@ -597,8 +601,8 @@ button {
   inset: 0;
   width: 100%;
   height: 100%;
-  background: rgba(4, 7, 12, 0.62);
-  backdrop-filter: blur(0px);
+  background: rgba(4, 7, 12, 0.56);
+  backdrop-filter: blur(4px);
   border: none;
   padding: 0;
   cursor: pointer;
@@ -617,12 +621,13 @@ button {
   bottom: 0px;
   width: min(1600px, calc(100vw - 84px));
   max-width: 1600px;
-  background: #44413f;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #4a4744;
   box-shadow: 24px 0 60px rgba(0, 0, 0, 0.44);
   transform: translateX(-100%);
   transition: transform 360ms cubic-bezier(0.32, 0.72, 0, 1);
   overflow: hidden;
-  border-radius: 0 14px 14px 0;
+  border-radius: 0 18px 18px 0;
 }
 
 .floor-panel.is-open .floor-panel-sheet {
@@ -642,8 +647,8 @@ button {
   border: none;
   padding: 0;
   background: transparent;
-  color: rgba(255, 255, 255, 0.42);
-  font-size: 2.4rem;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 2rem;
   line-height: 1;
   cursor: pointer;
 }
@@ -706,8 +711,8 @@ button {
 .floor-panel-head {
   position: relative;
   display: flex;
-  align-items: left;
-  justify-content: left;
+  align-items: center;
+  justify-content: flex-start;
   gap: 18px;
   padding: 30px 44px 12px;
 }
@@ -722,8 +727,8 @@ button {
 
 .floor-panel-zone-pill {
   padding: 7px 14px 6px;
-  background: rgba(255, 255, 255, 0.88);
-  color: #3d3a38;
+  background: rgba(244, 240, 235, 0.95);
+  color: #4c4846;
   font-size: 0.82rem;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -892,25 +897,97 @@ button {
 
 @media (max-width: 980px) {
   .floor-panel-sheet {
-    width: 100vw;
+    top: 162px;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    width: auto;
+    max-width: none;
+    border-radius: 10px;
+    box-shadow: 0 28px 64px rgba(0, 0, 0, 0.46);
   }
 
   .floor-panel-shell {
-    grid-template-columns: 64px minmax(0, 1fr);
+    grid-template-columns: 52px minmax(0, 1fr);
   }
 
   .floor-panel-head {
-    padding: 56px 22px 12px 22px;
-    flex-wrap: wrap;
+    gap: 10px;
+    padding: 20px 18px 10px 16px;
+    flex-wrap: nowrap;
   }
 
   .floor-panel-body {
     grid-template-columns: 1fr;
-    padding: 18px 22px 28px 14px;
+    gap: 18px;
+    align-items: start;
+    padding: 8px 18px 28px 14px;
   }
 
   .floor-panel-plan-wrap {
-    min-height: auto;
+    min-height: 250px;
+    align-items: flex-start;
+    justify-content: center;
+  }
+
+  .floor-panel-close {
+    top: 8px;
+    right: 10px;
+    width: 36px;
+    height: 36px;
+    font-size: 1.75rem;
+  }
+
+  .floor-panel-controls {
+    gap: 10px;
+    padding: 96px 4px 24px;
+  }
+
+  .floor-panel-controls-title {
+    font-size: 0.34rem;
+    letter-spacing: 0.18em;
+  }
+
+  .floor-panel-controls-value {
+    font-size: 1.35rem;
+  }
+
+  .floor-panel-controls-dots {
+    gap: 10px;
+  }
+
+  .floor-panel-floor-label {
+    font-size: 1rem;
+    letter-spacing: 0.03em;
+  }
+
+  .floor-panel-zone-pill {
+    padding: 6px 12px 5px;
+    font-size: 0.72rem;
+  }
+
+  .floor-panel-plan {
+    width: min(100%, 268px);
+    margin-inline: auto;
+  }
+
+  .floor-panel-list {
+    padding-top: 8px;
+  }
+
+  .floor-panel-list-title {
+    margin-bottom: 16px;
+    font-size: 0.96rem;
+    font-weight: 600;
+  }
+
+  .floor-panel-list-items {
+    gap: 8px;
+  }
+
+  .floor-panel-list-item {
+    font-size: 0.84rem;
+    line-height: 1.55;
   }
 }
 
@@ -1914,6 +1991,7 @@ h3 {
   line-height: 1.25;
   color: var(--gold-bright);
   display: -webkit-box;
+  line-clamp: 2;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -2672,7 +2750,7 @@ button.primary-link-button.project-preview-2d-button {
   flex: 1 1 auto;
   width: 100%;
   min-height: 0;
-  /* Beat legacy .visual-frame (e.g. styles.css) and any panel gradients */
+  /* Keep the embedded elevation frame neutral against surrounding panel gradients. */
   background:
     linear-gradient(
       180deg,

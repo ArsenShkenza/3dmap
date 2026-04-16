@@ -48,7 +48,7 @@ export default function SplashGate({ children }) {
   if (!gateReady) {
     return (
       <div
-        className={`splash-screen splash-screen--preload ${splashSans.variable}`}
+        className={`splash-screen splash-screen--preload fixed inset-0 z-60 overflow-hidden bg-[rgba(4,8,14,0.52)] text-pro-text ${splashSans.variable}`}
         aria-hidden
       />
     );
@@ -57,7 +57,7 @@ export default function SplashGate({ children }) {
   if (showSplash) {
     return (
       <div
-        className={`splash-screen ${splashSans.variable}`}
+        className={`splash-screen fixed inset-0 z-60 overflow-hidden bg-[rgba(4,8,14,0.52)] text-pro-text ${splashSans.variable}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="splash-headline"
@@ -94,7 +94,11 @@ export default function SplashGate({ children }) {
               />
             </div>
 
-            <button type="button" className="splash-screen__cta" onClick={dismiss}>
+            <button
+              type="button"
+              className="splash-screen__cta"
+              onClick={dismiss}
+            >
               Continue to Experience Pro X
             </button>
           </div>

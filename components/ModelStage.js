@@ -5,6 +5,22 @@ import { useEffect, useRef, useState } from "react";
 import InteriorExplorer3D from "@/components/InteriorExplorer3D";
 import { ProjectFloorElevationBlock } from "@/components/ProjectFloorElevationBlock";
 import { useGltfOrbitViewer } from "@/components/useGltfOrbitViewer";
+import { cn } from "@/lib/cn";
+import {
+  primaryLinkButton,
+  sectionLabel,
+  serifHeading,
+} from "@/lib/uiClasses";
+
+const modelCardClass =
+  "grid gap-[18px] rounded-[20px] border border-white/8 p-[18px] [background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)),rgba(255,255,255,0.02)] max-[820px]:rounded-[18px] max-[820px]:px-4 max-[820px]:py-[14px]";
+const toolbarButtonClass =
+  "inline-flex h-[42px] w-[42px] items-center justify-center rounded-full border border-[rgba(241,211,161,0.24)] bg-[rgba(8,14,21,0.72)] text-pro-text backdrop-blur-[12px] transition duration-200 ease-out hover:-translate-y-px hover:border-[rgba(241,211,161,0.34)] hover:text-pro-gold-bright max-[820px]:h-11 max-[820px]:w-11";
+const stageClass =
+  "model-stage relative mt-4 min-h-[320px] overflow-hidden rounded-[22px] border border-white/8 [background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)),#08121d] max-[820px]:mt-3 max-[820px]:min-h-[min(52vw,280px)] max-[820px]:rounded-[18px]";
+const modelCopyClass = "text-pro-text-soft leading-[1.55]";
+const statusPillClass =
+  "inline-flex items-center justify-center rounded-full border border-white/8 bg-[rgba(255,255,255,0.06)] px-[14px] py-[8px] text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[rgba(224,225,229,0.9)]";
 
 async function toggleFullscreen(container, isFullscreen) {
   if (typeof document === "undefined") {
@@ -71,6 +87,7 @@ function StandardModelStageGltf({
   const stageRef = useRef(null);
   const stageShellRef = useRef(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const shouldUseWideProjectLink = Boolean(fullProjectHref) && !statusLabel;
   const status = useGltfOrbitViewer(asset, stageShellRef, "exterior", {
     autoRotate: true
   });
@@ -87,53 +104,81 @@ function StandardModelStageGltf({
   }, []);
 
   return (
-    <article className="model-card">
-      <div className="section-head">
-        <div>
-          <p className="section-label">Virtual Experience</p>
-          <h3>{asset.label}</h3>
+    <article className={modelCardClass}>
+      <div className="grid gap-[10px]">
+        <div className="flex items-center justify-between gap-3">
+          <p className={sectionLabel}>Virtual Experience</p>
+          {statusLabel ? <span className={statusPillClass}>{statusLabel}</span> : null}
         </div>
-        {statusLabel || fullProjectHref ? (
-          <div className="model-card-head-end">
-            {fullProjectHref ? (
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h3 className={cn(serifHeading, "text-[1.05rem] leading-[1.16]")}>
+              {asset.label}
+            </h3>
+          </div>
+          {fullProjectHref && !shouldUseWideProjectLink ? (
+            <div className="flex shrink-0 items-start">
               <Link
                 href={fullProjectHref}
-                className="primary-link-button model-card-full-project-link"
+                className={cn(
+                  primaryLinkButton,
+                  "px-3 py-[7px] text-[0.62rem] tracking-[0.07em] whitespace-nowrap max-[480px]:w-full max-[480px]:justify-center",
+                )}
               >
                 View Full Project
               </Link>
-            ) : null}
-            {statusLabel ? (
-              <span className="status-pill subtle">{statusLabel}</span>
-            ) : null}
-          </div>
+            </div>
+          ) : null}
+        </div>
+        {shouldUseWideProjectLink ? (
+          <Link
+            href={fullProjectHref}
+            className={cn(
+              primaryLinkButton,
+              "w-full justify-center px-3 py-[10px] text-[0.7rem] tracking-[0.09em]",
+            )}
+          >
+            View Full Project
+          </Link>
         ) : null}
       </div>
 
-      <div ref={stageRef} className={`model-stage${isFullscreen ? " is-fullscreen" : ""}`}>
-        <div className="viewer-toolbar">
+      <div
+        ref={stageRef}
+        className={cn(
+          stageClass,
+          isFullscreen && "is-fullscreen min-h-dvh rounded-none border-0",
+        )}
+      >
+        <div className="absolute top-[14px] right-[14px] z-2 flex gap-[10px] max-[820px]:top-[10px] max-[820px]:right-[10px]">
           <button
             type="button"
-            className="viewer-toolbar-button"
+            className={toolbarButtonClass}
             onClick={() => toggleFullscreen(stageRef.current, isFullscreen)}
             aria-label={isFullscreen ? "Exit fullscreen view" : "Expand viewer"}
             title={isFullscreen ? "Exit fullscreen view" : "Expand viewer"}
           >
-            <FullscreenIcon isFullscreen={isFullscreen} />
+            <span className="block h-[18px] w-[18px]">
+              <FullscreenIcon isFullscreen={isFullscreen} />
+            </span>
           </button>
         </div>
         <div ref={stageShellRef} className="three-model-shell" />
 
         {status === "error" && asset.posterSrc ? (
-          <img className="model-fallback" src={asset.posterSrc} alt={asset.label} />
+          <img
+            className="absolute inset-0 h-full w-full object-cover opacity-25"
+            src={asset.posterSrc}
+            alt={asset.label}
+          />
         ) : null}
 
         {status !== "ready" ? (
-          <div className="model-overlay">
-            <p className="section-label">
+          <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/8 bg-[rgba(8,14,21,0.78)] px-4 py-[14px] backdrop-blur-[14px]">
+            <p className={sectionLabel}>
               {status === "error" ? "Preview unavailable" : "Loading 3D preview"}
             </p>
-            <p>
+            <p className={cn(modelCopyClass, "mt-2")}>
               {status === "error"
                 ? `The model did not render in the viewer. The raw asset is still connected at ${asset.src}.`
                 : `Rendering ${asset.fileName} so the concept pitch shows the imported object, not only the parcel.`}
@@ -142,13 +187,17 @@ function StandardModelStageGltf({
         ) : null}
       </div>
 
-      <p className="viewer-controls-note">Drag to rotate. Scroll to zoom. Use Expand View for closer review.</p>
+      <p className="m-0 pb-[clamp(12px,2.2vw,22px)] text-[0.82rem] tracking-[0.04em] text-pro-text-faint">
+        Drag to rotate. Scroll to zoom. Use Expand View for closer review.
+      </p>
       {!hideCaption ? (
-        <p className="model-caption">{caption ?? project.virtualExperience}</p>
+        <p className={cn(modelCopyClass, "mt-[14px]")}>
+          {caption ?? project.virtualExperience}
+        </p>
       ) : null}
       {!hideAssetMeta ? (
-        <p className="model-meta">
-          Current asset: <code>{asset.fileName}</code>
+        <p className="mt-[10px] text-[0.84rem] text-pro-text-faint">
+          Current asset: <code className="font-mono text-pro-gold-bright">{asset.fileName}</code>
         </p>
       ) : null}
     </article>
@@ -171,39 +220,46 @@ function StandardModelStage({
 
   if (inline2DProject && showInline2DExperience) {
     return (
-      <article className="model-card">
-        <div className="section-head">
-          <div>
-            <p className="section-label">Virtual Experience</p>
-            <h3>{asset.label}</h3>
+      <article className={modelCardClass}>
+        <div className="grid gap-[10px]">
+          <div className="flex items-center justify-between gap-3">
+            <p className={sectionLabel}>Virtual Experience</p>
+            {statusLabel ? <span className={statusPillClass}>{statusLabel}</span> : null}
           </div>
-          {statusLabel || fullProjectHref ? (
-            <div className="model-card-head-end">
-              {fullProjectHref ? (
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h3 className={cn(serifHeading, "text-[1.05rem] leading-[1.16]")}>
+                {asset.label}
+              </h3>
+            </div>
+            {fullProjectHref ? (
+              <div className="flex shrink-0 items-start">
                 <Link
                   href={fullProjectHref}
-                  className="primary-link-button model-card-full-project-link"
+                  className={cn(
+                    primaryLinkButton,
+                    "px-3 py-[7px] text-[0.62rem] tracking-[0.07em] whitespace-nowrap max-[480px]:w-full max-[480px]:justify-center",
+                  )}
                 >
                   View Full Project
                 </Link>
-              ) : null}
-              {statusLabel ? (
-                <span className="status-pill subtle">{statusLabel}</span>
-              ) : null}
-            </div>
-          ) : null}
+              </div>
+            ) : null}
+          </div>
         </div>
 
-        <div ref={stageRef} className="model-stage">
-          <div className="viewer-toolbar">
+        <div ref={stageRef} className={stageClass}>
+          <div className="absolute top-[14px] right-[14px] z-2 flex gap-[10px] max-[820px]:top-[10px] max-[820px]:right-[10px]">
             <button
               type="button"
-              className="viewer-toolbar-button"
+              className={toolbarButtonClass}
               onClick={() => onToggleInline2DExperience(false)}
               aria-label="Show 3D model"
               title="Show 3D model"
             >
-              <Model3DIcon />
+              <span className="block h-[18px] w-[18px]">
+                <Model3DIcon />
+              </span>
             </button>
           </div>
           <div className="three-model-shell project-floor-elevation-shell">
@@ -211,15 +267,17 @@ function StandardModelStage({
           </div>
         </div>
 
-        <p className="viewer-controls-note">
+        <p className="m-0 pb-[clamp(12px,2.2vw,22px)] text-[0.82rem] tracking-[0.04em] text-pro-text-faint">
           2D elevation: use the floor controls beside the tower. Click a floor to open plans.
         </p>
         {!hideCaption ? (
-          <p className="model-caption">{caption ?? project.virtualExperience}</p>
+          <p className={cn(modelCopyClass, "mt-[14px]")}>
+            {caption ?? project.virtualExperience}
+          </p>
         ) : null}
         {!hideAssetMeta ? (
-          <p className="model-meta">
-            Current asset: <code>{asset.fileName}</code>
+          <p className="mt-[10px] text-[0.84rem] text-pro-text-faint">
+            Current asset: <code className="font-mono text-pro-gold-bright">{asset.fileName}</code>
           </p>
         ) : null}
       </article>

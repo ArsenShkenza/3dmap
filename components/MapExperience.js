@@ -751,10 +751,10 @@ export default function MapExperience({
   }, [assetLibrary, mapBrowseSignature, ready, viewMode]);
 
   return (
-    <div className="map-underlay-stack">
-      <div className="map-backdrop">
-        <div className="map-frame">
-          <div ref={containerRef} className="map-canvas" />
+    <div className="map-underlay-stack row-span-full row-start-1 col-start-1 min-h-0 self-stretch pointer-events-none">
+      <div className="map-backdrop fixed inset-0 z-0 pointer-events-auto">
+        <div className="map-frame absolute inset-0 h-full min-h-full w-full overflow-hidden border-none bg-[rgba(5,9,15,0.96)] shadow-none">
+          <div ref={containerRef} className="map-canvas absolute inset-0" />
         </div>
       </div>
     </div>

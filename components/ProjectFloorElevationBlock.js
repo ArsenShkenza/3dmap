@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { cn } from "@/lib/cn";
 import { FLOOR_POLYGONS_ABSOLUTE } from "@/lib/floor-polygons";
 import { getApartmentPolygonsForProjectFloor } from "@/lib/apartment-polygons";
+import { ghostLinkButton } from "@/lib/uiClasses";
 
 function getTracedFloorCount(projectId) {
   const floors = FLOOR_POLYGONS_ABSOLUTE?.[projectId]?.floors;
@@ -377,6 +379,12 @@ const TIRANA_UPPER_FLOORS_PLAN_SRC = `/assets/${encodeURIComponent(
 /** Dev-only: copy-coords tooling on /experience. Hidden for investor UI. */
 const SHOW_ELEVATION_TRACE_TOOL = false;
 const SHOW_FLOOR_PLAN_TRACE_TOOL = false;
+const legacyGhostButtonClass = cn(
+  ghostLinkButton,
+  "px-3 py-[9px] normal-case tracking-[0.04em]",
+);
+const elevationFrameClass =
+  "experience-elevation-frame rounded-[28px] border border-white/8 p-[18px] [background:linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02)),rgba(10,17,27,0.78)]";
 
 function getFloorPanelPlanSrc(projectId, floorNumber) {
   if (projectId === "tirana-signature-residences") {
@@ -871,12 +879,12 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
 
   const wrapElevation = (content) =>
     embedded ? (
-      <div className="project-floor-elevation-embed visual-frame experience-elevation-frame">
+      <div className={cn("project-floor-elevation-embed", elevationFrameClass)}>
         {content}
       </div>
     ) : (
       <div className="experience-elevation-below">
-        <div className="visual-frame experience-elevation-frame">{content}</div>
+        <div className={elevationFrameClass}>{content}</div>
       </div>
     );
 
@@ -1147,7 +1155,7 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
                 <div className="floor-trace-toolbar">
                   <button
                     type="button"
-                    className="ghost-button floor-trace-toggle"
+                    className={legacyGhostButtonClass}
                     onClick={() => {
                       setTraceEnabled((prev) => !prev);
                       setTraceCursorPct(null);
@@ -1159,7 +1167,7 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
 
                   <button
                     type="button"
-                    className="ghost-button"
+                    className={legacyGhostButtonClass}
                     onClick={() => {
                       const saved = getSavedTracePointsPct(
                         project.id,
@@ -1190,7 +1198,7 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
 
                   <button
                     type="button"
-                    className="ghost-button floor-trace-prev"
+                    className={legacyGhostButtonClass}
                     onClick={() => {
                       const next = clamp(
                         traceFloorIndex - 1,
@@ -1212,7 +1220,7 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
 
                   <button
                     type="button"
-                    className="ghost-button floor-trace-next"
+                    className={legacyGhostButtonClass}
                     onClick={() => {
                       const next = clamp(
                         traceFloorIndex + 1,
@@ -1229,7 +1237,7 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
 
                   <button
                     type="button"
-                    className="ghost-button floor-trace-undo"
+                    className={legacyGhostButtonClass}
                     onClick={() => {
                       setTracePointsByFloor((prev) => {
                         const points = [...(prev[traceFloorIndex] || [])];
@@ -1248,7 +1256,7 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
 
                   <button
                     type="button"
-                    className="ghost-button floor-trace-clear"
+                    className={legacyGhostButtonClass}
                     onClick={() => {
                       setTracePointsByFloor((prev) => ({
                         ...prev,
@@ -1512,7 +1520,7 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
                       <div className="floor-plan-trace-toolbar">
                         <button
                           type="button"
-                          className="ghost-button"
+                          className={legacyGhostButtonClass}
                           onClick={() => {
                             setPlanTraceEnabled((prev) => !prev);
                             setPlanTraceCursorPct(null);
@@ -1524,7 +1532,7 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
                         </button>
                         <button
                           type="button"
-                          className="ghost-button"
+                          className={legacyGhostButtonClass}
                           onClick={() => {
                             const next = clamp(
                               planTraceApartmentIndex - 1,
@@ -1546,7 +1554,7 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
                         </strong>
                         <button
                           type="button"
-                          className="ghost-button"
+                          className={legacyGhostButtonClass}
                           onClick={() => {
                             const next = clamp(
                               planTraceApartmentIndex + 1,
@@ -1562,7 +1570,7 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
                         </button>
                         <button
                           type="button"
-                          className="ghost-button"
+                          className={legacyGhostButtonClass}
                           onClick={() => {
                             setPlanTracePointsByFloor((prev) => {
                               const floorPoints = {
@@ -1592,7 +1600,7 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
                         </button>
                         <button
                           type="button"
-                          className="ghost-button"
+                          className={legacyGhostButtonClass}
                           onClick={() => {
                             setPlanTracePointsByFloor((prev) => ({
                               ...prev,

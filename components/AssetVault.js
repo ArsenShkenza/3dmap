@@ -1,35 +1,52 @@
 "use client";
 
+import { cn } from "@/lib/cn";
+import {
+  countPill,
+  sectionLabel,
+  serifHeading,
+  switcherCard,
+  switcherCardActive,
+} from "@/lib/uiClasses";
+
 export default function AssetVault({
   assets,
   selectedAssetId,
   onSelectAsset
 }) {
   return (
-    <article className="asset-vault-card">
-      <div className="section-head">
-        <div>
-          <p className="section-label">Imported 3D Assets</p>
-          <h3>Models under `public/assets/` (exterior, full, interior).</h3>
+    <article className="mt-[18px] grid gap-4 border-t border-white/8 pt-[18px]">
+      <div className="flex items-start justify-between gap-3 max-[820px]:flex-col max-[820px]:items-start">
+        <div className="min-w-0">
+          <p className={sectionLabel}>Imported 3D Assets</p>
+          <h3 className={cn(serifHeading, "text-[1.05rem]")}>
+            Models under `public/assets/` (exterior, full, interior).
+          </h3>
         </div>
-        <span className="count-pill">{assets.length} models</span>
+        <span className={countPill}>{assets.length} models</span>
       </div>
 
-      <div className="asset-grid">
+      <div className="grid grid-cols-2 gap-3 max-[1480px]:grid-cols-1 max-[820px]:grid-cols-1">
         {assets.map((asset) => (
           <button
             key={asset.id}
             type="button"
-            className={`asset-card${
-              asset.id === selectedAssetId ? " active" : ""
-            }`}
+            className={cn(
+              switcherCard,
+              "rounded-2xl p-[14px]",
+              asset.id === selectedAssetId && switcherCardActive,
+            )}
             onClick={() => onSelectAsset(asset)}
           >
-            <span className="asset-type">
+            <span className="block text-[0.7rem] uppercase tracking-[0.12em] text-pro-gold-bright">
               {asset.assignedProjectId ? "Mapped hero asset" : "Library asset"}
             </span>
-            <strong>{asset.label}</strong>
-            <span className="asset-file">{asset.fileName}</span>
+            <strong className={cn(serifHeading, "mt-2 block text-base")}>
+              {asset.label}
+            </strong>
+            <span className="mt-[6px] block wrap-break-word text-[0.82rem] text-pro-text-faint">
+              {asset.fileName}
+            </span>
           </button>
         ))}
       </div>

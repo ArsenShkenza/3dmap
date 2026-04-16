@@ -9,8 +9,22 @@ import {
   getFloorOptions,
 } from "@/lib/floor-explorer";
 import { setupPackedGltfLoader } from "@/lib/setupPackedGltfLoader";
+import { cn } from "@/lib/cn";
+import {
+  sectionLabel,
+  serifHeading,
+  subtleStatusPill,
+} from "@/lib/uiClasses";
 
 const floorSceneCache = new Map();
+const modelCardClass =
+  "grid gap-[18px] rounded-[20px] border border-white/8 p-[18px] [background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)),rgba(255,255,255,0.02)] max-[820px]:rounded-[18px] max-[820px]:px-4 max-[820px]:py-[14px]";
+const stageClass =
+  "model-stage floor-model-stage relative mt-4 min-h-[320px] overflow-hidden rounded-[22px] border border-white/8 [background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)),#08121d] max-[820px]:mt-3 max-[820px]:min-h-[min(52vw,280px)] max-[820px]:rounded-[18px]";
+const floorButtonClass =
+  "rounded-[18px] border border-white/8 bg-white/[0.03] px-[14px] py-3 text-left text-pro-text-soft transition duration-200 ease-out hover:-translate-y-px hover:border-[rgba(241,211,161,0.24)]";
+const floorButtonActiveClass =
+  "border-[rgba(241,211,161,0.28)] text-pro-gold-bright [background:linear-gradient(180deg,rgba(214,180,123,0.16),rgba(214,180,123,0.06)),rgba(255,255,255,0.04)]";
 
 function getNamedNodePrefix(pattern = "floor_01") {
   const normalized = pattern.toLowerCase();
@@ -322,81 +336,93 @@ export default function ProjectExplorer3D({ asset, project }) {
   }, [asset, project, selectedFloor]);
 
   return (
-    <article className="model-card floor-model-card">
-      <div className="section-head">
-        <div>
-          <p className="section-label">Full Project Explorer</p>
-          <h3>{asset.label}</h3>
+    <article className={modelCardClass}>
+      <div className="flex items-start justify-between gap-3 max-[820px]:flex-col max-[820px]:items-start">
+        <div className="min-w-0">
+          <p className={sectionLabel}>Full Project Explorer</p>
+          <h3 className={cn(serifHeading, "text-[1.05rem]")}>{asset.label}</h3>
         </div>
-        <span className="status-pill subtle">
+        <span className={subtleStatusPill}>
           {getFloorLabel(project, selectedFloor)}
         </span>
       </div>
 
-      <div className="floor-explorer-panel">
-        <div className="floor-directory">
-          <div className="floor-directory-head">
-            <p className="section-label">Floor Directory</p>
-            <p className="floor-directory-copy">
+      <div className="grid gap-3">
+        <div className="grid gap-3">
+          <div className="grid gap-[6px]">
+            <p className={sectionLabel}>Floor Directory</p>
+            <p className="m-0 text-pro-text-soft leading-[1.55]">
               Choose an authored floor group from the structured building model.
             </p>
           </div>
 
           <div
-            className="floor-grid"
+            className="grid grid-cols-[repeat(auto-fit,minmax(148px,1fr))] gap-[10px] max-[820px]:grid-cols-1"
             role="list"
             aria-label="All building floors"
           >
             <button
               type="button"
-              className={`floor-grid-button floor-grid-button-overview${
-                selectedFloor === FLOOR_OVERVIEW_VALUE ? " active" : ""
-              }`}
+              className={cn(
+                floorButtonClass,
+                "grid gap-[6px]",
+                selectedFloor === FLOOR_OVERVIEW_VALUE && floorButtonActiveClass,
+              )}
               onClick={() => setSelectedFloor(FLOOR_OVERVIEW_VALUE)}
             >
-              <span>Exterior</span>
-              <strong>{getFloorLabel(project, FLOOR_OVERVIEW_VALUE)}</strong>
+              <span className="text-[0.72rem] font-bold uppercase tracking-[0.12em] text-pro-text-faint">
+                Exterior
+              </span>
+              <strong className="text-[0.9rem] leading-[1.35]">
+                {getFloorLabel(project, FLOOR_OVERVIEW_VALUE)}
+              </strong>
             </button>
             {allFloors.map((option) => (
               <button
                 key={option.value}
                 type="button"
-                className={`floor-grid-button${
-                  selectedFloor === option.value ? " active" : ""
-                }`}
+                className={cn(
+                  floorButtonClass,
+                  "grid gap-[6px]",
+                  selectedFloor === option.value && floorButtonActiveClass,
+                )}
                 onClick={() =>
                   setSelectedFloor(
                     clampFloorValue(project, Number(option.value)),
                   )
                 }
               >
-                <span>Level {String(option.value).padStart(2, "0")}</span>
-                <strong>{option.label}</strong>
+                <span className="text-[0.72rem] font-bold uppercase tracking-[0.12em] text-pro-text-faint">
+                  Level {String(option.value).padStart(2, "0")}
+                </span>
+                <strong className="text-[0.9rem] leading-[1.35]">
+                  {option.label}
+                </strong>
               </button>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="model-stage floor-model-stage">
+      <div className={stageClass}>
         <div ref={stageRef} className="three-model-shell" />
 
         {status === "error" && asset.posterSrc ? (
           <img
-            className="model-fallback"
+            className="absolute inset-0 h-full w-full object-cover opacity-25"
             src={asset.posterSrc}
             alt={asset.label}
           />
         ) : null}
 
         {status !== "ready" ? (
-          <div className="model-overlay">
-            <p className="section-label">
+          <div className="absolute inset-x-4 bottom-4 rounded-2xl border border-white/8 bg-[rgba(8,14,21,0.78)] px-4 py-[14px] backdrop-blur-[14px]">
+            <p className={sectionLabel}>
               {status === "error"
                 ? "Preview unavailable"
                 : "Loading floor explorer"}
             </p>
-            <p>
+            <p className="mt-2 text-pro-text-soft leading-[1.55]">
               {status === "error"
                 ? `The floor explorer could not render. The raw asset remains available at ${asset.src}.`
                 : `Preparing ${asset.fileName} so the selected building can move from exterior story into floor-by-floor review.`}
@@ -405,13 +431,19 @@ export default function ProjectExplorer3D({ asset, project }) {
         ) : null}
       </div>
 
-      <p className="model-caption">
+      <p className="mt-[14px] text-pro-text-soft leading-[1.55]">
         {getFloorFocusCopy(project, selectedFloor)}
       </p>
-      <p className="model-meta">
-        Explorer mode: <code>{asset.floorExplorer?.mode ?? "namedNodes"}</code>.
+      <p className="mt-[10px] text-[0.84rem] text-pro-text-faint">
+        Explorer mode:{" "}
+        <code className="font-mono text-pro-gold-bright">
+          {asset.floorExplorer?.mode ?? "namedNodes"}
+        </code>.
         Required export:
-        <code> {asset.floorExplorer?.namedNodePattern ?? "floor_01"}</code>
+        <code className="font-mono text-pro-gold-bright">
+          {" "}
+          {asset.floorExplorer?.namedNodePattern ?? "floor_01"}
+        </code>
       </p>
     </article>
   );

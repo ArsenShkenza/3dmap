@@ -5,6 +5,28 @@ import { useEffect, useMemo, useState } from "react";
 import ModelStage from "@/components/ModelStage";
 import ProjectExplorer3D from "@/components/ProjectExplorer3D";
 import { supportsFloorExplorer } from "@/lib/floor-explorer";
+import { cn } from "@/lib/cn";
+import {
+  primaryLinkButton,
+  sectionLabel,
+  serifHeading,
+  statLabel,
+} from "@/lib/uiClasses";
+
+const pageShellClass =
+  "min-h-dvh px-7 py-7 [background:radial-gradient(circle_at_top_left,rgba(214,180,123,0.14),transparent_28%),radial-gradient(circle_at_80%_0%,rgba(77,135,173,0.16),transparent_26%),linear-gradient(135deg,#04070c_0%,#08111b_42%,#0a1825_100%)] max-[1240px]:px-6 max-[820px]:pt-[max(16px,env(safe-area-inset-top,0px))] max-[820px]:pr-[max(16px,env(safe-area-inset-right,0px))] max-[820px]:pb-[max(16px,env(safe-area-inset-bottom,0px))] max-[820px]:pl-[max(16px,env(safe-area-inset-left,0px))]";
+const heroShellClass =
+  "mx-auto mb-6 grid max-w-[1480px] grid-cols-1 gap-[18px] rounded-pro-xl border border-pro-line px-7 py-[26px] shadow-pro-panel [background:radial-gradient(circle_at_top_right,rgba(214,180,123,0.16),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02)),rgba(8,14,21,0.84)] max-[1240px]:grid-cols-1 max-[820px]:px-4 max-[820px]:py-[18px]";
+const projectCardClass =
+  "grid content-start gap-4 overflow-hidden rounded-pro-lg border border-white/8 p-5 shadow-pro-panel [background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)),rgba(255,255,255,0.02)]";
+const sectionHeadClass =
+  "flex items-start justify-between gap-3 max-[820px]:flex-col max-[820px]:items-start";
+const statCardClass =
+  "rounded-[18px] border border-white/8 p-[14px] [background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)),rgba(255,255,255,0.02)]";
+const assetSwitchButtonClass =
+  "rounded-full border border-white/12 bg-white/[0.03] px-[14px] py-[10px] text-pro-text-soft transition duration-200 ease-out hover:-translate-y-px hover:border-[rgba(241,211,161,0.24)] hover:text-pro-text";
+const assetSwitchButtonActiveClass =
+  "border-[rgba(241,211,161,0.36)] text-pro-gold-bright [background:linear-gradient(180deg,rgba(214,180,123,0.12),rgba(214,180,123,0.05)),rgba(255,255,255,0.04)]";
 
 function ProjectExperienceDescription({ project }) {
   if (!project.memo && !project.thesis) {
@@ -13,10 +35,12 @@ function ProjectExperienceDescription({ project }) {
 
   return (
     <div className="project-experience-description">
-      <p className="experience-description-label">About this project</p>
+      <p className="experience-description-label">
+        About this project
+      </p>
       {project.memo ? <p className="detail-copy">{project.memo}</p> : null}
       {project.thesis ? (
-        <p className="detail-copy compact experience-description-thesis">{project.thesis}</p>
+        <p className="experience-description-thesis">{project.thesis}</p>
       ) : null}
     </div>
   );
@@ -108,18 +132,35 @@ export default function FullProjectExperience({
   };
 
   return (
-    <main className="project-page-shell">
-      <section className="project-page-hero">
-        <div className="project-hero-copy">
-          <Link href="/" className="eyebrow project-back-eyebrow-link">
+    <main className={cn(pageShellClass, "project-page-shell max-[820px]:px-[8px] max-[820px]:py-[10px]")}>
+      <section
+        className={cn(
+          heroShellClass,
+          "project-page-hero max-[820px]:mb-4 max-[820px]:gap-3 max-[820px]:rounded-[28px] max-[820px]:px-[20px] max-[820px]:py-[18px]",
+        )}
+      >
+        <div className="project-hero-copy max-w-2xl">
+          <Link
+            href="/"
+            className="project-back-eyebrow-link text-[0.72rem] font-bold uppercase tracking-[0.16em]"
+          >
             {`< Back to market view`}
           </Link>
-          <h1>{project.name}</h1>
-          <p className="lead project-lead">{project.stageSummary}</p>
+          <h1
+            className={cn(
+              serifHeading,
+              "text-[clamp(1.45rem,2.4vw,2.15rem)] leading-[1.1] tracking-[0.015em] wrap-break-word whitespace-normal max-[820px]:text-[clamp(1.8rem,8vw,2.2rem)] max-[820px]:leading-[1.04]",
+            )}
+          >
+            {project.name}
+          </h1>
+          <p className="project-lead text-pro-text-soft leading-[1.58] max-[820px]:text-[0.99rem]">
+            {project.stageSummary}
+          </p>
         </div>
       </section>
 
-      <section className="project-page-grid">
+      <section className="project-page-grid max-[820px]:gap-4">
         <div className="project-main-column">
           {hasFloorExplorer ? (
             <>
@@ -127,18 +168,27 @@ export default function FullProjectExperience({
               <ProjectExperienceDescription project={project} />
             </>
           ) : (
-            <div className="project-detail-card project-preview-card">
-              <div className="section-head">
-                <div>
-                  <p className="section-label">Project Preview</p>
-                  <h3>Exterior review</h3>
+            <div
+              className={cn(
+                projectCardClass,
+                "project-detail-card project-preview-card gap-[18px] max-[820px]:rounded-[22px] max-[820px]:p-[14px]",
+              )}
+            >
+              <div className={sectionHeadClass}>
+                <div className="min-w-0">
+                  <p className={sectionLabel}>Project Preview</p>
+                  <h3 className={cn(serifHeading, "text-[1.05rem]")}>
+                    Exterior review
+                  </h3>
                 </div>
                 {show2DViewButton ? (
                   <button
                     type="button"
-                    className={`primary-link-button project-preview-2d-button${
-                      showInline2DView ? " is-active" : ""
-                    }`}
+                    className={cn(
+                      primaryLinkButton,
+                      "project-preview-2d-button shrink-0 border-[rgba(205,178,128,0.42)] bg-[rgba(119,103,71,0.18)] px-[14px] py-[8px] text-[0.76rem] min-h-[34px] text-pro-text max-[820px]:px-[14px] max-[820px]:py-[8px] max-[820px]:text-[0.76rem] max-[820px]:tracking-[0.08em]",
+                      showInline2DView && "is-active shadow-[0_0_0_1px_rgba(241,211,161,0.35)]",
+                    )}
                     aria-pressed={showInline2DView}
                     disabled={!inline2DExperienceProject}
                     title={
@@ -148,20 +198,26 @@ export default function FullProjectExperience({
                     }
                     onClick={() => setShowInline2DView((open) => !open)}
                   >
-                    {showInline2DView ? "3D model" : "2D view"}
+                    {showInline2DView ? "3D VIEW" : "2D VIEW"}
                   </button>
                 ) : null}
               </div>
               {separateFilesFlow ? (
-                <div className="asset-switch-stack">
-                  <div className="asset-switch-row" role="tablist" aria-label="Building and interior files">
+                <div className="grid gap-4">
+                  <div
+                    className="flex flex-wrap gap-[10px]"
+                    role="tablist"
+                    aria-label="Building and interior files"
+                  >
                     <button
                       type="button"
                       role="tab"
                       aria-selected={activeAssetKey === "building"}
-                      className={`asset-switch-button${
-                        activeAssetKey === "building" ? " active" : ""
-                      }`}
+                      className={cn(
+                        assetSwitchButtonClass,
+                        activeAssetKey === "building" &&
+                          assetSwitchButtonActiveClass,
+                      )}
                       onClick={() => handleAssetSelection("building")}
                     >
                       Whole Building
@@ -172,9 +228,11 @@ export default function FullProjectExperience({
                         type="button"
                         role="tab"
                         aria-selected={activeAssetKey === unit.id}
-                        className={`asset-switch-button${
-                          activeAssetKey === unit.id ? " active" : ""
-                        }`}
+                        className={cn(
+                          assetSwitchButtonClass,
+                          activeAssetKey === unit.id &&
+                            assetSwitchButtonActiveClass,
+                        )}
                         onClick={() => handleAssetSelection(unit.id)}
                       >
                         {unit.label}
@@ -230,44 +288,51 @@ export default function FullProjectExperience({
         </div>
 
         <aside className="project-side-column">
-          <article className="project-detail-card">
-            <div className="section-head">
-              <div>
-                <p className="section-label">Capital Snapshot</p>
-                <h3>Headline terms</h3>
+          <article className={cn(projectCardClass, "project-detail-card")}>
+            <div className={sectionHeadClass}>
+              <div className="min-w-0">
+                <p className={sectionLabel}>Capital Snapshot</p>
+                <h3 className={cn(serifHeading, "text-[1.05rem]")}>
+                  Headline terms
+                </h3>
               </div>
             </div>
-            <div className="detail-stats project-stats">
-              <article>
-                <span className="stat-label">Target ROI</span>
-                <strong>{project.roi}</strong>
+            <div className="grid grid-cols-2 gap-3 max-[820px]:grid-cols-1">
+              <article className={statCardClass}>
+                <span className={statLabel}>Target ROI</span>
+                <strong className="mt-2 block text-base">{project.roi}</strong>
               </article>
-              <article>
-                <span className="stat-label">Funding Ask</span>
-                <strong>{project.ticket}</strong>
+              <article className={statCardClass}>
+                <span className={statLabel}>Funding Ask</span>
+                <strong className="mt-2 block text-base">{project.ticket}</strong>
               </article>
-              <article>
-                <span className="stat-label">Program</span>
-                <strong>{project.program}</strong>
+              <article className={statCardClass}>
+                <span className={statLabel}>Program</span>
+                <strong className="mt-2 block text-base">{project.program}</strong>
               </article>
-              <article>
-                <span className="stat-label">Access</span>
-                <strong>{project.access}</strong>
+              <article className={statCardClass}>
+                <span className={statLabel}>Access</span>
+                <strong className="mt-2 block text-base">{project.access}</strong>
               </article>
             </div>
           </article>
 
-          <article className="project-detail-card">
-            <div className="section-head">
-              <div>
-                <p className="section-label">Project Timeline</p>
-                <h3>Execution path</h3>
+          <article className={cn(projectCardClass, "project-detail-card")}>
+            <div className={sectionHeadClass}>
+              <div className="min-w-0">
+                <p className={sectionLabel}>Project Timeline</p>
+                <h3 className={cn(serifHeading, "text-[1.05rem]")}>
+                  Execution path
+                </h3>
               </div>
             </div>
-            <div className="project-timeline-list">
+            <div className="grid gap-[14px]">
               {project.timeline.map((step) => (
-                <div key={step} className="project-timeline-item">
-                  <span className="timeline-dot" />
+                <div
+                  key={step}
+                  className="flex items-center gap-3 rounded-[18px] border border-white/8 bg-white/3 px-[18px] py-4"
+                >
+                  <span className="h-[10px] w-[10px] shrink-0 rounded-full bg-pro-gold-bright shadow-[0_0_18px_rgba(241,211,161,0.42)]" />
                   <strong>{step}</strong>
                 </div>
               ))}
