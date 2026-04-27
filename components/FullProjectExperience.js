@@ -68,7 +68,10 @@ function ProjectRenderGallery({ images = [] }) {
 }
 
 function ProjectExperienceDescription({ project }) {
-  if (!project.memo && !project.thesis) {
+  const aboutMemo = project.aboutMemo ?? project.memo;
+  const aboutThesis = project.aboutThesis ?? project.thesis;
+
+  if (!aboutMemo && !aboutThesis) {
     return null;
   }
 
@@ -77,9 +80,13 @@ function ProjectExperienceDescription({ project }) {
       <p className="experience-description-label">
         About this project
       </p>
-      {project.memo ? <p className="detail-copy">{project.memo}</p> : null}
-      {project.thesis ? (
-        <p className="experience-description-thesis">{project.thesis}</p>
+      {aboutMemo ? (
+        <p className="detail-copy whitespace-pre-line">{aboutMemo}</p>
+      ) : null}
+      {aboutThesis ? (
+        <p className="experience-description-thesis whitespace-pre-line">
+          {aboutThesis}
+        </p>
       ) : null}
     </div>
   );
