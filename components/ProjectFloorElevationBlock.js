@@ -373,20 +373,14 @@ function shouldClosePolygon(pointPct, pointsPct, rect) {
   return Math.hypot(dxPx, dyPx) <= 16;
 }
 
-const TIRANA_UPPER_FLOORS_PLAN_SRC = `/assets/${encodeURIComponent(
-  "Screenshot 2026-03-27 150122.png",
-)}`;
-
 /** Enable Trace Floors + Copy Floor Coords on the full-project 2D elevation for these projects. */
 const ELEVATION_TRACE_PROJECT_IDS = new Set([
-  "tirana-signature-residences",
   "bazaar-gate",
   "united-towers-of-tirana",
 ]);
 
 /** Facade uses Tirana-tuned control placement + `is-tirana` floor chrome. */
 const TIRANA_FACADE_UI_PROJECT_IDS = new Set([
-  "tirana-signature-residences",
   "bazaar-gate",
   "united-towers-of-tirana",
 ]);
@@ -412,13 +406,7 @@ const elevationFrameEmbeddedClass = cn(
   "rounded-[22px] max-[820px]:rounded-[18px]",
 );
 
-function getFloorPanelPlanSrc(projectId, floorNumber) {
-  if (projectId === "tirana-signature-residences") {
-    if (floorNumber === 1) {
-      return "/assets/interior/Planimetri.png";
-    }
-    return TIRANA_UPPER_FLOORS_PLAN_SRC;
-  }
+function getFloorPanelPlanSrc() {
   return "/assets/plan-33.jpg";
 }
 
@@ -435,15 +423,7 @@ const DEFAULT_FLOOR_PANEL_APARTMENTS = [
   "APARTAMENTI - 3+1",
 ];
 
-function getFloorPanelApartmentLabels(projectId, floorNumber) {
-  if (projectId === "tirana-signature-residences") {
-    if (floorNumber === 1) {
-      return ["Space 1", "Space 2", "Space 3"];
-    }
-    if (floorNumber === 2 || floorNumber === 3) {
-      return ["Apartment 2+1", "Apartment 2+1", "Apartment 2+1"];
-    }
-  }
+function getFloorPanelApartmentLabels() {
   return DEFAULT_FLOOR_PANEL_APARTMENTS;
 }
 
