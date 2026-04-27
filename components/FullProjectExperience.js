@@ -138,9 +138,12 @@ export default function FullProjectExperience({
   const selectedStatusLabel =
     selectedAsset?.viewerLabel ??
     (activeAssetKey === "building" ? "AR Ready" : "Interior Navigation");
-  const show2DViewButton = ["tirana-signature-residences", "prishtina-prime-offices"].includes(
-    project.id
-  );
+  const show2DViewButton = [
+    "tirana-signature-residences",
+    "prishtina-prime-offices",
+    "bazaar-gate",
+    "united-towers-of-tirana",
+  ].includes(project.id);
   const inline2DExperienceProject =
     show2DViewButton && (!separateFilesFlow || activeAssetKey === "building") ? project : null;
   const modelStage2DProps =

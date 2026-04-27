@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import InteriorExplorer3D from "@/components/InteriorExplorer3D";
 import { ProjectFloorElevationBlock } from "@/components/ProjectFloorElevationBlock";
 import { useGltfOrbitViewer } from "@/components/useGltfOrbitViewer";
@@ -17,7 +17,7 @@ const modelCardClass =
 const toolbarButtonClass =
   "inline-flex h-[42px] w-[42px] items-center justify-center rounded-full border border-[rgba(241,211,161,0.24)] bg-[rgba(8,14,21,0.72)] text-pro-text backdrop-blur-[12px] transition duration-200 ease-out hover:-translate-y-px hover:border-[rgba(241,211,161,0.34)] hover:text-pro-gold-bright max-[820px]:h-11 max-[820px]:w-11";
 const stageClass =
-  "model-stage relative mt-4 min-h-[320px] overflow-hidden rounded-[22px] border border-white/8 [background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)),#08121d] max-[820px]:mt-3 max-[820px]:min-h-[min(52vw,280px)] max-[820px]:rounded-[18px]";
+  "model-stage relative mt-4 min-h-[360px] overflow-hidden rounded-[22px] border border-white/8 [background:linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02)),#08121d] max-[820px]:mt-3 max-[820px]:min-h-[min(56vw,300px)] max-[820px]:rounded-[18px]";
 const modelCopyClass = "text-pro-text-soft leading-[1.55]";
 const statusPillClass =
   "inline-flex items-center justify-center rounded-full border border-white/8 bg-[rgba(255,255,255,0.06)] px-[14px] py-[8px] text-[0.72rem] font-bold uppercase tracking-[0.08em] text-[rgba(224,225,229,0.9)]";
@@ -54,20 +54,6 @@ function FullscreenIcon({ isFullscreen }) {
         fill="none"
         stroke="currentColor"
         strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function Model3DIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9m9-13.5-9 5.25m0 0 9 5.25M12 12.75 3 7.5m9 5.25v9l-9 5.25M9 18l-6-3.375v-9"
-        stroke="currentColor"
-        strokeWidth="1.65"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
@@ -217,6 +203,10 @@ function StandardModelStage({
   onToggleInline2DExperience = () => {}
 }) {
   const stageRef = useRef(null);
+  const [traceToolbarHost, setTraceToolbarHost] = useState(null);
+  const traceToolbarHostRef = useCallback((node) => {
+    setTraceToolbarHost(node);
+  }, []);
 
   if (inline2DProject && showInline2DExperience) {
     return (
@@ -249,23 +239,19 @@ function StandardModelStage({
         </div>
 
         <div ref={stageRef} className={stageClass}>
-          <div className="absolute top-[14px] right-[14px] z-2 flex gap-[10px] max-[820px]:top-[10px] max-[820px]:right-[10px]">
-            <button
-              type="button"
-              className={toolbarButtonClass}
-              onClick={() => onToggleInline2DExperience(false)}
-              aria-label="Show 3D model"
-              title="Show 3D model"
-            >
-              <span className="block h-[18px] w-[18px]">
-                <Model3DIcon />
-              </span>
-            </button>
-          </div>
           <div className="three-model-shell project-floor-elevation-shell">
-            <ProjectFloorElevationBlock project={inline2DProject} embedded />
+            <ProjectFloorElevationBlock
+              project={inline2DProject}
+              embedded
+              traceToolbarHost={traceToolbarHost}
+            />
           </div>
         </div>
+
+        <div
+          ref={traceToolbarHostRef}
+          className="project-inline-trace-toolbar-host w-full min-h-0"
+        />
 
         <p className="m-0 pb-[clamp(12px,2.2vw,22px)] text-[0.82rem] tracking-[0.04em] text-pro-text-faint">
           2D elevation: use the floor controls beside the tower. Click a floor to open plans.

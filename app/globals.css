@@ -780,7 +780,7 @@ body {
   position: relative;
   display: block;
   width: fit-content;
-  max-width: min(100%, 1150px);
+  max-width: min(100%, 1040px);
   margin-inline: auto;
 }
 
@@ -830,7 +830,7 @@ body {
 }
 
 .floor-plan-trace-tool {
-  width: min(100%, 1150px);
+  width: min(100%, 1040px);
   margin-top: 14px;
   margin-inline: auto;
   display: grid;
@@ -2305,7 +2305,7 @@ h3 {
 .model-stage {
   position: relative;
   overflow: hidden;
-  min-height: 320px;
+  min-height: 360px;
   margin-top: 16px;
   border-radius: 22px;
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -2750,10 +2750,15 @@ button.primary-link-button.project-preview-2d-button {
   display: flex;
   flex-direction: column;
   height: auto;
-  min-height: 320px;
-  max-height: min(72vh, 620px);
-  overflow: auto;
+  min-height: 360px;
+  max-height: min(82vh, 780px);
+  /* Vertical scroll only — avoid horizontal track from wide children. */
+  overflow-x: hidden;
+  overflow-y: auto;
   padding: 0;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
   background: rgba(6, 12, 18, 0.5);
 }
 
@@ -2766,7 +2771,14 @@ button.primary-link-button.project-preview-2d-button {
   flex: 1 1 auto;
   width: 100%;
   min-height: 0;
-  overflow: hidden;
+  /* Allow scroll so tall facades + trace toolbar stay reachable (was hidden, which clipped the tool). */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overflow-x: clip;
+  -webkit-overflow-scrolling: touch;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
   /* Align with Tailwind `elevationFrameClass` — same tokens as `.floor-elevation.is-tirana` */
   background:
     linear-gradient(
@@ -2775,6 +2787,53 @@ button.primary-link-button.project-preview-2d-button {
       rgba(255, 255, 255, 0.02)
     ),
     rgba(10, 17, 27, 0.78);
+}
+
+/* Inline 2D view: scale tall renders so the whole facade + trace UI fit without clipping. */
+.model-stage:not(.interior-model-stage)
+  > .three-model-shell.project-floor-elevation-shell
+  .project-floor-elevation-embed
+  .elevation-tower {
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+  max-height: min(72vh, 840px);
+  margin-left: auto;
+  margin-right: auto;
+  flex-shrink: 0;
+  justify-self: center;
+}
+
+.model-stage:not(.interior-model-stage)
+  > .three-model-shell.project-floor-elevation-shell
+  .project-floor-elevation-embed
+  .elevation-image {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  min-width: 0;
+  max-height: min(72vh, 840px);
+  height: auto;
+  object-fit: contain;
+  object-position: center top;
+}
+
+/* Portaled from ProjectFloorElevationBlock when inline 2D is active (host sits in ModelStage `article`). */
+.model-stage:not(.interior-model-stage) .project-inline-trace-toolbar-host {
+  width: 100%;
+}
+
+.model-stage:not(.interior-model-stage)
+  .project-inline-trace-toolbar-host
+  .floor-trace-tool {
+  position: static;
+  margin: 0;
+  padding: 10px 0 2px;
+  border-radius: 0;
+  background: transparent;
+  backdrop-filter: none;
+  box-shadow: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
 }
 
 /* One rounded surface inside the embed — avoid a second “card” corner stack vs. the frame. */
@@ -2788,9 +2847,14 @@ button.primary-link-button.project-preview-2d-button {
   .floor-elevation.is-tirana {
   flex: 1 1 auto;
   width: 100%;
-  min-height: 320px;
+  min-width: 0;
+  min-height: 360px;
   margin-top: 0;
   box-sizing: border-box;
+  /* Match top/bottom (base .floor-elevation uses 48px / 36px) */
+  padding: 32px 16px 32px;
+  max-width: 100%;
+  overflow-x: clip;
 }
 
 .floor-elevation.is-tirana .controls-outer {
@@ -2828,6 +2892,66 @@ button.primary-link-button.project-preview-2d-button {
 .floor-elevation.is-tirana .current-floor-number {
   font-size: 0.8rem;
   padding: 0;
+}
+
+/* Inline 2D facade: controls and tower are columns, not overlapping layers. */
+.model-stage:not(.interior-model-stage)
+  > .three-model-shell.project-floor-elevation-shell
+  .project-floor-elevation-embed
+  > .floor-elevation.is-tirana {
+  display: grid;
+  grid-template-columns: clamp(56px, 8vw, 86px) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(8px, 1.4vw, 16px);
+  padding: 24px 14px;
+}
+
+.model-stage:not(.interior-model-stage)
+  > .three-model-shell.project-floor-elevation-shell
+  .project-floor-elevation-embed
+  > .floor-elevation.is-tirana
+  .controls-outer {
+  position: relative;
+  inset: auto;
+  top: auto;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  width: 100%;
+  max-width: 86px;
+  height: 100%;
+  pointer-events: none;
+}
+
+.model-stage:not(.interior-model-stage)
+  > .three-model-shell.project-floor-elevation-shell
+  .project-floor-elevation-embed
+  > .floor-elevation.is-tirana
+  .controls-wrapper.controls-wrapper-centered {
+  position: relative;
+  top: auto;
+  transform: none;
+  width: 100%;
+  max-width: 86px;
+  align-self: center;
+  pointer-events: auto;
+}
+
+.model-stage:not(.interior-model-stage)
+  > .three-model-shell.project-floor-elevation-shell
+  .project-floor-elevation-embed
+  > .floor-elevation.is-tirana
+  .elevation-tower {
+  grid-column: 2;
+  align-self: center;
+  width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  justify-self: center;
 }
 
 .project-memo-card {
@@ -3565,6 +3689,58 @@ button.primary-link-button.project-preview-2d-button {
 
   .floor-elevation.is-tirana .elevation-floor span {
     font-size: 0.65rem;
+  }
+}
+
+/* Inline 2D in ModelStage: keep Tirana narrow-layout tower within the card (avoids x-scroll). */
+@media (max-width: 960px) {
+  .model-stage:not(.interior-model-stage)
+    > .three-model-shell.project-floor-elevation-shell
+    .project-floor-elevation-embed
+    .floor-elevation.is-tirana {
+    display: grid;
+    grid-template-columns: clamp(48px, 18vw, 74px) minmax(0, 1fr);
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    max-width: 100%;
+    /* Align with 960px side paddings, equal top/bottom */
+    padding: 20px 10px 20px;
+  }
+
+  .model-stage:not(.interior-model-stage)
+    > .three-model-shell.project-floor-elevation-shell
+    .project-floor-elevation-embed
+    .floor-elevation.is-tirana
+    .controls-outer {
+    display: grid;
+    place-items: center;
+    align-self: stretch;
+    width: 100%;
+    max-width: 74px;
+    height: 100%;
+  }
+
+  .model-stage:not(.interior-model-stage)
+    > .three-model-shell.project-floor-elevation-shell
+    .project-floor-elevation-embed
+    .floor-elevation.is-tirana
+    .elevation-tower {
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 100%;
+    width: fit-content;
+    overflow: hidden;
+    justify-self: center;
+  }
+
+  .model-stage:not(.interior-model-stage)
+    > .three-model-shell.project-floor-elevation-shell
+    .project-floor-elevation-embed
+    .floor-elevation.is-tirana
+    .elevation-tower
+    .elevation-image {
+    min-width: 0;
   }
 }
 

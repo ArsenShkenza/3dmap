@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/cn";
 import { FLOOR_POLYGONS_ABSOLUTE } from "@/lib/floor-polygons";
 import { getApartmentPolygonsForProjectFloor } from "@/lib/apartment-polygons";
@@ -376,8 +377,19 @@ const TIRANA_UPPER_FLOORS_PLAN_SRC = `/assets/${encodeURIComponent(
   "Screenshot 2026-03-27 150122.png",
 )}`;
 
-/** Dev-only: copy-coords tooling on /experience. Hidden for investor UI. */
-const SHOW_ELEVATION_TRACE_TOOL = false;
+/** Enable Trace Floors + Copy Floor Coords on the full-project 2D elevation for these projects. */
+const ELEVATION_TRACE_PROJECT_IDS = new Set([
+  "tirana-signature-residences",
+  "bazaar-gate",
+  "united-towers-of-tirana",
+]);
+
+/** Facade uses Tirana-tuned control placement + `is-tirana` floor chrome. */
+const TIRANA_FACADE_UI_PROJECT_IDS = new Set([
+  "tirana-signature-residences",
+  "bazaar-gate",
+  "united-towers-of-tirana",
+]);
 const SHOW_FLOOR_PLAN_TRACE_TOOL = false;
 const legacyGhostButtonClass = cn(
   ghostLinkButton,
@@ -395,7 +407,7 @@ const elevationFrameClass = cn(
  * no second border; background matches standalone frame.
  */
 const elevationFrameEmbeddedClass = cn(
-  "experience-elevation-frame overflow-hidden border-0 p-[18px]",
+  "experience-elevation-frame overflow-x-hidden overflow-y-auto border-0 p-3 sm:p-[14px] min-h-0 w-full min-w-0 max-w-full box-border",
   elevationFrameBg,
   "rounded-[22px] max-[820px]:rounded-[18px]",
 );
@@ -435,7 +447,12 @@ function getFloorPanelApartmentLabels(projectId, floorNumber) {
   return DEFAULT_FLOOR_PANEL_APARTMENTS;
 }
 
-export function ProjectFloorElevationBlock({ project, embedded = false }) {
+export function ProjectFloorElevationBlock({
+  project,
+  embedded = false,
+  /** When set (ModelStage inline 2D), trace UI is portaled here — a child of the Virtual Experience `article`, below the model stage. */
+  traceToolbarHost = null,
+}) {
   const floors = useMemo(() => buildFloors(project), [project]);
   const facadeZones = useMemo(
     () => getFacadeZoneLayout(floors.length),
@@ -457,6 +474,7 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
   const [traceClosedByFloor, setTraceClosedByFloor] = useState({});
   const [traceCursorPct, setTraceCursorPct] = useState(null);
   const [traceStatus, setTraceStatus] = useState("");
+  const [imageOverlayStyle, setImageOverlayStyle] = useState(null);
 
   const towerRef = useRef(null);
   const imageRef = useRef(null);
@@ -472,7 +490,8 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
   const isTracing = traceEnabled && !traceIsClosed;
   const activeFloorNumber = hoveredFloorNumber ?? focusedFloorNumber;
   const traceFloorNumber = traceFloorIndex + 1;
-  const isTiranaSignature = project.id === "tirana-signature-residences";
+  const isTiranaSignature = TIRANA_FACADE_UI_PROJECT_IDS.has(project.id);
+  const showElevationTraceTool = ELEVATION_TRACE_PROJECT_IDS.has(project.id);
   const traceFloor =
     floors.find((floor) => floor.number === traceFloorNumber) ??
     floors[floors.length - 1];
@@ -558,13 +577,34 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
     const dpr = window.devicePixelRatio || 1;
     const canvasWidth = Math.max(Math.round(imageRect.width), 1);
     const canvasHeight = Math.max(Math.round(imageRect.height), 1);
+    const overlayLeft = `${imageRect.left - towerRect.left}px`;
+    const overlayTop = `${imageRect.top - towerRect.top}px`;
+    const overlayWidth = `${canvasWidth}px`;
+    const overlayHeight = `${canvasHeight}px`;
 
     canvas.width = Math.max(Math.round(canvasWidth * dpr), 1);
     canvas.height = Math.max(Math.round(canvasHeight * dpr), 1);
-    canvas.style.left = `${imageRect.left - towerRect.left}px`;
-    canvas.style.top = `${imageRect.top - towerRect.top}px`;
-    canvas.style.width = `${canvasWidth}px`;
-    canvas.style.height = `${canvasHeight}px`;
+    canvas.style.left = overlayLeft;
+    canvas.style.top = overlayTop;
+    canvas.style.width = overlayWidth;
+    canvas.style.height = overlayHeight;
+    setImageOverlayStyle((prev) => {
+      if (
+        prev?.left === overlayLeft &&
+        prev?.top === overlayTop &&
+        prev?.width === overlayWidth &&
+        prev?.height === overlayHeight
+      ) {
+        return prev;
+      }
+
+      return {
+        left: overlayLeft,
+        top: overlayTop,
+        width: overlayWidth,
+        height: overlayHeight,
+      };
+    });
 
     const context = canvas.getContext("2d");
     if (!context) {
@@ -902,6 +942,173 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
       </div>
     );
 
+  const floorTraceToolPanel = showElevationTraceTool ? (
+    <div className="floor-trace-tool">
+      <div className="floor-trace-toolbar">
+        <button
+          type="button"
+          className={legacyGhostButtonClass}
+          onClick={() => {
+            setTraceEnabled((prev) => !prev);
+            setTraceCursorPct(null);
+            setTraceStatus("");
+          }}
+        >
+          {traceEnabled ? "Tracing On" : "Trace Floors"}
+        </button>
+
+        <button
+          type="button"
+          className={legacyGhostButtonClass}
+          onClick={() => {
+            const saved = getSavedTracePointsPct(project.id, traceFloorIndex);
+            if (!saved) {
+              setTraceStatus(
+                `No saved polygon found for trace ${traceFloorIndex}.`,
+              );
+              return;
+            }
+            setTracePointsByFloor((prev) => ({
+              ...prev,
+              [traceFloorIndex]: saved.pointsPct,
+            }));
+            setTraceClosedByFloor((prev) => ({
+              ...prev,
+              [traceFloorIndex]: saved.isClosed,
+            }));
+            setTraceCursorPct(saved.pointsPct[0] ?? null);
+            setTraceStatus(
+              `Loaded saved polygon for trace ${traceFloorIndex}.`,
+            );
+          }}
+        >
+          Load Saved
+        </button>
+
+        <button
+          type="button"
+          className={legacyGhostButtonClass}
+          onClick={() => {
+            const next = clamp(
+              traceFloorIndex - 1,
+              0,
+              Math.max(floors.length - 1, 0),
+            );
+            setTraceFloorIndex(next);
+            setTraceCursorPct(null);
+            setTraceStatus("");
+          }}
+        >
+          Prev
+        </button>
+
+        <strong className="floor-trace-floor">
+          Trace {traceFloorIndex}
+          {traceFloor ? ` · Floor ${traceFloor.number}` : ""}
+        </strong>
+
+        <button
+          type="button"
+          className={legacyGhostButtonClass}
+          onClick={() => {
+            const next = clamp(
+              traceFloorIndex + 1,
+              0,
+              Math.max(floors.length - 1, 0),
+            );
+            setTraceFloorIndex(next);
+            setTraceCursorPct(null);
+            setTraceStatus("");
+          }}
+        >
+          Next
+        </button>
+
+        <button
+          type="button"
+          className={legacyGhostButtonClass}
+          onClick={() => {
+            setTracePointsByFloor((prev) => {
+              const points = [...(prev[traceFloorIndex] || [])];
+              points.pop();
+              return { ...prev, [traceFloorIndex]: points };
+            });
+            setTraceClosedByFloor((prev) => ({
+              ...prev,
+              [traceFloorIndex]: false,
+            }));
+            setTraceStatus("");
+          }}
+        >
+          Undo
+        </button>
+
+        <button
+          type="button"
+          className={legacyGhostButtonClass}
+          onClick={() => {
+            setTracePointsByFloor((prev) => ({
+              ...prev,
+              [traceFloorIndex]: [],
+            }));
+            setTraceClosedByFloor((prev) => ({
+              ...prev,
+              [traceFloorIndex]: false,
+            }));
+            setTraceCursorPct(null);
+            setTraceStatus("");
+          }}
+        >
+          Clear
+        </button>
+
+        <button
+          type="button"
+          className="floor-trace-copy"
+          onClick={async () => {
+            const image = imageRef.current;
+            if (!image) {
+              return;
+            }
+
+            const payload = {
+              projectId: project.id,
+              floor: traceFloorIndex,
+              floorNumber: traceFloor?.number ?? null,
+              sourceWidth: image.naturalWidth || 0,
+              sourceHeight: image.naturalHeight || 0,
+              coords: toAbsoluteFloorCoords(
+                image,
+                tracePointsByFloor[traceFloorIndex] || [],
+                Boolean(traceClosedByFloor[traceFloorIndex]),
+              ),
+            };
+
+            const text = JSON.stringify(payload, null, 2);
+            try {
+              await navigator.clipboard.writeText(text);
+              setTraceStatus(
+                `Copied trace ${traceFloorIndex} coords to clipboard.`,
+              );
+            } catch (_error) {
+              console.log(text);
+              setTraceStatus(
+                "Clipboard blocked. Coordinates logged in console.",
+              );
+            }
+          }}
+        >
+          Copy Floor Coords
+        </button>
+      </div>
+
+      <p className="floor-trace-help">
+        Enable trace, click points clockwise on the facade, then copy coords.
+      </p>
+      {traceStatus ? <p className="floor-trace-help">{traceStatus}</p> : null}
+    </div>
+  ) : null;
+
   return (
     <>
       {wrapElevation(
@@ -1067,9 +1274,11 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
                       preserveAspectRatio="none"
                       style={{
                         position: "absolute",
-                        inset: 0,
-                        width: "100%",
-                        height: "100%",
+                        ...(imageOverlayStyle ?? {
+                          inset: 0,
+                          width: "100%",
+                          height: "100%",
+                        }),
                         pointerEvents: "none",
                         zIndex: 5,
                       }}
@@ -1106,7 +1315,10 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
               <div
                 className="elevation-floor-stack"
                 style={{
-                  ...(hasAbsolutePolygons ? { inset: 0 } : null),
+                  ...(imageOverlayStyle ??
+                    (hasAbsolutePolygons
+                      ? { inset: 0, width: "100%", height: "100%" }
+                      : null)),
                   pointerEvents: traceEnabled ? "none" : "auto",
                 }}
               >
@@ -1163,182 +1375,15 @@ export function ProjectFloorElevationBlock({ project, embedded = false }) {
                 })}
               </div>
             </div>
-
-            {SHOW_ELEVATION_TRACE_TOOL ? (
-              <div className="floor-trace-tool">
-                <div className="floor-trace-toolbar">
-                  <button
-                    type="button"
-                    className={legacyGhostButtonClass}
-                    onClick={() => {
-                      setTraceEnabled((prev) => !prev);
-                      setTraceCursorPct(null);
-                      setTraceStatus("");
-                    }}
-                  >
-                    {traceEnabled ? "Tracing On" : "Trace Floors"}
-                  </button>
-
-                  <button
-                    type="button"
-                    className={legacyGhostButtonClass}
-                    onClick={() => {
-                      const saved = getSavedTracePointsPct(
-                        project.id,
-                        traceFloorIndex,
-                      );
-                      if (!saved) {
-                        setTraceStatus(
-                          `No saved polygon found for trace ${traceFloorIndex}.`,
-                        );
-                        return;
-                      }
-                      setTracePointsByFloor((prev) => ({
-                        ...prev,
-                        [traceFloorIndex]: saved.pointsPct,
-                      }));
-                      setTraceClosedByFloor((prev) => ({
-                        ...prev,
-                        [traceFloorIndex]: saved.isClosed,
-                      }));
-                      setTraceCursorPct(saved.pointsPct[0] ?? null);
-                      setTraceStatus(
-                        `Loaded saved polygon for trace ${traceFloorIndex}.`,
-                      );
-                    }}
-                  >
-                    Load Saved
-                  </button>
-
-                  <button
-                    type="button"
-                    className={legacyGhostButtonClass}
-                    onClick={() => {
-                      const next = clamp(
-                        traceFloorIndex - 1,
-                        0,
-                        Math.max(floors.length - 1, 0),
-                      );
-                      setTraceFloorIndex(next);
-                      setTraceCursorPct(null);
-                      setTraceStatus("");
-                    }}
-                  >
-                    Prev
-                  </button>
-
-                  <strong className="floor-trace-floor">
-                    Trace {traceFloorIndex}
-                    {traceFloor ? ` · Floor ${traceFloor.number}` : ""}
-                  </strong>
-
-                  <button
-                    type="button"
-                    className={legacyGhostButtonClass}
-                    onClick={() => {
-                      const next = clamp(
-                        traceFloorIndex + 1,
-                        0,
-                        Math.max(floors.length - 1, 0),
-                      );
-                      setTraceFloorIndex(next);
-                      setTraceCursorPct(null);
-                      setTraceStatus("");
-                    }}
-                  >
-                    Next
-                  </button>
-
-                  <button
-                    type="button"
-                    className={legacyGhostButtonClass}
-                    onClick={() => {
-                      setTracePointsByFloor((prev) => {
-                        const points = [...(prev[traceFloorIndex] || [])];
-                        points.pop();
-                        return { ...prev, [traceFloorIndex]: points };
-                      });
-                      setTraceClosedByFloor((prev) => ({
-                        ...prev,
-                        [traceFloorIndex]: false,
-                      }));
-                      setTraceStatus("");
-                    }}
-                  >
-                    Undo
-                  </button>
-
-                  <button
-                    type="button"
-                    className={legacyGhostButtonClass}
-                    onClick={() => {
-                      setTracePointsByFloor((prev) => ({
-                        ...prev,
-                        [traceFloorIndex]: [],
-                      }));
-                      setTraceClosedByFloor((prev) => ({
-                        ...prev,
-                        [traceFloorIndex]: false,
-                      }));
-                      setTraceCursorPct(null);
-                      setTraceStatus("");
-                    }}
-                  >
-                    Clear
-                  </button>
-
-                  <button
-                    type="button"
-                    className="floor-trace-copy"
-                    onClick={async () => {
-                      const image = imageRef.current;
-                      if (!image) {
-                        return;
-                      }
-
-                      const payload = {
-                        projectId: project.id,
-                        floor: traceFloorIndex,
-                        floorNumber: traceFloor?.number ?? null,
-                        sourceWidth: image.naturalWidth || 0,
-                        sourceHeight: image.naturalHeight || 0,
-                        coords: toAbsoluteFloorCoords(
-                          image,
-                          tracePointsByFloor[traceFloorIndex] || [],
-                          Boolean(traceClosedByFloor[traceFloorIndex]),
-                        ),
-                      };
-
-                      const text = JSON.stringify(payload, null, 2);
-                      try {
-                        await navigator.clipboard.writeText(text);
-                        setTraceStatus(
-                          `Copied trace ${traceFloorIndex} coords to clipboard.`,
-                        );
-                      } catch (_error) {
-                        console.log(text);
-                        setTraceStatus(
-                          "Clipboard blocked. Coordinates logged in console.",
-                        );
-                      }
-                    }}
-                  >
-                    Copy Floor Coords
-                  </button>
-                </div>
-
-                <p className="floor-trace-help">
-                  Enable trace, click points clockwise on the facade, then copy
-                  coords.
-                </p>
-                {traceStatus ? (
-                  <p className="floor-trace-help">{traceStatus}</p>
-                ) : null}
-              </div>
-            ) : null}
           </div>
+
+          {!embedded ? floorTraceToolPanel : null}
         </>,
       )}
+
+      {embedded && floorTraceToolPanel && traceToolbarHost
+        ? createPortal(floorTraceToolPanel, traceToolbarHost)
+        : null}
 
       <div
         className={`floor-panel${floorPanelNumber !== null ? " is-open" : ""}`}
