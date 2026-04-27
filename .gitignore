@@ -1,3 +1,10 @@
 node_modules
 .next
 .tools
+
+# Source art dropped into /assets/ — keep the web-served copies under /public/ only
+/assets/*.jpg
+
+# Original multi-hundred-MB glTF deliverables; app uses the *_min.glb pack output instead
+public/assets/exterior/BAZAAR GATE.glb
+public/assets/exterior/UNITED TOWERS OF TIRANA.glb

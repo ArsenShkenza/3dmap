@@ -111,6 +111,75 @@ const paginationButtonClass =
 const searchInputClass =
   "w-full rounded-full border border-[rgba(241,211,161,0.22)] bg-[rgba(8,14,21,0.18)] px-[22px] py-[18px] text-[0.96rem] text-pro-gold-bright caret-pro-gold-bright outline-none backdrop-blur-[6px] placeholder:text-[rgba(241,211,161,0.84)] focus:border-[rgba(241,211,161,0.44)] focus:shadow-[0_0_0_4px_rgba(214,180,123,0.08)] max-[820px]:px-[18px] max-[820px]:py-[14px] max-[820px]:text-base max-[820px]:text-left";
 
+const platformStats = [
+  { label: "PRO Real Estate", value: "Active since 2014" },
+  { label: "XPLAN Studio", value: "Est. 2010" },
+  { label: "Team", value: "30 employees" },
+  { label: "Portfolio", value: "300+ projects" },
+];
+
+const proRealEstatePoints = [
+  "Practical and updated knowledge of the local market",
+  "Careful management of each property",
+  "Clear process from listing to completion",
+];
+
+const xplanExpertise = [
+  "Architecture",
+  "Interiors",
+  "Visualization",
+  "Landscape",
+  "Urban planning",
+  "MEP Design",
+  "Project and construction management",
+  "Environmental impact assessment",
+  "Valuation and property development",
+  "Energy auditor",
+];
+
+const xplanSectors = [
+  "Residential",
+  "Mixed use",
+  "Hotel",
+  "Office",
+  "Industrial",
+  "Urban design",
+  "Reuse",
+  "Airport",
+  "Auditorium",
+  "Masterplan",
+  "Cultural Center",
+  "Education",
+];
+
+const xplanPracticeCards = [
+  {
+    title: "Philosophy",
+    copy:
+      "XPLAN STUDIO approaches every project as a choreography of human experience: practical, inspiring, and rooted in environments that improve daily life while reflecting the organizations and communities they serve.",
+  },
+  {
+    title: "Project & Construction Management",
+    copy:
+      "The studio coordinates planning, scheduling, and delivery so complex construction work can move on time, within budget, and to a high standard of quality.",
+  },
+  {
+    title: "Quality",
+    copy:
+      "Modern, visually refined, and functional design is treated as a long-term contribution to Tirana and the wider regional architectural fabric.",
+  },
+  {
+    title: "BIM",
+    copy:
+      "A BIM-driven workflow gives clients a coordinated 3D model of the investment before implementation, improving communication across architecture, structure, and plant disciplines.",
+  },
+  {
+    title: "Sustainability",
+    copy:
+      "The practice emphasizes context, environmental responsibility, energy performance, and buildings that harmonize with the urban fabric while making a clear statement.",
+  },
+];
+
 export default function ExperienceShell({
   assetLibrary,
   projects,
@@ -700,6 +769,15 @@ export default function ExperienceShell({
         </p>
       </div>
 
+      <div className="grid grid-cols-2 gap-3 max-[820px]:grid-cols-1">
+        {platformStats.map((stat) => (
+          <article key={stat.label} className={statCardClass}>
+            <span className={statLabel}>{stat.label}</span>
+            <strong className={statValueClass}>{stat.value}</strong>
+          </article>
+        ))}
+      </div>
+
       <div className={sectionHeadClass}>
         <div className="min-w-0">
           <p className={sectionLabel}>Unfair Advantage</p>
@@ -714,8 +792,9 @@ export default function ExperienceShell({
             Xplan Studio
           </strong>
           <p className={cn(proseSoft, "mt-2")}>
-            Supplies the future-state vision, design language, and 3D material
-            that makes the investment story believable.
+            Supplies the future-state vision, design language, 3D material, and
+            technical delivery discipline that makes the investment story
+            believable.
           </p>
         </div>
         <div className="rounded-2xl bg-white/3 p-[14px]">
@@ -723,9 +802,17 @@ export default function ExperienceShell({
             PRO Real Estate
           </strong>
           <p className={cn(proseSoft, "mt-2")}>
-            Supplies the market access, investor network, and financing
-            narrative that closes the commercial side.
+            Established in 2014, PRO Real Estate brings deep knowledge of the
+            Pristina market and surrounding areas, guiding sellers, buyers, and
+            renters with confidence, transparency, and professionalism.
           </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {proRealEstatePoints.map((point) => (
+              <span key={point} className={metaPillClass}>
+                {point}
+              </span>
+            ))}
+          </div>
         </div>
         <div className="rounded-2xl bg-white/3 p-[14px]">
           <strong className={cn(serifHeading, "block text-base")}>
@@ -737,6 +824,80 @@ export default function ExperienceShell({
           </p>
         </div>
       </div>
+
+      <article className="grid gap-4 rounded-2xl bg-white/3 p-[14px]">
+        <div>
+          <p className={sectionLabel}>XPLAN Studio</p>
+          <h3 className={cn(serifHeading, "mt-2 text-[1.05rem]")}>
+            It is not just design, it is an experience.
+          </h3>
+          <p className={cn(proseSoft, "mt-3")}>
+            XPLAN STUDIO is a dynamic architecture and design studio based in
+            Tirana, founded in 2010 with over 15 years of experience, a
+            multidisciplinary team of architects, engineers, and designers, and
+            more than 300 completed projects in Albania and abroad.
+          </p>
+          <p className={cn(proseSoft, "mt-3")}>
+            The practice works across architecture, interior design, urban
+            design, masterplanning, landscape, MEP design, BIM, project and
+            construction management, delivering human-centered solutions for
+            residential, mixed-use, hospitality, office, industrial,
+            infrastructure, and cultural developments.
+          </p>
+        </div>
+
+        <div className="grid gap-3">
+          {xplanPracticeCards.map((card) => (
+            <div key={card.title} className="rounded-2xl border border-white/8 bg-white/3 p-[14px]">
+              <strong className={cn(serifHeading, "block text-base")}>
+                {card.title}
+              </strong>
+              <p className={cn(proseSoft, "mt-2")}>{card.copy}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="grid gap-3">
+          <p className={sectionLabel}>Expertise</p>
+          <div className="flex flex-wrap gap-2">
+            {xplanExpertise.map((item) => (
+              <span key={item} className={metaPillClass}>
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="grid gap-3">
+          <p className={sectionLabel}>Sectors</p>
+          <div className="flex flex-wrap gap-2">
+            {xplanSectors.map((item) => (
+              <span key={item} className={metaPillClass}>
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/8 bg-white/3 p-[14px]">
+          <p className={sectionLabel}>Contact</p>
+          <p className={cn(proseSoft, "mt-2")}>
+            Website:{" "}
+            <a className="text-pro-gold-bright" href="https://xplanstudio.al/">
+              xplanstudio.al
+            </a>
+            <br />
+            Mobile: +355 69 40 48 003
+            <br />
+            Email: info@xplanstudio.al
+            <br />
+            Instagram: @xplanstudio
+            <br />
+            Headquarters: Kavaja street, Square 21 Residence, Phase 1, St.5,
+            2nd floor, Administrative Unit 7, Tirana 1023, Albania.
+          </p>
+        </div>
+      </article>
     </section>
   );
 

@@ -28,6 +28,45 @@ const assetSwitchButtonClass =
 const assetSwitchButtonActiveClass =
   "border-[rgba(241,211,161,0.36)] text-pro-gold-bright [background:linear-gradient(180deg,rgba(214,180,123,0.12),rgba(214,180,123,0.05)),rgba(255,255,255,0.04)]";
 
+function ProjectRenderGallery({ images = [] }) {
+  if (!images.length) {
+    return null;
+  }
+
+  return (
+    <article className={cn(projectCardClass, "project-detail-card")}>
+      <div className={sectionHeadClass}>
+        <div className="min-w-0">
+          <p className={sectionLabel}>Project Renders</p>
+          <h3 className={cn(serifHeading, "text-[1.05rem]")}>
+            Visual reference set
+          </h3>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3 max-[820px]:grid-cols-1">
+        {images.map((image) => (
+          <figure
+            key={image.src}
+            className="m-0 overflow-hidden rounded-[18px] border border-white/8 bg-white/3"
+          >
+            <img
+              src={image.src}
+              alt={image.alt}
+              className="block aspect-4/5 w-full object-cover"
+              loading="lazy"
+            />
+            {image.caption ? (
+              <figcaption className="px-4 py-3 text-[0.82rem] leading-[1.45] text-pro-text-soft">
+                {image.caption}
+              </figcaption>
+            ) : null}
+          </figure>
+        ))}
+      </div>
+    </article>
+  );
+}
+
 function ProjectExperienceDescription({ project }) {
   if (!project.memo && !project.thesis) {
     return null;
@@ -252,6 +291,7 @@ export default function FullProjectExperience({
                     {...modelStage2DProps}
                   />
                   <ProjectExperienceDescription project={project} />
+                  <ProjectRenderGallery images={project.galleryImages} />
                 </div>
               ) : integratedBuildingFlow ? (
                 <>
@@ -270,6 +310,7 @@ export default function FullProjectExperience({
                     {...modelStage2DProps}
                   />
                   <ProjectExperienceDescription project={project} />
+                  <ProjectRenderGallery images={project.galleryImages} />
                 </>
               ) : (
                 <>
@@ -281,6 +322,7 @@ export default function FullProjectExperience({
                     {...modelStage2DProps}
                   />
                   <ProjectExperienceDescription project={project} />
+                  <ProjectRenderGallery images={project.galleryImages} />
                 </>
               )}
             </div>
@@ -298,6 +340,18 @@ export default function FullProjectExperience({
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3 max-[820px]:grid-cols-1">
+              {project.projectFacts?.project ? (
+                <article className={statCardClass}>
+                  <span className={statLabel}>Project</span>
+                  <strong className="mt-2 block text-base">{project.projectFacts.project}</strong>
+                </article>
+              ) : null}
+              {project.projectFacts?.investor ? (
+                <article className={statCardClass}>
+                  <span className={statLabel}>Investor</span>
+                  <strong className="mt-2 block text-base">{project.projectFacts.investor}</strong>
+                </article>
+              ) : null}
               <article className={statCardClass}>
                 <span className={statLabel}>Target ROI</span>
                 <strong className="mt-2 block text-base">{project.roi}</strong>
@@ -314,6 +368,12 @@ export default function FullProjectExperience({
                 <span className={statLabel}>Access</span>
                 <strong className="mt-2 block text-base">{project.access}</strong>
               </article>
+              {project.projectFacts?.area ? (
+                <article className={statCardClass}>
+                  <span className={statLabel}>Area</span>
+                  <strong className="mt-2 block text-base">{project.projectFacts.area}</strong>
+                </article>
+              ) : null}
             </div>
           </article>
 
