@@ -373,11 +373,14 @@ function shouldClosePolygon(pointPct, pointsPct, rect) {
   return Math.hypot(dxPx, dyPx) <= 16;
 }
 
-/** Enable Trace Floors + Copy Floor Coords on the full-project 2D elevation for these projects. */
+/** Projects that support the dev-only elevation trace tool (see `ELEVATION_TRACE_DEV_UI`). */
 const ELEVATION_TRACE_PROJECT_IDS = new Set([
   "bazaar-gate",
   "united-towers-of-tirana",
 ]);
+
+/** Dev-only: elevation "Trace floors" / copy coords (authoring for `lib/floor-polygons.js`). Set `true` locally; keep `false` for investors. */
+const ELEVATION_TRACE_DEV_UI = false;
 
 /** Facade uses Tirana-tuned control placement + `is-tirana` floor chrome. */
 const TIRANA_FACADE_UI_PROJECT_IDS = new Set([
@@ -471,7 +474,8 @@ export function ProjectFloorElevationBlock({
   const activeFloorNumber = hoveredFloorNumber ?? focusedFloorNumber;
   const traceFloorNumber = traceFloorIndex + 1;
   const isTiranaSignature = TIRANA_FACADE_UI_PROJECT_IDS.has(project.id);
-  const showElevationTraceTool = ELEVATION_TRACE_PROJECT_IDS.has(project.id);
+  const showElevationTraceTool =
+    ELEVATION_TRACE_DEV_UI && ELEVATION_TRACE_PROJECT_IDS.has(project.id);
   const traceFloor =
     floors.find((floor) => floor.number === traceFloorNumber) ??
     floors[floors.length - 1];

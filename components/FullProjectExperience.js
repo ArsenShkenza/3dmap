@@ -138,12 +138,15 @@ export default function FullProjectExperience({
   const selectedStatusLabel =
     selectedAsset?.viewerLabel ??
     (activeAssetKey === "building" ? "AR Ready" : "Interior Navigation");
-  const show2DViewButton = [
+  const projectSupports2DElevation = [
     "bazaar-gate",
     "united-towers-of-tirana"
   ].includes(project.id);
+  /** 2D / 3D toggle: only on "Whole building" (not unit interior tabs). */
+  const show2DViewButton =
+    projectSupports2DElevation && activeAssetKey === "building";
   const inline2DExperienceProject =
-    show2DViewButton && (!separateFilesFlow || activeAssetKey === "building") ? project : null;
+    projectSupports2DElevation && activeAssetKey === "building" ? project : null;
   const modelStage2DProps =
     inline2DExperienceProject !== null
       ? {
@@ -237,12 +240,6 @@ export default function FullProjectExperience({
                       showInline2DView && "is-active shadow-[0_0_0_1px_rgba(241,211,161,0.35)]",
                     )}
                     aria-pressed={showInline2DView}
-                    disabled={!inline2DExperienceProject}
-                    title={
-                      !inline2DExperienceProject
-                        ? "Select Whole Building to use the 2D elevation in this panel."
-                        : undefined
-                    }
                     onClick={() => setShowInline2DView((open) => !open)}
                   >
                     {showInline2DView ? "3D VIEW" : "2D VIEW"}
