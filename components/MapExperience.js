@@ -13,6 +13,26 @@ const DISCOVER_OVERVIEW = {
   bearing: -8
 };
 
+/** Pins use `project.center`; cursor `lngLat` sits on the circle edge — anchor popup to the point. */
+function showProjectMarkerPopup(map, popup, feature) {
+  const coords = feature?.geometry?.coordinates;
+  if (
+    !popup ||
+    !coords ||
+    coords.length < 2 ||
+    feature.geometry?.type !== "Point"
+  ) {
+    return;
+  }
+
+  popup
+    .setLngLat(coords)
+    .setHTML(
+      `<div class="map-popup"><strong>${feature.properties.name}</strong><span>${feature.properties.category}</span></div>`
+    )
+    .addTo(map);
+}
+
 function pointCollection(projects) {
   return {
     type: "FeatureCollection",
@@ -313,6 +333,7 @@ export default function MapExperience({
 
       mapRef.current = map;
       popupRef.current = new maplibregl.Popup({
+        anchor: "bottom",
         closeButton: false,
         closeOnClick: false,
         offset: 18
@@ -475,8 +496,10 @@ export default function MapExperience({
         });
 
         const handleSelect = (event) => {
-          const id = event.features?.[0]?.properties?.id;
+          const feature = event.features?.[0];
+          const id = feature?.properties?.id;
           if (id) {
+            showProjectMarkerPopup(map, popupRef.current, feature);
             onSelectProjectRef.current(id);
           }
         };
@@ -488,12 +511,7 @@ export default function MapExperience({
             return;
           }
 
-          popupRef.current
-            .setLngLat(event.lngLat)
-            .setHTML(
-              `<div class="map-popup"><strong>${feature.properties.name}</strong><span>${feature.properties.category}</span></div>`
-            )
-            .addTo(map);
+          showProjectMarkerPopup(map, popupRef.current, feature);
         };
 
         const handleLeave = () => {
